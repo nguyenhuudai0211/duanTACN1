@@ -2,7 +2,7 @@ import streamlit as st
 import streamlit.components.v1 as components
 
 st.set_page_config(
-    page_title="Focus Flight Pro - Study & Chill",
+    page_title="Focus Flight Pro - Strict Mode",
     page_icon="✈️",
     layout="wide",
     initial_sidebar_state="collapsed"
@@ -41,16 +41,14 @@ app_html = """
             border: 1px solid rgba(255, 255, 255, 0.14);
         }
 
-        /* Popover chọn chế độ tập trung chuẩn như ảnh mẫu */
         .focus-popover {
-            background: rgba(32, 45, 72, 0.94);
+            background: rgba(32, 45, 72, 0.95);
             backdrop-filter: blur(28px);
             -webkit-backdrop-filter: blur(28px);
             border: 1px solid rgba(147, 197, 253, 0.25);
             box-shadow: 0 25px 60px rgba(0, 0, 0, 0.75);
         }
 
-        /* Thân máy bay nghiêng 3D nhẹ như video */
         .fuselage {
             border-top-left-radius: 170px 260px;
             border-top-right-radius: 170px 260px;
@@ -61,12 +59,8 @@ app_html = """
             box-shadow: inset 0 15px 40px rgba(255,255,255,0.04), 0 20px 60px rgba(0,0,0,0.8);
         }
 
-        .seat-box {
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .seat-box:hover {
-            transform: scale(1.06);
-        }
+        .seat-box { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+        .seat-box:hover { transform: scale(1.06); }
 
         .ticket-cutout-left { position: absolute; left: -14px; top: 66%; width: 28px; height: 28px; background: #060911; border-radius: 50%; }
         .ticket-cutout-right { position: absolute; right: -14px; top: 66%; width: 28px; height: 28px; background: #060911; border-radius: 50%; }
@@ -76,12 +70,22 @@ app_html = """
         .eq-bar:nth-child(2) { animation-delay: 0.2s; }
         .eq-bar:nth-child(3) { animation-delay: 0.4s; }
 
+        /* Hiệu ứng chớp đỏ báo động khi thoát ra ngoài */
+        @keyframes red-alert {
+            0%, 100% { background: rgba(153, 27, 27, 0.88); }
+            50% { background: rgba(220, 38, 38, 0.96); }
+        }
+        .turbulence-alert {
+            animation: red-alert 0.7s infinite;
+            backdrop-filter: blur(16px);
+        }
+
         ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
         .leaflet-control-attribution { display: none !important; }
     </style>
 </head>
-<body class="relative w-screen h-screen">
+<body class="relative w-screen h-screen" id="app-root">
 
     <!-- BẢN ĐỒ VỆ TINH THỰC TẾ -->
     <div id="map"></div>
@@ -90,6 +94,42 @@ app_html = """
     <audio id="lofi-player" loop crossorigin="anonymous">
         <source id="lofi-source" src="https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3" type="audio/mpeg">
     </audio>
+
+    <!-- ================= MÀN HÌNH CẢNH BÁO ĐỎ KHI NHẢY RA TAB KHÁC (STRICT MODE ALERT) ================= -->
+    <div id="turbulence-modal" class="fixed inset-0 z-[999] turbulence-alert hidden flex-col items-center justify-center p-6 text-center">
+        <div class="text-6xl mb-3 animate-bounce">🚨</div>
+        <div class="bg-black/40 border border-white/30 px-4 py-1 rounded-full text-xs font-mono font-bold uppercase tracking-widest text-yellow-300 mb-2">
+            COCKPIT MASTER WARNING • TURBULENCE DETECTED
+        </div>
+        <h2 class="text-2xl sm:text-3xl font-black text-white uppercase tracking-wide mb-2">
+            CẢNH BÁO: BẠN ĐÃ RỜI KHỎI CHUYẾN BAY!
+        </h2>
+        <p class="text-sm text-red-100 max-w-md mb-5">
+            Hệ thống phát hiện bạn vừa chuyển sang Tab/Ứng dụng khác hoặc thoát toàn màn hình. Đồng hồ tập trung đã bị <b>TẠM DỪNG</b>!
+        </p>
+
+        <div class="bg-black/50 border border-red-300/30 rounded-2xl p-4 w-full max-w-sm mb-6">
+            <div class="text-xs text-red-200 uppercase font-bold mb-1">Số lần vi phạm trong chuyến bay này</div>
+            <div id="violation-count-text" class="text-2xl font-black text-yellow-400 mono">1 / 3 LẦN</div>
+            <div class="text-[11px] text-slate-300 mt-1">Vi phạm đủ 3 lần máy bay sẽ buộc phải <b>HỦY CHUYẾN (CRASH)</b>!</div>
+        </div>
+
+        <button onclick="resumeFromTurbulence()" class="bg-white hover:bg-yellow-300 text-red-900 font-black px-8 py-4 rounded-2xl shadow-2xl text-sm uppercase tracking-wider transition active:scale-95">
+            🔒 Quay lại Buồng lái & Tiếp tục Học ngay
+        </button>
+    </div>
+
+    <!-- ================= MÀN HÌNH HỦY CHUYẾN DO VI PHẠM QUÁ 3 LẦN ================= -->
+    <div id="crash-modal" class="fixed inset-0 z-[999] bg-black/95 backdrop-blur-xl hidden flex-col items-center justify-center p-6 text-center">
+        <div class="text-6xl mb-3">💥</div>
+        <h2 class="text-2xl font-black text-red-500 uppercase mb-2">CHUYẾN BAY ĐÃ BỊ HỦY BỎ (FLIGHT FAILED)</h2>
+        <p class="text-xs text-slate-300 max-w-sm mb-6">
+            Bạn đã rời khỏi màn hình tập trung quá 3 lần cho phép. Chuyến bay không thể hoàn thành để đảm bảo kỷ luật học tập thực sự.
+        </p>
+        <button onclick="closeCrashModal()" class="bg-red-600 hover:bg-red-500 text-white font-extrabold px-6 py-3.5 rounded-2xl text-xs uppercase tracking-wider">
+            Đặt lại chuyến bay mới
+        </button>
+    </div>
 
     <!-- THANH BAR PHÍA TRÊN -->
     <div class="fixed top-4 left-4 right-4 z-20 flex justify-between items-center pointer-events-none">
@@ -100,7 +140,7 @@ app_html = """
                     FOCUS FLIGHT AIRLINES
                     <span id="top-aircraft-tag" class="bg-cyan-500/20 text-cyan-300 text-[10px] px-2 py-0.5 rounded-md font-mono">A321neo</span>
                 </div>
-                <div class="text-[11px] text-slate-400" id="top-subtitle">Đặt vé máy bay ảo • Tập trung học tập</div>
+                <div class="text-[11px] text-slate-400" id="top-subtitle">Chế độ Kỷ luật Hàng không • Chống xao nhãng</div>
             </div>
         </div>
 
@@ -151,8 +191,7 @@ app_html = """
 
     <!-- ================= MÀN HÌNH 1: CHỌN ĐIỂM ĐI - ĐIỂM ĐẾN & THỜI GIAN ================= -->
     <div id="screen-booking" class="fixed bottom-5 left-1/2 -translate-x-1/2 z-20 w-[94%] max-w-lg glass-panel rounded-3xl p-5 shadow-2xl">
-        <!-- Ảnh sân bay đến -->
-        <div class="relative w-full h-28 rounded-2xl overflow-hidden mb-4 border border-white/10">
+        <div class="relative w-full h-28 rounded-2xl overflow-hidden mb-3.5 border border-white/10">
             <img id="dest-banner-img" src="" class="w-full h-full object-cover opacity-85 transition-all duration-500" />
             <div class="absolute inset-0 bg-gradient-to-t from-[#060911] via-[#060911]/40 to-transparent"></div>
             <div class="absolute top-2.5 left-3 flex items-center gap-1.5">
@@ -175,8 +214,8 @@ app_html = """
             </div>
         </div>
 
-        <!-- Bộ chọn Điểm Đi (Origin) & Điểm Đến (Destination) -->
-        <div class="grid grid-cols-11 gap-2 items-center bg-slate-900/90 p-3 rounded-2xl border border-white/10 mb-3.5">
+        <!-- Bộ chọn Điểm Đi & Điểm Đến -->
+        <div class="grid grid-cols-11 gap-2 items-center bg-slate-900/90 p-3 rounded-2xl border border-white/10 mb-3">
             <div class="col-span-5">
                 <div class="text-[10px] text-slate-400 uppercase font-bold mb-1">Điểm khởi hành</div>
                 <select id="origin-select" onchange="onRouteChange()" class="w-full bg-slate-800 text-white font-extrabold text-xs px-2.5 py-2 rounded-xl border border-white/10 focus:outline-none focus:border-cyan-400 cursor-pointer"></select>
@@ -190,13 +229,13 @@ app_html = """
             </div>
         </div>
 
-        <!-- Phím tắt nhanh các sân bay quê hương & Thời gian bay -->
-        <div class="flex items-center justify-between mb-2">
+        <!-- Thời gian bay -->
+        <div class="flex items-center justify-between mb-1.5">
             <span class="text-[11px] text-slate-400 font-semibold">Thời gian tập trung (Phút):</span>
             <button onclick="randomRoute()" class="text-[11px] text-cyan-400 font-bold hover:underline">🎲 Random chuyến bay</button>
         </div>
 
-        <div class="grid grid-cols-6 gap-1.5 mb-4">
+        <div class="grid grid-cols-6 gap-1.5 mb-3.5">
             <button onclick="setDuration(15)" id="dur-15" class="dur-btn bg-slate-800 py-2 rounded-xl text-xs font-bold text-slate-300 border border-transparent">15m</button>
             <button onclick="setDuration(25)" id="dur-25" class="dur-btn bg-slate-800 py-2 rounded-xl text-xs font-bold text-slate-300 border border-transparent">25m</button>
             <button onclick="setDuration(35)" id="dur-35" class="dur-btn bg-blue-600/30 border-blue-400 text-blue-300 py-2 rounded-xl text-xs font-bold border">35m</button>
@@ -211,9 +250,8 @@ app_html = """
         </button>
     </div>
 
-    <!-- ================= MÀN HÌNH 2: SƠ ĐỒ GHẾ & POPUP FOCUS GIỐNG HỆT ẢNH ================= -->
+    <!-- ================= MÀN HÌNH 2: SƠ ĐỒ GHẾ & POPUP FOCUS ================= -->
     <div id="screen-seat" class="fixed inset-0 z-30 bg-[#070b14]/95 backdrop-blur-xl hidden flex-col items-center justify-between py-5 px-4">
-        <!-- Top Nav -->
         <div class="w-full max-w-md flex items-center justify-between">
             <button onclick="backToBooking()" class="bg-slate-800/80 hover:bg-slate-700 text-slate-200 px-3.5 py-2 rounded-xl text-xs font-bold">
                 ‹ Quay lại
@@ -227,44 +265,45 @@ app_html = """
             </div>
         </div>
 
-        <!-- Khoang máy bay -->
         <div class="relative w-full max-w-[340px] h-[72vh] fuselage flex flex-col items-center pt-12 pb-8 px-6 overflow-y-auto my-2">
-            <!-- Mũi buồng lái -->
             <div class="w-32 h-6 border-b border-slate-700/80 mb-5 flex items-center justify-center text-[10px] font-mono text-slate-500 tracking-widest uppercase">
                 Cockpit
             </div>
 
-            <!-- Cột A C - Hành lang - D F -->
             <div class="grid grid-cols-5 w-full text-center text-xs font-extrabold text-slate-400 mb-3 px-1">
                 <div>A</div><div>C</div><div></div><div>D</div><div>F</div>
             </div>
 
-            <!-- Danh sách hàng ghế 01 -> 12 -->
             <div id="seat-grid" class="w-full space-y-2.5 pb-8"></div>
         </div>
 
-        <!-- POPUP "What do you want to focus?" GIỐNG HỆT TRONG ẢNH MẪU -->
+        <!-- POPUP "What do you want to focus?" + BẬT KHÓA KỶ LUẬT -->
         <div id="focus-popover-backdrop" class="fixed inset-0 z-40 bg-black/50 backdrop-blur-[2px] hidden items-center justify-center p-4">
-            <div class="focus-popover w-full max-w-[360px] rounded-[28px] p-5 text-white animate-fade-in">
+            <div class="focus-popover w-full max-w-[360px] rounded-[28px] p-5 text-white">
                 <div class="flex justify-between items-center mb-1">
                     <span class="text-xs font-bold text-blue-300/90">Seat: <span id="pop-seat-code" class="mono text-white">06A</span></span>
                     <button onclick="closeFocusPopover()" class="text-slate-400 hover:text-white text-sm font-bold">✕</button>
                 </div>
-                <h3 class="text-base font-extrabold text-white mb-4">What do you want to focus?</h3>
+                <h3 class="text-base font-extrabold text-white mb-3.5">What do you want to focus?</h3>
 
-                <!-- Các nút chọn chế độ dạng Pill (Viên thuốc) đúng như ảnh -->
-                <div class="flex flex-wrap gap-2.5 mb-4" id="focus-pills-container">
-                    <!-- Render bằng JS -->
-                </div>
+                <div class="flex flex-wrap gap-2 mb-3.5" id="focus-pills-container"></div>
 
-                <!-- Ô nhập mục tiêu riêng khi bấm nút (+) và nhập tên Hành khách -->
                 <div id="custom-focus-box" class="hidden mb-3">
                     <input type="text" id="custom-focus-input" placeholder="Nhập chế độ riêng (VD: Giải tích, Đồ án...)" class="w-full bg-slate-900/90 text-xs text-white px-3.5 py-2.5 rounded-xl border border-blue-400/40 focus:outline-none" />
                 </div>
 
-                <div class="bg-slate-900/60 p-3 rounded-2xl border border-white/10 mb-4">
+                <div class="bg-slate-900/60 p-3 rounded-2xl border border-white/10 mb-3">
                     <label class="block text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-1">Tên hành khách in lên vé:</label>
                     <input type="text" id="passenger-name-input" value="QUANG MINH" placeholder="Nhập tên của bạn..." class="w-full bg-transparent text-xs font-extrabold text-amber-300 focus:outline-none uppercase" />
+                </div>
+
+                <!-- Tùy chọn Khóa Kỷ Luật không cho nhảy sang tab khác -->
+                <div class="bg-red-500/15 border border-red-400/30 p-3 rounded-2xl flex items-center justify-between mb-4">
+                    <div>
+                        <div class="text-xs font-extrabold text-red-200 flex items-center gap-1">🔒 Khóa Kỷ Luật (Strict Mode)</div>
+                        <div class="text-[10px] text-slate-300">Tự bung Fullscreen & Báo động nếu chuyển tab khác</div>
+                    </div>
+                    <input type="checkbox" id="strict-mode-toggle" checked class="w-5 h-5 accent-red-500 cursor-pointer" />
                 </div>
 
                 <button onclick="confirmSeatAndFocus()" class="w-full bg-blue-500 hover:bg-blue-400 text-white font-extrabold py-3 rounded-2xl text-xs shadow-lg shadow-blue-500/40 transition">
@@ -273,7 +312,6 @@ app_html = """
             </div>
         </div>
 
-        <!-- Thanh dưới cùng -->
         <div class="w-full max-w-md flex items-center justify-between px-2">
             <div class="text-xs text-slate-400">Chạm vào ghế bất kỳ để chọn chế độ tập trung</div>
             <button onclick="showBoardingPass()" class="bg-blue-600 hover:bg-blue-500 text-white font-extrabold px-5 py-2.5 rounded-xl text-xs shadow-lg">
@@ -301,12 +339,11 @@ app_html = """
                             <div id="tk-passenger" class="text-base font-black text-amber-300 uppercase">QUANG MINH</div>
                         </div>
                         <div class="text-right">
-                            <div class="text-[10px] text-slate-400 uppercase">Date</div>
-                            <div id="tk-date" class="text-xs font-bold text-slate-200 mono">2026/10/31</div>
+                            <div class="text-[10px] text-slate-400 uppercase">Discipline Mode</div>
+                            <div id="tk-strict-badge" class="text-[11px] font-extrabold text-red-400">🔒 STRICT LOCK ON</div>
                         </div>
                     </div>
 
-                    <!-- Mã Sân Bay Lớn -->
                     <div class="flex justify-between items-center my-4">
                         <div>
                             <div id="tk-origin-code" class="text-4xl font-black text-white">SGN</div>
@@ -322,7 +359,6 @@ app_html = """
                         </div>
                     </div>
 
-                    <!-- Thông số ghế & Chế độ tập trung -->
                     <div class="grid grid-cols-3 gap-2 pt-4 border-t border-white/10 text-xs mb-5">
                         <div>
                             <div class="text-slate-500 text-[10px] uppercase">Seat</div>
@@ -340,7 +376,6 @@ app_html = """
 
                     <div class="border-b-2 border-dashed border-slate-700/80 my-4"></div>
 
-                    <!-- Barcode xanh dương -->
                     <div class="flex flex-col items-center mt-4">
                         <div class="w-full h-12 flex items-center justify-between gap-[2px] px-2">
                             <script>
@@ -350,7 +385,7 @@ app_html = """
                                 }
                             </script>
                         </div>
-                        <div class="mono text-[10px] tracking-[0.35em] text-slate-400 mt-2">READY-FOR-TAKEOFF</div>
+                        <div class="mono text-[10px] tracking-[0.35em] text-slate-400 mt-2">NO-DISTRACTION-FLIGHT</div>
                     </div>
                 </div>
             </div>
@@ -358,7 +393,7 @@ app_html = """
             <div class="flex gap-2 w-full mt-5">
                 <button onclick="backToSeatFromTicket()" class="w-1/3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-4 rounded-2xl text-xs">‹ Đổi ghế</button>
                 <button onclick="startFlight()" class="w-2/3 bg-gradient-to-r from-blue-600 to-cyan-500 hover:opacity-95 text-white font-extrabold py-4 rounded-2xl shadow-xl shadow-cyan-500/30 text-xs uppercase tracking-wider">
-                    🛫 Boarding (Cất cánh)
+                    🛫 Boarding & Khóa Màn Hình
                 </button>
             </div>
         </div>
@@ -374,21 +409,28 @@ app_html = """
                     <div class="text-[11px] text-cyan-400 font-semibold mt-0.5" id="fly-sub-info">💻 Work • Ghế 06A • QUANG MINH</div>
                 </div>
             </div>
-            <button onclick="centerOnPlane()" class="bg-slate-800 hover:bg-slate-700 text-xs px-3 py-1.5 rounded-xl text-slate-200 border border-white/10 font-bold">
-                🎯 Theo dõi
-            </button>
+            <div class="text-right">
+                <div class="text-[10px] text-slate-400 uppercase font-bold">An toàn bay</div>
+                <div id="safety-hearts" class="text-xs tracking-widest">❤️❤️❤️</div>
+            </div>
         </div>
 
         <div class="flex items-end justify-between">
             <div>
-                <div class="text-[10px] uppercase tracking-widest text-slate-400">Time Remaining</div>
+                <div class="text-[10px] uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
+                    <span>Time Remaining</span>
+                    <span id="strict-live-pill" class="bg-red-500/20 text-red-300 border border-red-500/30 px-1.5 py-0.2 rounded text-[9px] font-bold">🔒 KHÓA TAB</span>
+                </div>
                 <div id="countdown-timer" class="mono text-4xl font-extrabold text-white tracking-tight mt-0.5">35:00</div>
             </div>
             <div class="text-right">
                 <div class="text-xs text-slate-300 font-semibold mb-1.5">Còn <span id="fly-dist-left" class="text-yellow-400 font-bold">320</span> km</div>
-                <button onclick="abortFlight()" class="bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-500/30 px-3.5 py-2 rounded-xl text-xs font-bold transition">
-                    Hạ cánh khẩn cấp
-                </button>
+                <div class="flex gap-1.5">
+                    <button onclick="centerOnPlane()" class="bg-slate-800 hover:bg-slate-700 text-xs px-3 py-2 rounded-xl text-slate-200 border border-white/10 font-bold">🎯</button>
+                    <button onclick="abortFlight()" class="bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-500/30 px-3.5 py-2 rounded-xl text-xs font-bold transition">
+                        Hạ cánh khẩn cấp
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -398,7 +440,7 @@ app_html = """
     </div>
 
     <script>
-        // 1. DANH SÁCH 12 SÂN BAY ĐẦY ĐỦ (QUÊ HƯƠNG NHÓM + TRONG NƯỚC + QUỐC TẾ)
+        // 1. DANH SÁCH 12 SÂN BAY
         const AIRPORTS = [
             { code: "SGN", name: "Sài Gòn (Tân Sơn Nhất)", region: "📍 TP. Hồ Chí Minh", coords: [10.8188, 106.6519], img: "https://images.unsplash.com/photo-1583417319070-4a69db38a482?w=900&q=80" },
             { code: "DAD", name: "Đà Nẵng (Quảng Nam)", region: "✨ Quê hương Quảng Nam - Đà Nẵng", coords: [16.0439, 108.1994], img: "https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?w=900&q=80" },
@@ -414,7 +456,6 @@ app_html = """
             { code: "ICN", name: "Seoul Incheon (Hàn Quốc)", region: "❄️ Chuyến bay Quốc tế Đông Á", coords: [37.4602, 126.4407], img: "https://images.unsplash.com/photo-1517154421773-0529f29ea451?w=900&q=80" }
         ];
 
-        // 2. CÁC CHẾ ĐỘ TẬP TRUNG GIỐNG HỆT ẢNH MẪU (Focus, Work, Meditate, Read, Exercise + Custom)
         const FOCUS_MODES = [
             { id: "focus", label: "Focus", icon: "⚛️", color: "bg-slate-600/90 border-slate-400 text-white" },
             { id: "work", label: "Work", icon: "💻", color: "bg-blue-600 border-blue-300 text-white" },
@@ -423,27 +464,34 @@ app_html = """
             { id: "exercise", label: "Exercise", icon: "🏃", color: "bg-sky-500 border-sky-300 text-white" }
         ];
 
-        let originAirport = AIRPORTS[0]; // SGN
-        let destAirport = AIRPORTS[2];   // CXR - Cam Ranh
+        let originAirport = AIRPORTS[0];
+        let destAirport = AIRPORTS[2];
         let selectedDuration = 35;
         let currentDistance = 320;
         let selectedAircraft = "Airbus A321neo";
         let selectedSeat = "06A";
-        let selectedFocus = FOCUS_MODES[1]; // Mặc định Work (💻)
+        let selectedFocus = FOCUS_MODES[1];
         let passengerName = "QUANG MINH";
+
+        // Biến trạng thái Chuyến bay & Khóa kỷ luật
+        let isFlying = false;
+        let strictModeEnabled = true;
+        let isPausedByViolation = false;
+        let violationCount = 0;
+        const MAX_VIOLATIONS = 3;
+        let alarmInterval = null;
 
         let flightInterval = null;
         let remainingSeconds = 35 * 60;
         let totalFlightSeconds = 35 * 60;
 
-        // 3. KHỞI TẠO BẢN ĐỒ VỆ TINH
+        // 2. BẢN ĐỒ VỆ TINH
         const map = L.map('map', { zoomControl: false }).setView([12.5, 108.0], 6);
         L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 18 }).addTo(map);
         L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', { maxZoom: 18 }).addTo(map);
 
         let routeLine = null, originMarker = null, destMarker = null, planeMarker = null;
 
-        // Tính khoảng cách km giữa 2 sân bay bằng công thức Haversine
         function calcDistanceKm(coord1, coord2) {
             const R = 6371;
             const dLat = (coord2[0] - coord1[0]) * Math.PI / 180;
@@ -468,12 +516,10 @@ app_html = """
             const oSel = document.getElementById('origin-select');
             const dSel = document.getElementById('dest-select');
             oSel.innerHTML = ''; dSel.innerHTML = '';
-
             AIRPORTS.forEach(a => {
                 oSel.innerHTML += `<option value="${a.code}" class="bg-slate-900">${a.code} - ${a.name}</option>`;
                 dSel.innerHTML += `<option value="${a.code}" class="bg-slate-900">${a.code} - ${a.name}</option>`;
             });
-
             oSel.value = originAirport.code;
             dSel.value = destAirport.code;
         }
@@ -481,15 +527,12 @@ app_html = """
         function onRouteChange() {
             const oCode = document.getElementById('origin-select').value;
             const dCode = document.getElementById('dest-select').value;
-
             if (oCode === dCode) {
                 const alt = AIRPORTS.find(a => a.code !== oCode);
                 document.getElementById('dest-select').value = alt.code;
             }
-
             originAirport = AIRPORTS.find(a => a.code === document.getElementById('origin-select').value);
             destAirport = AIRPORTS.find(a => a.code === document.getElementById('dest-select').value);
-
             currentDistance = calcDistanceKm(originAirport.coords, destAirport.coords);
             updateBookingUI();
         }
@@ -521,9 +564,7 @@ app_html = """
                 b.className = "dur-btn bg-slate-800 py-2 rounded-xl text-xs font-bold text-slate-300 border border-transparent";
             });
             const activeBtn = document.getElementById('dur-' + mins);
-            if (activeBtn) {
-                activeBtn.className = "dur-btn bg-blue-600/30 border-blue-400 text-blue-300 py-2 rounded-xl text-xs font-bold border";
-            }
+            if (activeBtn) activeBtn.className = "dur-btn bg-blue-600/30 border-blue-400 text-blue-300 py-2 rounded-xl text-xs font-bold border";
         }
 
         function updateBookingUI() {
@@ -548,7 +589,7 @@ app_html = """
             map.fitBounds(routeLine.getBounds(), { padding: [90, 90] });
         }
 
-        // 4. MÀN HÌNH SƠ ĐỒ GHẾ NGỒI & POPUP CHỌN FOCUS GIỐNG ẢNH MẪU
+        // 3. SƠ ĐỒ GHẾ & FOCUS POPOVER
         function renderSeats() {
             const grid = document.getElementById('seat-grid');
             grid.innerHTML = '';
@@ -575,7 +616,6 @@ app_html = """
                         if (isSelected) style = 'bg-[#3b82f6] border-blue-200 text-white shadow-lg shadow-blue-500/50 scale-105';
 
                         btn.className = `seat-box h-11 rounded-xl font-bold text-xs flex items-center justify-center border ${style}`;
-                        // Nếu ghế đang được chọn thì hiển thị Icon của chế độ tập trung giống trong video
                         btn.innerHTML = isSelected ? `<span class="text-base">${selectedFocus.icon}</span>` : '';
                         btn.onclick = () => openFocusPopover(seatCode);
                         rowEl.appendChild(btn);
@@ -588,7 +628,6 @@ app_html = """
         function renderFocusPills() {
             const container = document.getElementById('focus-pills-container');
             container.innerHTML = '';
-
             FOCUS_MODES.forEach(mode => {
                 const active = selectedFocus.id === mode.id;
                 const pill = document.createElement('button');
@@ -605,13 +644,10 @@ app_html = """
                 container.appendChild(pill);
             });
 
-            // Nút dấu cộng (+) để tự nhập chế độ riêng như trong ảnh
             const plusBtn = document.createElement('button');
             plusBtn.className = `w-9 h-9 rounded-full bg-slate-800/90 hover:bg-slate-700 border border-white/15 text-white font-bold text-base flex items-center justify-center`;
             plusBtn.innerText = '+';
-            plusBtn.onclick = () => {
-                document.getElementById('custom-focus-box').classList.toggle('hidden');
-            };
+            plusBtn.onclick = () => document.getElementById('custom-focus-box').classList.toggle('hidden');
             container.appendChild(plusBtn);
         }
 
@@ -632,11 +668,10 @@ app_html = """
 
         function confirmSeatAndFocus() {
             const customVal = document.getElementById('custom-focus-input').value.trim();
-            if (customVal) {
-                selectedFocus = { id: 'custom', label: customVal, icon: '✨', color: 'bg-cyan-600 border-cyan-300 text-white' };
-            }
+            if (customVal) selectedFocus = { id: 'custom', label: customVal, icon: '✨', color: 'bg-cyan-600 border-cyan-300 text-white' };
             const pName = document.getElementById('passenger-name-input').value.trim();
             if (pName) passengerName = pName;
+            strictModeEnabled = document.getElementById('strict-mode-toggle').checked;
 
             closeFocusPopover();
             renderSeats();
@@ -658,13 +693,16 @@ app_html = """
             document.getElementById('screen-booking').classList.remove('hidden');
         }
 
-        // 5. HIỂN THỊ BOARDING PASS & BẮT ĐẦU BAY
+        // 4. BOARDING PASS & CẤT CÁNH CÙNG KHÓA KỶ LUẬT
         function showBoardingPass() {
+            strictModeEnabled = document.getElementById('strict-mode-toggle').checked;
             document.getElementById('screen-seat').classList.add('hidden');
             document.getElementById('screen-seat').classList.remove('flex');
 
             document.getElementById('tk-aircraft').innerText = selectedAircraft;
             document.getElementById('tk-passenger').innerText = passengerName;
+            document.getElementById('tk-strict-badge').innerText = strictModeEnabled ? "🔒 STRICT LOCK ON" : "🔓 FREE MODE";
+            document.getElementById('tk-strict-badge').className = strictModeEnabled ? "text-[11px] font-extrabold text-red-400" : "text-[11px] font-extrabold text-slate-400";
             document.getElementById('tk-origin-code').innerText = originAirport.code;
             document.getElementById('tk-origin-name').innerText = originAirport.name.split(' (')[0];
             document.getElementById('tk-dest-code').innerText = destAirport.code;
@@ -685,14 +723,31 @@ app_html = """
             document.getElementById('screen-seat').classList.add('flex');
         }
 
+        function requestAppFullscreen() {
+            const elem = document.documentElement;
+            if (elem.requestFullscreen) elem.requestFullscreen().catch(() => {});
+            else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
+        }
+
         function startFlight() {
             document.getElementById('screen-ticket').classList.add('hidden');
             document.getElementById('screen-ticket').classList.remove('flex');
             document.getElementById('screen-flying').classList.remove('hidden');
 
+            // Bật Fullscreen nếu chọn Khóa Kỷ Luật
+            if (strictModeEnabled) {
+                requestAppFullscreen();
+            }
+
             const player = document.getElementById('lofi-player');
             if (player.paused) toggleLofi();
 
+            isFlying = true;
+            isPausedByViolation = false;
+            violationCount = 0;
+            updateSafetyHearts();
+
+            document.getElementById('strict-live-pill').style.display = strictModeEnabled ? 'inline-block' : 'none';
             document.getElementById('fly-badge').innerText = destAirport.code;
             document.getElementById('fly-route-text').innerText = `${originAirport.name.split(' (')[0]} ➔ ${destAirport.name.split(' (')[0]}`;
             document.getElementById('fly-sub-info').innerText = `${selectedFocus.icon} ${selectedFocus.label} • Ghế ${selectedSeat} • ${passengerName}`;
@@ -714,16 +769,110 @@ app_html = """
             updateFlightTick();
             if (flightInterval) clearInterval(flightInterval);
             flightInterval = setInterval(() => {
+                if (isPausedByViolation) return; // Đóng băng đồng hồ khi nhảy ra ngoài!
                 remainingSeconds--;
                 if (remainingSeconds <= 0) {
                     clearInterval(flightInterval);
-                    alert(`🎉 Chuyến bay ${originAirport.code} ➔ ${destAirport.code} đã hạ cánh an toàn! Chúc mừng ${passengerName} đã hoàn thành phiên ${selectedFocus.label}.`);
+                    isFlying = false;
+                    alert(`🎉 Chuyến bay ${originAirport.code} ➔ ${destAirport.code} đã hạ cánh an toàn! Chúc mừng ${passengerName} đã hoàn thành phiên ${selectedFocus.label} với độ tập trung tuyệt đối.`);
                     abortFlight();
                 } else {
                     updateFlightTick();
                 }
             }, 1000);
         }
+
+        function updateSafetyHearts() {
+            const left = Math.max(0, MAX_VIOLATIONS - violationCount);
+            document.getElementById('safety-hearts').innerText = '❤️'.repeat(left) + '🖤'.repeat(MAX_VIOLATIONS - left);
+        }
+
+        // 5. HỆ THỐNG BẮT LỖI CHUYỂN TAB / RỜI CỬA SỔ & CÒI BÁO ĐỘNG BUỒNG LÁI
+        let audioCtx = null, cabinNoiseNode = null;
+
+        function playCockpitAlarmBeep() {
+            try {
+                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(880, audioCtx.currentTime); // Tần số cao cảnh báo
+                osc.frequency.setValueAtTime(440, audioCtx.currentTime + 0.18);
+                gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.35);
+            } catch (e) {}
+        }
+
+        function triggerTurbulenceViolation() {
+            if (!isFlying || !strictModeEnabled || isPausedByViolation) return;
+
+            isPausedByViolation = true;
+            violationCount++;
+            updateSafetyHearts();
+
+            // Nếu vi phạm đủ 3 lần -> Rơi máy bay (Hủy chuyến)
+            if (violationCount >= MAX_VIOLATIONS) {
+                isFlying = false;
+                clearInterval(flightInterval);
+                stopAlarmLoop();
+                document.getElementById('turbulence-modal').classList.add('hidden');
+                document.getElementById('turbulence-modal').classList.remove('flex');
+                document.getElementById('crash-modal').classList.remove('hidden');
+                document.getElementById('crash-modal').classList.add('flex');
+                playCockpitAlarmBeep();
+                return;
+            }
+
+            // Hiển thị màn hình đỏ cảnh báo & phát còi liên tục
+            document.getElementById('violation-count-text').innerText = `${violationCount} / ${MAX_VIOLATIONS} LẦN`;
+            document.getElementById('turbulence-modal').classList.remove('hidden');
+            document.getElementById('turbulence-modal').classList.add('flex');
+
+            playCockpitAlarmBeep();
+            if (alarmInterval) clearInterval(alarmInterval);
+            alarmInterval = setInterval(playCockpitAlarmBeep, 900);
+        }
+
+        function stopAlarmLoop() {
+            if (alarmInterval) {
+                clearInterval(alarmInterval);
+                alarmInterval = null;
+            }
+        }
+
+        function resumeFromTurbulence() {
+            stopAlarmLoop();
+            isPausedByViolation = false;
+            document.getElementById('turbulence-modal').classList.add('hidden');
+            document.getElementById('turbulence-modal').classList.remove('flex');
+            requestAppFullscreen();
+        }
+
+        function closeCrashModal() {
+            document.getElementById('crash-modal').classList.add('hidden');
+            document.getElementById('crash-modal').classList.remove('flex');
+            abortFlight();
+        }
+
+        // Lắng nghe sự kiện người dùng đổi sang Tab khác hoặc bấm ra ngoài cửa sổ
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) triggerTurbulenceViolation();
+        });
+
+        window.addEventListener('blur', () => {
+            triggerTurbulenceViolation();
+        });
+
+        // Cảnh báo nếu người dùng tự ý nhấn hộp thoại đóng/tải lại trang khi đang bay
+        window.addEventListener('beforeunload', (e) => {
+            if (isFlying && strictModeEnabled) {
+                e.preventDefault();
+                e.returnValue = 'Chuyến bay tập trung đang diễn ra! Bạn có chắc muốn hủy chuyến bay?';
+            }
+        });
 
         function updateFlightTick() {
             const mins = Math.floor(remainingSeconds / 60);
@@ -746,16 +895,20 @@ app_html = """
         }
 
         function abortFlight() {
+            isFlying = false;
+            isPausedByViolation = false;
+            stopAlarmLoop();
             if (flightInterval) clearInterval(flightInterval);
             if (planeMarker) map.removeLayer(planeMarker);
+            if (document.fullscreenElement && document.exitFullscreen) {
+                document.exitFullscreen().catch(() => {});
+            }
             document.getElementById('screen-flying').classList.add('hidden');
             document.getElementById('screen-booking').classList.remove('hidden');
             updateBookingUI();
         }
 
         // 6. HỆ THỐNG ÂM THANH LOFI & CUSTOM MEDIA
-        let audioCtx = null, cabinNoiseNode = null;
-
         function toggleLofi() {
             const p = document.getElementById('lofi-player');
             const eq = document.getElementById('eq-icon');
@@ -840,7 +993,6 @@ app_html = """
             closeMediaModal();
         }
 
-        // Khởi chạy lần đầu
         initDropdowns();
         onRouteChange();
     </script>

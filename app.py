@@ -2,13 +2,12 @@ import streamlit as st
 import streamlit.components.v1 as components
 
 st.set_page_config(
-    page_title="StudyHub & Flight Sim - Real-Time",
-    page_icon="✈️",
+    page_title="StudyHub & 3D Earth Flight Sim",
+    page_icon="🌍",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
 
-# Khóa chặt iframe khớp 100% với chiều cao màn hình thực tế của mọi Laptop/Điện thoại
 st.markdown("""
     <style>
         #MainMenu, header, footer, [data-testid="stHeader"], [data-testid="stToolbar"] {
@@ -38,7 +37,7 @@ st.markdown("""
             margin: 0 !important;
             padding: 0 !important;
             overflow: hidden !important;
-            background-color: #060913 !important;
+            background-color: #03060f !important;
         }
     </style>
 """, unsafe_allow_html=True)
@@ -52,19 +51,58 @@ app_html = """
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
     <style>
         * { box-sizing: border-box; }
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #060913; color: white; margin: 0; padding: 0; width: 100vw; height: 100vh; overflow: hidden; user-select: none; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #03060f; color: white; margin: 0; padding: 0; width: 100vw; height: 100vh; overflow: hidden; user-select: none; }
         .mono { font-family: 'JetBrains Mono', monospace; }
-        #map { position: absolute; inset: 0; z-index: 1; background: #060913; transition: filter 0.8s ease; }
 
-        .map-night-filter { filter: brightness(0.45) contrast(1.35) saturate(0.8) hue-rotate(195deg); }
-        .map-sunset-filter { filter: brightness(0.75) contrast(1.15) sepia(0.35) hue-rotate(-15deg); }
+        /* Không gian Vũ trụ & Quả địa cầu 3D */
+        #globe-wrapper {
+            position: absolute;
+            inset: 0;
+            z-index: 2;
+            background: radial-gradient(circle at center, #0a1636 0%, #040817 55%, #010308 100%);
+            overflow: hidden;
+            transition: opacity 0.45s ease;
+        }
+
+        /* Bản đồ 2D khi phóng to (Zoom In) */
+        #map-2d-wrapper {
+            position: absolute;
+            inset: 0;
+            z-index: 1;
+            background: #040814;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.45s ease;
+        }
+        #map-2d-wrapper.active-2d {
+            z-index: 3;
+            opacity: 1;
+            pointer-events: auto;
+        }
+        #map { width: 100%; height: 100%; background: #040814; }
+
+        .map-night-filter { filter: brightness(0.48) contrast(1.35) saturate(0.8) hue-rotate(195deg); }
+        .map-sunset-filter { filter: brightness(0.78) contrast(1.15) sepia(0.35) hue-rotate(-15deg); }
         .map-rain-filter { filter: brightness(0.55) contrast(1.2) saturate(0.6); }
 
+        /* Chuyển trang bằng Visibility thay vì display:none để Map/3D không bao giờ bị lỗi kích thước 0x0 */
+        .page-layer-hidden {
+            visibility: hidden !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+        }
+        .page-layer-visible {
+            visibility: visible !important;
+            opacity: 1 !important;
+            pointer-events: auto !important;
+        }
+
         .glass-panel {
-            background: rgba(13, 19, 33, 0.92);
+            background: rgba(11, 17, 30, 0.90);
             backdrop-filter: blur(22px);
             -webkit-backdrop-filter: blur(22px);
             border: 1px solid rgba(255, 255, 255, 0.15);
@@ -77,9 +115,9 @@ app_html = """
         }
 
         .focus-popover {
-            background: rgba(24, 35, 58, 0.98);
+            background: rgba(20, 31, 53, 0.98);
             backdrop-filter: blur(28px);
-            border: 1px solid rgba(147, 197, 253, 0.35);
+            border: 1px solid rgba(56, 189, 248, 0.35);
             box-shadow: 0 25px 60px rgba(0, 0, 0, 0.9);
         }
 
@@ -96,8 +134,8 @@ app_html = """
         .seat-box { transition: all 0.18s ease; }
         .seat-box:hover { transform: scale(1.07); }
 
-        .ticket-cutout-left { position: absolute; left: -14px; top: 66%; width: 28px; height: 28px; background: #060913; border-radius: 50%; }
-        .ticket-cutout-right { position: absolute; right: -14px; top: 66%; width: 28px; height: 28px; background: #060913; border-radius: 50%; }
+        .ticket-cutout-left { position: absolute; left: -14px; top: 66%; width: 28px; height: 28px; background: #03060f; border-radius: 50%; }
+        .ticket-cutout-right { position: absolute; right: -14px; top: 66%; width: 28px; height: 28px; background: #03060f; border-radius: 50%; }
 
         @keyframes pulse-bar { 0%, 100% { height: 4px; } 50% { height: 15px; } }
         .eq-bar { width: 3px; background: #38bdf8; border-radius: 2px; animation: pulse-bar 0.9s infinite ease-in-out; }
@@ -140,7 +178,7 @@ app_html = """
         .leaflet-control-attribution { display: none !important; }
     </style>
 </head>
-<body class="relative w-screen h-screen overflow-hidden bg-[#060913]">
+<body class="relative w-screen h-screen overflow-hidden bg-[#03060f]">
 
     <!-- AUDIO LOFI -->
     <audio id="lofi-player" loop crossorigin="anonymous">
@@ -148,13 +186,12 @@ app_html = """
     </audio>
 
     <!-- ================= THANH ĐIỀU HƯỚNG CHÍNH + ĐỒNG HỒ THỜI GIAN THỰC ================= -->
-    <header class="fixed top-0 left-0 right-0 h-14 z-40 bg-[#090e1a]/95 backdrop-blur-xl border-b border-white/10 px-3 sm:px-5 flex items-center justify-between gap-2">
-        <!-- Logo + Chọn Thành viên + Đồng hồ Thời gian thực -->
+    <header class="fixed top-0 left-0 right-0 h-14 z-50 bg-[#080d1a]/95 backdrop-blur-xl border-b border-white/10 px-3 sm:px-5 flex items-center justify-between gap-2">
         <div class="flex items-center gap-2.5">
             <div class="flex items-center gap-2">
-                <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center text-black font-black text-base shadow">✈️</div>
+                <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center text-black font-black text-base shadow">🌍</div>
                 <div class="hidden xl:block">
-                    <div class="text-[11px] font-extrabold tracking-wider text-white">STUDYHUB & FLIGHT SIM</div>
+                    <div class="text-[11px] font-extrabold tracking-wider text-white">STUDYHUB & EARTH 3D</div>
                     <div class="text-[9px] text-emerald-400" id="save-status-indicator">● Tự động lưu dữ liệu</div>
                 </div>
             </div>
@@ -175,7 +212,7 @@ app_html = """
                 </div>
             </div>
 
-            <!-- ĐỒNG HỒ THỜI GIAN THỰC (REAL-TIME CLOCK) -->
+            <!-- ĐỒNG HỒ THỜI GIAN THỰC -->
             <div class="hidden sm:flex items-center gap-2 bg-slate-900/90 border border-cyan-500/30 px-3 py-1 rounded-xl">
                 <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
                 <div>
@@ -192,7 +229,7 @@ app_html = """
                 <span id="nav-pending-badge" class="bg-black/30 text-white text-[10px] px-1.5 rounded-full">0</span>
             </button>
             <button id="nav-btn-flight" onclick="switchPage('flight')" class="px-3 py-1.5 rounded-lg text-xs font-extrabold text-slate-400 hover:text-white transition flex items-center gap-1.5">
-                <span>✈️ Chuyến Bay Tập Trung</span>
+                <span>✈️ Chuyến Bay Vũ Trụ 3D</span>
             </button>
         </div>
 
@@ -213,7 +250,7 @@ app_html = """
     <!-- ========================================================================================= -->
     <!-- TRANG 1: BẢNG ĐIỀU KHIỂN HỌC TẬP, TO-DO LIST & THỜI KHÓA BIỂU CÁ NHÂN                    -->
     <!-- ========================================================================================= -->
-    <main id="page-dashboard" class="fixed inset-x-0 top-14 bottom-0 z-30 bg-[#060913] overflow-y-auto px-4 sm:px-6 py-5">
+    <main id="page-dashboard" class="fixed inset-x-0 top-14 bottom-0 z-30 bg-[#03060f] overflow-y-auto px-4 sm:px-6 py-5 page-layer-visible">
         <div class="max-w-7xl mx-auto space-y-5 pb-20">
 
             <!-- CẢNH BÁO DEADLINE KHẨN CẤP -->
@@ -304,7 +341,6 @@ app_html = """
 
             <!-- CỘT TRÁI: TO-DO LIST KÉO THẢ | CỘT PHẢI: THỜI KHÓA BIỂU CÁ NHÂN -->
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
-                <!-- CỘT TRÁI (7 PHẦN) -->
                 <div class="lg:col-span-7 dash-card rounded-3xl p-4 sm:p-5 flex flex-col">
                     <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
                         <div>
@@ -322,7 +358,6 @@ app_html = """
                         </div>
                     </div>
 
-                    <!-- Form Thêm Công Việc (Chọn Điểm đến để tự tính thời gian học theo khoảng cách) -->
                     <div class="bg-slate-900/90 border border-white/15 rounded-2xl p-3.5 mb-4 space-y-2.5">
                         <div class="text-xs font-bold text-cyan-400">+ Thêm công việc mới (Thời gian học tự tính theo khoảng cách bay từ SGN):</div>
                         <div class="grid grid-cols-1 sm:grid-cols-12 gap-2">
@@ -356,7 +391,7 @@ app_html = """
                     <div id="todo-drag-list" class="space-y-2 flex-1"></div>
                 </div>
 
-                <!-- CỘT PHẢI (5 PHẦN): THỜI KHÓA BIỂU CÁ NHÂN -->
+                <!-- CỘT PHẢI: THỜI KHÓA BIỂU CÁ NHÂN -->
                 <div class="lg:col-span-5 dash-card rounded-3xl p-4 sm:p-5 flex flex-col">
                     <div class="mb-3">
                         <h2 class="text-sm sm:text-base font-extrabold text-white flex items-center gap-2">
@@ -392,17 +427,54 @@ app_html = """
     </main>
 
     <!-- ========================================================================================= -->
-    <!-- TRANG 2: TRẠM BAY TẬP TRUNG, 4 GÓC NHÌN CAMERA & TỰ ĐỘNG TÍNH GIỜ THEO KHOẢNG CÁCH        -->
+    <!-- TRANG 2: QUẢ ĐỊA CẦU 3D VŨ TRỤ (THU NHỎ) ⟷ BẢN ĐỒ VỆ TINH 2D (PHÓNG TO)                   -->
     <!-- ========================================================================================= -->
-    <section id="page-flight" class="fixed inset-x-0 top-14 bottom-0 z-20 hidden overflow-hidden">
-        <!-- GÓC NHÌN 1: BẢN ĐỒ VỆ TINH RADAR -->
-        <div id="map"></div>
+    <section id="page-flight" class="fixed inset-x-0 top-14 bottom-0 z-20 overflow-hidden page-layer-hidden">
+
+        <!-- LỚP 1: QUẢ ĐỊA CẦU 3D TRONG VŨ TRỤ NGÀN SAO (Giống Google Earth / Google Maps khi thu nhỏ) -->
+        <div id="globe-wrapper">
+            <canvas id="globe-canvas" class="w-full h-full block cursor-grab active:cursor-grabbing"></canvas>
+
+            <!-- Nhãn Sân Bay Đi, Sân Bay Đến & Máy Bay gắn trực tiếp lên tọa độ 3D của Quả Địa Cầu -->
+            <div id="globe-origin-pin" class="fixed pointer-events-none z-10 -translate-x-1/2 -translate-y-1/2 hidden">
+                <div class="bg-cyan-400 text-black font-black text-[10px] px-2 py-0.5 rounded-md shadow-xl border border-black/40 whitespace-nowrap">✈️ <span id="globe-origin-code">SGN</span></div>
+            </div>
+            <div id="globe-dest-pin" class="fixed pointer-events-none z-10 -translate-x-1/2 -translate-y-1/2 hidden">
+                <div class="bg-yellow-400 text-black font-black text-[10px] px-2 py-0.5 rounded-md shadow-xl border border-black/40 whitespace-nowrap">🏁 <span id="globe-dest-code">DAD</span></div>
+            </div>
+            <div id="globe-plane-pin" class="fixed pointer-events-none z-15 -translate-x-1/2 -translate-y-1/2 hidden">
+                <div class="relative w-14 h-14 flex items-center justify-center">
+                    <div class="radar-ring absolute inset-1 rounded-full border-2 border-cyan-400/80"></div>
+                    <div id="globe-plane-svg" class="w-12 h-12 relative z-10"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- LỚP 2: BẢN ĐỒ VỆ TINH 2D CHI TIẾT (Tự động hiện ra khi phóng to gần mặt đất) -->
+        <div id="map-2d-wrapper">
+            <div id="map"></div>
+        </div>
+
+        <!-- CỤM NÚT PHÓNG TO (2D) / THU NHỎ (QUẢ CẦU 3D VŨ TRỤ) Ở CẠNH PHẢI GIỐNG GOOGLE MAPS -->
+        <div id="zoom-mode-controls" class="fixed right-4 top-1/2 -translate-y-1/2 z-30 flex flex-col items-center gap-2">
+            <div class="glass-panel p-1.5 rounded-2xl flex flex-col items-center gap-1.5 shadow-2xl border border-cyan-400/30">
+                <button onclick="zoomStepIn()" title="Phóng to (Chuyển sang Bản đồ 2D chi tiết)" class="w-9 h-9 rounded-xl bg-slate-800 hover:bg-blue-600 text-white font-black text-base flex items-center justify-center transition border border-white/10">+</button>
+                <div id="projection-mode-badge" class="text-[9px] font-mono font-extrabold text-cyan-300 px-1 py-0.5 text-center leading-tight">
+                    3D<br>CẦU
+                </div>
+                <button onclick="zoomStepOut()" title="Thu nhỏ (Ra ngoài Vũ trụ Hình cầu 3D)" class="w-9 h-9 rounded-xl bg-slate-800 hover:bg-blue-600 text-white font-black text-base flex items-center justify-center transition border border-white/10">−</button>
+            </div>
+
+            <button onclick="toggleProjectionMode()" id="quick-switch-proj-btn" class="glass-panel px-2.5 py-2 rounded-xl text-[10px] font-extrabold text-amber-300 hover:text-white border border-amber-400/30 shadow-xl whitespace-nowrap">
+                🔍 Phóng to 2D
+            </button>
+        </div>
 
         <!-- THANH CHỌN 4 GÓC NHÌN CAMERA & CHẾ ĐỘ NGÀY/ĐÊM THEO THỜI GIAN THỰC -->
         <div id="flight-top-hud" class="fixed top-16 left-1/2 -translate-x-1/2 z-30 w-[96%] max-w-4xl flex flex-wrap items-center justify-between gap-2 pointer-events-none">
             <div class="glass-panel p-1 rounded-2xl flex items-center gap-1 pointer-events-auto shadow-2xl border border-cyan-400/30">
                 <button id="cam-btn-map" onclick="setCameraView('map')" class="px-2.5 py-1.5 rounded-xl text-[11px] font-extrabold bg-cyan-500 text-black shadow transition">
-                    🗺️ Toàn Bản Đồ
+                    🌍 Vũ Trụ 3D / 2D
                 </button>
                 <button id="cam-btn-cockpit" onclick="setCameraView('cockpit')" class="px-2.5 py-1.5 rounded-xl text-[11px] font-extrabold text-slate-300 hover:text-white transition">
                     👨‍✈️ Buồng Lái Phi Công
@@ -435,7 +507,7 @@ app_html = """
         </div>
 
         <!-- ================= GÓC NHÌN 2: BUỒNG LÁI PHI CÔNG (COCKPIT HUD VIEW) ================= -->
-        <div id="view-cockpit" class="fixed inset-x-0 top-14 bottom-0 z-20 hidden flex-col justify-between overflow-hidden">
+        <div id="view-cockpit" class="fixed inset-x-0 top-14 bottom-0 z-25 hidden flex-col justify-between overflow-hidden">
             <div id="cockpit-sky-bg" class="absolute inset-0 bg-gradient-to-b from-[#040b1a] via-[#0c2249] to-[#1e3a8a] transition-all duration-700">
                 <div id="cockpit-stars" class="absolute inset-0 opacity-90" style="background-image: radial-gradient(white 1px, transparent 1px), radial-gradient(rgba(255,255,255,0.7) 1.5px, transparent 1.5px); background-size: 55px 55px, 95px 95px;"></div>
                 <div class="cloud-anim-1 absolute top-1/3 w-96 h-24 bg-white/10 blur-2xl rounded-full"></div>
@@ -446,7 +518,6 @@ app_html = """
             <div class="relative z-10 flex-1 flex items-center justify-center pointer-events-none mt-10">
                 <div class="absolute inset-y-0 left-1/2 -translate-x-1/2 w-4 bg-gradient-to-r from-slate-950 via-slate-800 to-slate-950 border-x border-white/10"></div>
 
-                <!-- Màn hình HUD -->
                 <div class="w-[320px] sm:w-[440px] h-[230px] sm:h-[260px] border-2 border-emerald-400/50 rounded-3xl bg-emerald-950/15 backdrop-blur-[1px] p-4 flex flex-col justify-between shadow-[0_0_50px_rgba(16,185,129,0.15)]">
                     <div class="flex justify-between items-center text-[11px] font-mono font-bold text-emerald-400 border-b border-emerald-400/30 pb-1">
                         <span>SPD: <b id="hud-speed">840 KM/H</b></span>
@@ -470,7 +541,6 @@ app_html = """
                 </div>
             </div>
 
-            <!-- Táp-lô Buồng lái -->
             <div class="relative z-10 h-44 bg-gradient-to-t from-[#05070e] via-[#0d1322] to-[#1a243b] border-t-4 border-slate-700/80 px-4 py-2.5 shadow-2xl">
                 <div class="max-w-3xl mx-auto grid grid-cols-3 gap-3 h-24">
                     <div class="bg-[#060a12] border border-slate-700 rounded-xl p-2 flex flex-col justify-between font-mono">
@@ -498,7 +568,7 @@ app_html = """
         </div>
 
         <!-- ================= GÓC NHÌN 3: TRONG KHOANG CABIN (CABIN INTERIOR VIEW) ================= -->
-        <div id="view-cabin" class="fixed inset-x-0 top-14 bottom-0 z-20 hidden flex-col items-center justify-center bg-gradient-to-b from-[#131129] via-[#0e172a] to-[#060913] p-4 overflow-hidden">
+        <div id="view-cabin" class="fixed inset-x-0 top-14 bottom-0 z-25 hidden flex-col items-center justify-center bg-gradient-to-b from-[#131129] via-[#0e172a] to-[#060913] p-4 overflow-hidden">
             <div id="cabin-ceiling-glow" class="absolute top-0 inset-x-0 h-32 bg-gradient-to-b from-purple-500/30 via-cyan-500/15 to-transparent blur-2xl pointer-events-none transition-all duration-700"></div>
 
             <div class="relative z-10 flex items-center gap-2 mb-3">
@@ -542,7 +612,7 @@ app_html = """
         </div>
 
         <!-- ================= GÓC NHÌN 4: QUA CỬA SỔ MÁY BAY (WINDOW SEAT VIEW) ================= -->
-        <div id="view-window" class="fixed inset-x-0 top-14 bottom-0 z-20 hidden flex-col items-center justify-center bg-[#090d18] p-4 overflow-hidden">
+        <div id="view-window" class="fixed inset-x-0 top-14 bottom-0 z-25 hidden flex-col items-center justify-center bg-[#090d18] p-4 overflow-hidden">
             <div class="relative z-20 flex items-center gap-3 mb-2">
                 <button onclick="toggleWindowShade()" class="glass-panel px-3.5 py-1 rounded-full text-xs font-extrabold text-amber-300 hover:text-white border border-amber-400/30">
                     🪟 Kéo Rèm Cửa Sổ Lên / Xuống
@@ -556,7 +626,6 @@ app_html = """
                 <div class="cloud-anim-3 absolute bottom-24 w-72 h-16 bg-white/15 blur-xl rounded-full"></div>
                 <div id="window-city-lights" class="absolute bottom-0 inset-x-0 h-14 bg-gradient-to-t from-amber-500/25 via-orange-500/10 to-transparent"></div>
 
-                <!-- Cánh máy bay nhìn từ cửa sổ -->
                 <div class="absolute bottom-10 right-0 w-[240px] h-[125px] pointer-events-none">
                     <svg viewBox="0 0 300 160" class="w-full h-full drop-shadow-2xl">
                         <ellipse cx="145" cy="112" rx="34" ry="18" fill="#334155" stroke="#64748b" stroke-width="2"/>
@@ -581,7 +650,6 @@ app_html = """
 
         <!-- MÀN HÌNH 1 TRONG TRẠM BAY: BẢNG ĐẶT VÉ TỰ ĐỘNG TÍNH THỜI GIAN HỌC THEO KHOẢNG CÁCH -->
         <div id="screen-booking" class="fixed bottom-3 left-1/2 -translate-x-1/2 z-30 w-[95%] max-w-md glass-panel rounded-3xl p-3.5 shadow-2xl transition-all duration-300">
-            <!-- Hàng 1: Mô hình Tàu bay + Quãng đường + Thời gian tự tính -->
             <div class="flex items-center justify-between gap-2 mb-2.5 pb-2 border-b border-white/10">
                 <div class="flex items-center gap-2.5">
                     <div id="booking-plane-svg-box" class="w-10 h-10 rounded-xl bg-slate-900 border border-cyan-400/30 flex items-center justify-center p-1 shrink-0"></div>
@@ -604,7 +672,7 @@ app_html = """
                 </select>
             </div>
 
-            <!-- Hàng 2: Chọn Điểm Đi & Điểm Đến -->
+            <!-- Chọn Điểm Đi & Điểm Đến -->
             <div class="grid grid-cols-11 gap-1.5 items-center bg-slate-900/90 p-2 rounded-2xl border border-white/10 mb-2.5">
                 <div class="col-span-5">
                     <div class="text-[9px] text-slate-400 uppercase font-bold mb-0.5">Điểm khởi hành</div>
@@ -619,7 +687,7 @@ app_html = """
                 </div>
             </div>
 
-            <!-- Hàng 3: Bảng Thời Gian Học Tự Động Theo Khoảng Cách & Giờ Thực Tế -->
+            <!-- Bảng Thời Gian Học Tự Động Theo Khoảng Cách & Giờ Thực Tế -->
             <div class="bg-blue-950/50 border border-cyan-400/30 rounded-2xl p-2.5 mb-2.5 flex items-center justify-between">
                 <div>
                     <div class="text-[9px] text-cyan-300 font-bold uppercase tracking-wider">⏱️ Thời gian học (Tính theo khoảng cách)</div>
@@ -635,18 +703,17 @@ app_html = """
             </div>
 
             <div class="flex gap-2">
-                <button onclick="randomRoute()" class="bg-slate-800 hover:bg-slate-700 text-cyan-300 font-bold px-3 py-2.5 rounded-2xl text-xs border border-white/10 shrink-0" title="Đổi chặng ngẫu nhiên">
-                    🎲 Đổi chặng
+                <button onclick="goToSeatSelection()" class="w-1/2 bg-slate-800 hover:bg-slate-700 text-cyan-300 font-extrabold py-2.5 rounded-2xl text-xs border border-cyan-500/30 transition">
+                    💺 Chọn Ghế &In Vé
                 </button>
-                <button onclick="goToSeatSelection()" class="flex-1 bg-gradient-to-r from-blue-600 to-cyan-500 hover:opacity-95 text-white font-extrabold py-2.5 rounded-2xl shadow-lg shadow-blue-600/30 transition flex items-center justify-center gap-1.5 text-xs uppercase tracking-wider">
-                    <span>Chọn Ghế & Bắt Đầu Tập Trung</span>
-                    <span>➔</span>
+                <button onclick="startFlight()" class="w-1/2 bg-gradient-to-r from-emerald-500 to-cyan-500 hover:opacity-95 text-black font-black py-2.5 rounded-2xl shadow-lg text-xs uppercase tracking-wider transition">
+                    🛫 Bay Ngay Lập Tức
                 </button>
             </div>
         </div>
 
         <!-- MÀN HÌNH 2 TRONG TRẠM BAY: CHỌN GHẾ NGỒI -->
-        <div id="screen-seat" class="fixed inset-x-0 top-14 bottom-0 z-30 bg-[#070b14]/95 backdrop-blur-xl hidden flex-col items-center justify-between py-3 px-4">
+        <div id="screen-seat" class="fixed inset-x-0 top-14 bottom-0 z-35 bg-[#070b14]/95 backdrop-blur-xl hidden flex-col items-center justify-between py-3 px-4">
             <div class="w-full max-w-md flex items-center justify-between">
                 <button onclick="backToBooking()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-xl text-xs font-bold">‹ Đổi chặng bay</button>
                 <div class="text-center">
@@ -875,7 +942,7 @@ app_html = """
     </div>
 
     <!-- ================= CHATBOT AI VÀNG KIM GÓC DƯỚI PHẢI ================= -->
-    <div id="chatbot-launcher" onclick="toggleChatbotWindow()" class="fixed bottom-3 right-3 z-40 w-13 h-13 rounded-full bg-white p-1 cursor-pointer bot-launcher-glow flex items-center justify-center border-2 border-[#d4a349]" style="width:52px;height:52px;">
+    <div id="chatbot-launcher" onclick="toggleChatbotWindow()" class="fixed bottom-3 right-3 z-40 rounded-full bg-white p-1 cursor-pointer bot-launcher-glow flex items-center justify-center border-2 border-[#d4a349]" style="width:52px;height:52px;">
         <img id="bot-launcher-img" src="https://cdn-icons-png.flaticon.com/512/4712/4712109.png" class="w-full h-full rounded-full object-cover bg-gradient-to-b from-yellow-300 to-amber-500 p-1" />
         <span class="absolute -top-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full"></span>
     </div>
@@ -909,7 +976,7 @@ app_html = """
     </div>
 
     <script>
-        // ================= 1. KHAI BÁO TOÀN BỘ BIẾN TRẠNG THÁI Ở ĐẦU FILE (CHỐNG LỖI) =================
+        // ================= 1. DỮ LIỆU 34 SÂN BAY & CẤU HÌNH CHUNG =================
         const AIRPORTS = [
             // 22 Sân bay Việt Nam
             { code: "SGN", name: "TP.HCM (Tân Sơn Nhất)", group: "VN", coords: [10.8188, 106.6519] },
@@ -966,7 +1033,7 @@ app_html = """
         let destAirport = AIRPORTS[2];   // DAD
         let selectedAircraft = "Airbus A321neo";
         let currentDistance = 610;
-        let selectedDuration = 56; // Tự động tính từ khoảng cách
+        let selectedDuration = 56;
         let selectedSeat = "06A";
         let selectedFocus = FOCUS_MODES[1];
         let isBookingCollapsed = false;
@@ -975,19 +1042,324 @@ app_html = """
         const MAX_VIOLATIONS = 3;
         let alarmInterval = null, flightInterval = null, audioCtx = null, cabinNoiseNode = null;
         let remainingSeconds = 56 * 60, totalFlightSeconds = 56 * 60;
+        let currentFlightProgress = 0;
         let flightEtaString = "--:--";
 
         let currentCamView = "map";
         let currentEnvMode = "day";
         let isShadeClosed = false;
         let cabinMoodIdx = 0;
+        let is2DMapActive = false; // false = Quả Địa Cầu 3D Vũ Trụ, true = Bản đồ 2D chi tiết
 
-        // ================= 2. CÔNG THỨC TÍNH THỜI GIAN HỌC DỰA VÀO KHOẢNG CÁCH & VẬN TỐC MÁY BAY =================
+        // ================= 2. QUẢ ĐỊA CẦU 3D VŨ TRỤ NGÀN SAO (THREE.JS GLOBE ENGINE) =================
+        let scene, camera, renderer, earthGroup, earthMesh, nightMesh, routeArcLine;
+        const GLOBE_RADIUS = 100;
+        let globeCameraZ = 275; // Thu nhỏ: 220..420 (Hình cầu 3D), Phóng to < 185 -> Tự chuyển sang Bản đồ 2D
+        let isDraggingGlobe = false;
+        let prevMouse = { x: 0, y: 0 };
+        let targetRot = { x: 0.22, y: 3.4 };
+
+        // Tạo Texture Trái Đất dự phòng siêu nét bằng Canvas trước khi ảnh vệ tinh NASA tải xong
+        function createFallbackEarthCanvas() {
+            const c = document.createElement('canvas');
+            c.width = 1024; c.height = 512;
+            const ctx = c.getContext('2d');
+            const grad = ctx.createLinearGradient(0, 0, 0, 512);
+            grad.addColorStop(0, '#0c2d57');
+            grad.addColorStop(0.5, '#071936');
+            grad.addColorStop(1, '#0c2d57');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, 1024, 512);
+            ctx.strokeStyle = 'rgba(56, 189, 248, 0.18)';
+            ctx.lineWidth = 1;
+            for (let x = 0; x < 1024; x += 32) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, 512); ctx.stroke(); }
+            for (let y = 0; y < 512; y += 32) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(1024, y); ctx.stroke(); }
+            return new THREE.CanvasTexture(c);
+        }
+
+        function latLngToVec3(lat, lng, radius = GLOBE_RADIUS) {
+            const phi = (90 - lat) * (Math.PI / 180);
+            const theta = (lng + 180) * (Math.PI / 180);
+            return new THREE.Vector3(
+                -radius * Math.sin(phi) * Math.cos(theta),
+                radius * Math.cos(phi),
+                radius * Math.sin(phi) * Math.sin(theta)
+            );
+        }
+
+        function initThreeGlobe() {
+            const canvas = document.getElementById('globe-canvas');
+            scene = new THREE.Scene();
+
+            const w = window.innerWidth || 1200;
+            const h = (window.innerHeight - 56) || 700;
+            camera = new THREE.PerspectiveCamera(45, w / h, 1, 2000);
+            camera.position.z = globeCameraZ;
+
+            renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
+            renderer.setSize(w, h);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+            // 1. Tạo 1.800 Ngôi sao lấp lánh ngoài Vũ Trụ bao quanh Quả Địa Cầu
+            const starGeo = new THREE.BufferGeometry();
+            const starCount = 1800;
+            const starPos = new Float32Array(starCount * 3);
+            const starColors = new Float32Array(starCount * 3);
+            for (let i = 0; i < starCount * 3; i += 3) {
+                const r = 450 + Math.random() * 800;
+                const theta = Math.random() * Math.PI * 2;
+                const phi = Math.acos(2 * Math.random() - 1);
+                starPos[i] = r * Math.sin(phi) * Math.cos(theta);
+                starPos[i+1] = r * Math.sin(phi) * Math.sin(theta);
+                starPos[i+2] = r * Math.cos(phi);
+
+                const tint = 0.75 + Math.random() * 0.25;
+                starColors[i] = tint;
+                starColors[i+1] = tint;
+                starColors[i+2] = 1.0;
+            }
+            starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+            starGeo.setAttribute('color', new THREE.BufferAttribute(starColors, 3));
+            const starMat = new THREE.PointsMaterial({ size: 2.2, vertexColors: true, transparent: true, opacity: 0.9 });
+            const starField = new THREE.Points(starGeo, starMat);
+            scene.add(starField);
+
+            // 2. Nhóm Quả Địa Cầu 3D
+            earthGroup = new THREE.Group();
+            scene.add(earthGroup);
+
+            const sphereGeo = new THREE.SphereGeometry(GLOBE_RADIUS, 64, 64);
+            const fallbackTex = createFallbackEarthCanvas();
+            const earthMat = new THREE.MeshPhongMaterial({
+                map: fallbackTex,
+                shininess: 18,
+                specular: new THREE.Color(0x1e3a8a)
+            });
+            earthMesh = new THREE.Mesh(sphereGeo, earthMat);
+            earthGroup.add(earthMesh);
+
+            // Tải ảnh vệ tinh NASA Blue Marble & Đèn Đêm Trái Đất
+            const loader = new THREE.TextureLoader();
+            loader.setCrossOrigin('anonymous');
+            loader.load('https://unpkg.com/three-globe@2.31.0/example/img/earth-blue-marble.jpg', (tex) => {
+                earthMat.map = tex;
+                earthMat.needsUpdate = true;
+            });
+
+            // Lớp bầu khí quyển xanh phát sáng quanh rìa Quả Địa Cầu
+            const atmosGeo = new THREE.SphereGeometry(GLOBE_RADIUS * 1.035, 64, 64);
+            const atmosMat = new THREE.MeshBasicMaterial({
+                color: 0x38bdf8,
+                transparent: true,
+                opacity: 0.16,
+                side: THREE.BackSide
+            });
+            earthGroup.add(new THREE.Mesh(atmosGeo, atmosMat));
+
+            // Ánh sáng Mặt Trời & Vũ Trụ
+            scene.add(new THREE.AmbientLight(0xdbeafe, 0.85));
+            const dirLight = new THREE.DirectionalLight(0xffffff, 0.95);
+            dirLight.position.set(250, 180, 300);
+            scene.add(dirLight);
+
+            // Tương tác Kéo xoay Quả Địa Cầu 360°
+            canvas.addEventListener('mousedown', (e) => {
+                isDraggingGlobe = true;
+                prevMouse = { x: e.clientX, y: e.clientY };
+            });
+            window.addEventListener('mousemove', (e) => {
+                if (!isDraggingGlobe) return;
+                const dx = e.clientX - prevMouse.x;
+                const dy = e.clientY - prevMouse.y;
+                targetRot.y += dx * 0.006;
+                targetRot.x = Math.max(-1.2, Math.min(1.2, targetRot.x + dy * 0.006));
+                prevMouse = { x: e.clientX, y: e.clientY };
+            });
+            window.addEventListener('mouseup', () => { isDraggingGlobe = false; });
+
+            // Hỗ trợ cảm ứng điện thoại xoay Quả Địa Cầu
+            canvas.addEventListener('touchstart', (e) => {
+                if (e.touches.length === 1) {
+                    isDraggingGlobe = true;
+                    prevMouse = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+                }
+            }, { passive: true });
+            window.addEventListener('touchmove', (e) => {
+                if (!isDraggingGlobe || e.touches.length !== 1) return;
+                const dx = e.touches[0].clientX - prevMouse.x;
+                const dy = e.touches[0].clientY - prevMouse.y;
+                targetRot.y += dx * 0.006;
+                targetRot.x = Math.max(-1.2, Math.min(1.2, targetRot.x + dy * 0.006));
+                prevMouse = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+            }, { passive: true });
+            window.addEventListener('touchend', () => { isDraggingGlobe = false; });
+
+            // Lăn chuột Phóng to (Chuyển sang 2D) / Thu nhỏ (Quả cầu 3D) giống Google Maps
+            canvas.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                if (e.deltaY < 0) {
+                    globeCameraZ -= 22;
+                    if (globeCameraZ <= 185) {
+                        globeCameraZ = 210;
+                        activate2DSatelliteMap();
+                    }
+                } else {
+                    globeCameraZ = Math.min(430, globeCameraZ + 22);
+                }
+            }, { passive: false });
+
+            window.addEventListener('resize', () => {
+                const nw = window.innerWidth;
+                const nh = window.innerHeight - 56;
+                camera.aspect = nw / nh;
+                camera.updateProjectionMatrix();
+                renderer.setSize(nw, nh);
+                map.invalidateSize();
+            });
+
+            animateThreeGlobe();
+        }
+
+        // Vẽ đường bay cong 3D trên bề mặt Quả Địa Cầu
+        function update3DGlobeRouteArc() {
+            if (!earthGroup) return;
+            if (routeArcLine) {
+                earthGroup.remove(routeArcLine);
+                routeArcLine.geometry.dispose();
+            }
+
+            const startVec = latLngToVec3(originAirport.coords[0], originAirport.coords[1], GLOBE_RADIUS * 1.005);
+            const endVec = latLngToVec3(destAirport.coords[0], destAirport.coords[1], GLOBE_RADIUS * 1.005);
+
+            const midVec = startVec.clone().add(endVec).multiplyScalar(0.5);
+            const dist = startVec.distanceTo(endVec);
+            midVec.normalize().multiplyScalar(GLOBE_RADIUS + Math.max(12, dist * 0.28));
+
+            const curve = new THREE.QuadraticBezierCurve3(startVec, midVec, endVec);
+            const points = curve.getPoints(60);
+            const arcGeo = new THREE.BufferGeometry().setFromPoints(points);
+            const arcMat = new THREE.LineBasicMaterial({ color: 0x38bdf8, linewidth: 3 });
+            routeArcLine = new THREE.Line(arcGeo, arcMat);
+            earthGroup.add(routeArcLine);
+
+            // Tự xoay Quả Địa Cầu hướng về trung tâm chặng bay
+            const midLat = (originAirport.coords[0] + destAirport.coords[0]) / 2;
+            const midLng = (originAirport.coords[1] + destAirport.coords[1]) / 2;
+            targetRot.y = (midLng + 90) * (Math.PI / 180);
+            targetRot.x = midLat * (Math.PI / 180) * 0.75;
+
+            document.getElementById('globe-origin-code').innerText = originAirport.code;
+            document.getElementById('globe-dest-code').innerText = destAirport.code;
+            const brng = calcBearingDeg(originAirport.coords, destAirport.coords);
+            document.getElementById('globe-plane-svg').innerHTML = getAircraftSVG(selectedAircraft, brng);
+        }
+
+        // Gắn nhãn Sân bay & Máy bay bám theo đúng tọa độ 3D trên Quả Địa Cầu
+        function update3DPinOverlay(elId, lat, lng, lift = 1.02) {
+            const el = document.getElementById(elId);
+            if (!el || is2DMapActive || currentCamView !== 'map') {
+                if (el) el.classList.add('hidden');
+                return;
+            }
+            const localVec = latLngToVec3(lat, lng, GLOBE_RADIUS * lift);
+            const worldVec = localVec.clone().applyMatrix4(earthGroup.matrixWorld);
+
+            // Kiểm tra điểm đó đang nằm ở mặt trước hay mặt khuất phía sau Quả Địa Cầu
+            const camDir = camera.position.clone().normalize();
+            const pointDir = worldVec.clone().normalize();
+            if (camDir.dot(pointDir) < 0.15) {
+                el.classList.add('hidden');
+                return;
+            }
+
+            const projected = worldVec.clone().project(camera);
+            const sx = (projected.x * 0.5 + 0.5) * window.innerWidth;
+            const sy = (-(projected.y * 0.5) + 0.5) * (window.innerHeight - 56) + 56;
+
+            el.style.left = `${sx}px`;
+            el.style.top = `${sy}px`;
+            el.classList.remove('hidden');
+        }
+
+        function animateThreeGlobe() {
+            requestAnimationFrame(animateThreeGlobe);
+            if (!earthGroup || !renderer) return;
+
+            earthGroup.rotation.y += (targetRot.y - earthGroup.rotation.y) * 0.08;
+            earthGroup.rotation.x += (targetRot.x - earthGroup.rotation.x) * 0.08;
+            camera.position.z += (globeCameraZ - camera.position.z) * 0.12;
+
+            renderer.render(scene, camera);
+
+            update3DPinOverlay('globe-origin-pin', originAirport.coords[0], originAirport.coords[1], 1.02);
+            update3DPinOverlay('globe-dest-pin', destAirport.coords[0], destAirport.coords[1], 1.02);
+
+            if (isFlying) {
+                const curLat = originAirport.coords[0] + (destAirport.coords[0] - originAirport.coords[0]) * currentFlightProgress;
+                const curLng = originAirport.coords[1] + (destAirport.coords[1] - originAirport.coords[1]) * currentFlightProgress;
+                update3DPinOverlay('globe-plane-pin', curLat, curLng, 1.05);
+            } else {
+                const pEl = document.getElementById('globe-plane-pin');
+                if (pEl) pEl.classList.add('hidden');
+            }
+        }
+
+        // ================= 3. CHUYỂN ĐỔI MƯỢT MÀ GIỮA QUẢ ĐỊA CẦU 3D ⟷ BẢN ĐỒ 2D CHI TIẾT =================
+        function activate2DSatelliteMap() {
+            is2DMapActive = true;
+            document.getElementById('map-2d-wrapper').classList.add('active-2d');
+            document.getElementById('projection-mode-badge').innerHTML = "2D<br>MAP";
+            document.getElementById('quick-switch-proj-btn').innerHTML = "🌍 Thu về Quả Cầu 3D";
+            setTimeout(() => {
+                map.invalidateSize();
+                if (isFlying && planeMarker) {
+                    map.setView(planeMarker.getLatLng(), 7);
+                } else if (routeLine) {
+                    map.fitBounds(routeLine.getBounds(), { padding: [70, 70], maxZoom: 7 });
+                }
+            }, 80);
+        }
+
+        function activate3DSpaceGlobe() {
+            is2DMapActive = false;
+            globeCameraZ = 275;
+            document.getElementById('map-2d-wrapper').classList.remove('active-2d');
+            document.getElementById('projection-mode-badge').innerHTML = "3D<br>CẦU";
+            document.getElementById('quick-switch-proj-btn').innerHTML = "🔍 Phóng to 2D";
+        }
+
+        function toggleProjectionMode() {
+            if (is2DMapActive) activate3DSpaceGlobe();
+            else activate2DSatelliteMap();
+        }
+
+        function zoomStepIn() {
+            if (!is2DMapActive) {
+                globeCameraZ -= 35;
+                if (globeCameraZ <= 185) activate2DSatelliteMap();
+            } else {
+                map.zoomIn();
+            }
+        }
+
+        function zoomStepOut() {
+            if (is2DMapActive) {
+                if (map.getZoom() <= 5) {
+                    activate3DSpaceGlobe();
+                } else {
+                    map.zoomOut();
+                }
+            } else {
+                globeCameraZ = Math.min(430, globeCameraZ + 35);
+            }
+        }
+
+        // ================= 4. CÔNG THỨC TÍNH THỜI GIAN HỌC THEO KHOẢNG CÁCH & ĐỒNG HỒ THỰC =================
         function getAircraftSpecs(aircraftType) {
             if (aircraftType.includes("787")) return { speedKmh: 910, altFt: "39,000 FT", taxiMins: 12 };
             if (aircraftType.includes("A350")) return { speedKmh: 905, altFt: "40,000 FT", taxiMins: 12 };
             if (aircraftType.includes("ATR")) return { speedKmh: 510, altFt: "22,000 FT", taxiMins: 8 };
-            return { speedKmh: 840, altFt: "36,000 FT", taxiMins: 12 }; // Airbus A321neo
+            return { speedKmh: 840, altFt: "36,000 FT", taxiMins: 12 };
         }
 
         function calcDistanceKm(coord1, coord2) {
@@ -1000,7 +1372,6 @@ app_html = """
             return Math.max(25, Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))));
         }
 
-        // Tính tự động số phút học dựa vào Khoảng cách (km) và Vận tốc tàu bay
         function calcStudyDurationFromDistance(distKm, aircraftType) {
             const specs = getAircraftSpecs(aircraftType);
             const airMinutes = (distKm / specs.speedKmh) * 60;
@@ -1011,17 +1382,15 @@ app_html = """
             if (mins < 60) return `${mins} phút`;
             const h = Math.floor(mins / 60);
             const m = mins % 60;
-            return m > 0 ? `${h}h ${m}p (${mins} phút)` : `${h} giờ (${mins} phút)`;
+            return m > 0 ? `${h}h ${m}p (${mins}p)` : `${h} giờ (${mins}p)`;
         }
 
-        // Tính giờ hạ cánh thực tế (ETA) = Giờ hiện tại + số phút bay
         function calcRealTimeETA(durationMins) {
             const now = new Date();
             const eta = new Date(now.getTime() + durationMins * 60000);
             return `${String(eta.getHours()).padStart(2,'0')}:${String(eta.getMinutes()).padStart(2,'0')}`;
         }
 
-        // ================= 3. ĐỒNG HỒ THỜI GIAN THỰC (REAL-TIME ENGINE) =================
         function updateRealTimeClock() {
             const now = new Date();
             const hh = String(now.getHours()).padStart(2, '0');
@@ -1055,7 +1424,7 @@ app_html = """
             else setFlightEnvironment('night', true);
         }
 
-        // ================= 4. HÀM VẼ 4 MÔ HÌNH MÁY BAY VECTOR SVG =================
+        // ================= 5. MÔ HÌNH MÁY BAY VECTOR SVG RIÊNG BIỆT =================
         function getAircraftSVG(aircraftType, headingDeg = 0) {
             if (aircraftType.includes("787")) {
                 return `
@@ -1125,7 +1494,7 @@ app_html = """
             return Math.round((brng + 360) % 360);
         }
 
-        // ================= 5. LƯU TRỮ DỮ LIỆU VĨNH VIỄN CHO 6 THÀNH VIÊN =================
+        // ================= 6. LƯU TRỮ DỮ LIỆU VĨNH VIỄN CHO 6 THÀNH VIÊN =================
         function createEmptyTimetable() {
             return { "T2": [], "T3": [], "T4": [], "T5": [], "T6": [], "T7": [], "CN": [] };
         }
@@ -1170,10 +1539,34 @@ app_html = """
         loadPersistentState();
         let currentMemberKey = appState.lastMember || "huudai";
 
-        // ================= 6. KHỞI TẠO BẢN ĐỒ VỆ TINH LEAFLET =================
-        const map = L.map('map', { zoomControl: false }).setView([14.0, 108.0], 5);
-        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 18 }).addTo(map);
-        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', { maxZoom: 18 }).addTo(map);
+        // ================= 7. BẢN ĐỒ VỆ TINH 2D (KHÓA KHÔNG LẶP LẠI HÌNH CHỮ NHẬT - NOWRAP) =================
+        const map = L.map('map', {
+            zoomControl: false,
+            minZoom: 4,
+            maxZoom: 18,
+            worldCopyJump: false,
+            maxBounds: [[-85, -180], [85, 180]],
+            maxBoundsViscosity: 1.0
+        }).setView([14.0, 108.0], 6);
+
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            maxZoom: 18,
+            noWrap: true,
+            bounds: [[-85, -180], [85, 180]]
+        }).addTo(map);
+
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
+            maxZoom: 18,
+            noWrap: true,
+            bounds: [[-85, -180], [85, 180]]
+        }).addTo(map);
+
+        // Nếu đang ở Bản đồ 2D mà người dùng thu nhỏ (Zoom Out) xuống mức 4 -> Tự động chuyển về Quả Cầu 3D Vũ Trụ!
+        map.on('zoomend', () => {
+            if (is2DMapActive && map.getZoom() <= 4) {
+                activate3DSpaceGlobe();
+            }
+        });
 
         let routeLine = null, originMarker = null, destMarker = null, planeMarker = null;
 
@@ -1203,7 +1596,7 @@ app_html = """
             });
         }
 
-        // ================= 7. CHUYỂN ĐỔI GÓC NHÌN CAMERA & BẦU TRỜI THỜI GIAN THỰC =================
+        // ================= 8. CHUYỂN ĐỔI GÓC NHÌN CAMERA & BẦU TRỜI =================
         function setCameraView(view) {
             currentCamView = view;
             ['map', 'cockpit', 'cabin', 'window'].forEach(v => {
@@ -1214,6 +1607,8 @@ app_html = """
                         : "px-2.5 py-1.5 rounded-xl text-[11px] font-extrabold text-slate-300 hover:text-white transition";
                 }
             });
+
+            document.getElementById('zoom-mode-controls').classList.toggle('hidden', view !== 'map');
 
             document.getElementById('view-cockpit').classList.toggle('hidden', view !== 'cockpit');
             document.getElementById('view-cockpit').classList.toggle('flex', view === 'cockpit');
@@ -1315,7 +1710,7 @@ app_html = """
             document.getElementById('cabin-passenger-name').innerText = profile.name;
         }
 
-        // ================= 8. CHUYỂN ĐỔI 2 TRANG (DASHBOARD <-> CHUYẾN BAY) =================
+        // ================= 9. CHUYỂN ĐỔI 2 TRANG (DASHBOARD <-> CHUYẾN BAY VŨ TRỤ) =================
         function switchPage(page) {
             const pageDash = document.getElementById('page-dashboard');
             const pageFlight = document.getElementById('page-flight');
@@ -1323,17 +1718,24 @@ app_html = """
             const btnFlight = document.getElementById('nav-btn-flight');
 
             if (page === 'flight') {
-                pageDash.classList.add('hidden');
-                pageFlight.classList.remove('hidden');
+                pageDash.classList.remove('page-layer-visible');
+                pageDash.classList.add('page-layer-hidden');
+
+                pageFlight.classList.remove('page-layer-hidden');
+                pageFlight.classList.add('page-layer-visible');
+
                 btnFlight.className = "px-3 py-1.5 rounded-lg text-xs font-extrabold bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow transition flex items-center gap-1.5";
                 btnDash.className = "px-3 py-1.5 rounded-lg text-xs font-extrabold text-slate-400 hover:text-white transition flex items-center gap-1.5";
-                setTimeout(() => {
-                    map.invalidateSize();
-                    updateBookingUI();
-                }, 120);
+
+                map.invalidateSize();
+                updateBookingUI();
             } else {
-                pageFlight.classList.add('hidden');
-                pageDash.classList.remove('hidden');
+                pageFlight.classList.remove('page-layer-visible');
+                pageFlight.classList.add('page-layer-hidden');
+
+                pageDash.classList.remove('page-layer-hidden');
+                pageDash.classList.add('page-layer-visible');
+
                 btnDash.className = "px-3 py-1.5 rounded-lg text-xs font-extrabold bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow transition flex items-center gap-1.5";
                 btnFlight.className = "px-3 py-1.5 rounded-lg text-xs font-extrabold text-slate-400 hover:text-white transition flex items-center gap-1.5";
                 renderDashboard();
@@ -1348,7 +1750,7 @@ app_html = """
             resetChat();
         }
 
-        // ================= 9. QUẢN LÝ CÔNG VIỆC (TÍNH GIỜ THEO KHOẢNG CÁCH) & THỜI KHÓA BIỂU =================
+        // ================= 10. QUẢN LÝ CÔNG VIỆC & THỜI KHÓA BIỂU =================
         function calcPriorityScore(task) {
             const urgency = Math.max(5, 100 - task.hoursLeft * 1.4);
             return Math.round(task.importance * 18 + urgency * 0.6);
@@ -1503,7 +1905,7 @@ app_html = """
             } else if (allTasks.length > 0 && pendingTasks.length === 0) {
                 aiBox.innerHTML = `<div class="text-xs text-emerald-400 font-bold py-1.5">🎉 Xuất sắc! ${profile.name} đã hoàn thành toàn bộ ${allTasks.length} công việc!</div>`;
             } else {
-                aiBox.innerHTML = `<div class="text-xs text-slate-400 py-1.5">Danh sách của <b>${profile.name}</b> đang trống. Hãy nhập công việc bên dưới hoặc bấm sang tab <b>✈️ Chuyến Bay Tập Trung</b> để bay ngay!</div>`;
+                aiBox.innerHTML = `<div class="text-xs text-slate-400 py-1.5">Danh sách của <b>${profile.name}</b> đang trống. Hãy nhập công việc bên dưới hoặc bấm sang tab <b>✈️ Chuyến Bay Vũ Trụ 3D</b> để trải nghiệm ngay!</div>`;
             }
 
             const listEl = document.getElementById('todo-drag-list');
@@ -1727,7 +2129,7 @@ app_html = """
             goToSeatSelection();
         }
 
-        // ================= 10. LOGIC TRẠM BAY & TỰ ĐỘNG TÍNH THỜI GIAN THEO KHOẢNG CÁCH =================
+        // ================= 11. LOGIC TRẠM BAY & TỰ ĐỘNG TÍNH THỜI GIAN THEO KHOẢNG CÁCH =================
         function toggleBookingCardSize() {
             const card = document.getElementById('screen-booking');
             const btn = document.getElementById('toggle-booking-btn');
@@ -1797,13 +2199,6 @@ app_html = """
             onRouteChange();
         }
 
-        function randomRoute() {
-            const randDest = AIRPORTS.filter(a => a.code !== originAirport.code);
-            destAirport = randDest[Math.floor(Math.random() * randDest.length)];
-            document.getElementById('dest-select').value = destAirport.code;
-            onRouteChange();
-        }
-
         function updateAircraft() {
             selectedAircraft = document.getElementById('aircraft-select').value;
             selectedDuration = calcStudyDurationFromDistance(currentDistance, selectedAircraft);
@@ -1829,6 +2224,7 @@ app_html = """
             const mm = String(now.getMinutes()).padStart(2, '0');
             document.getElementById('booking-realtime-eta').innerText = `${hh}:${mm} ➔ ${calcRealTimeETA(selectedDuration)}`;
 
+            // Cập nhật đường bay trên Bản đồ 2D
             if (routeLine) map.removeLayer(routeLine);
             if (originMarker) map.removeLayer(originMarker);
             if (destMarker) map.removeLayer(destMarker);
@@ -1840,7 +2236,12 @@ app_html = """
                 color: '#38bdf8', weight: 3.5, dashArray: '8, 8', opacity: 0.95
             }).addTo(map);
 
-            map.fitBounds(routeLine.getBounds(), { padding: [70, 70] });
+            if (is2DMapActive) {
+                map.fitBounds(routeLine.getBounds(), { padding: [70, 70], maxZoom: 7 });
+            }
+
+            // Cập nhật đường bay cong 3D trên Quả Địa Cầu Vũ Trụ
+            update3DGlobeRouteArc();
             updateCameraViewsData();
         }
 
@@ -1997,6 +2398,10 @@ app_html = """
             const profile = appState.members[currentMemberKey];
             const specs = getAircraftSpecs(selectedAircraft);
 
+            document.getElementById('screen-booking').classList.add('hidden');
+            document.getElementById('toggle-booking-btn').classList.add('hidden');
+            document.getElementById('screen-seat').classList.add('hidden');
+            document.getElementById('screen-seat').classList.remove('flex');
             document.getElementById('screen-ticket').classList.add('hidden');
             document.getElementById('screen-ticket').classList.remove('flex');
             document.getElementById('screen-flying').classList.remove('hidden');
@@ -2008,6 +2413,7 @@ app_html = """
             isFlying = true;
             isPausedByViolation = false;
             violationCount = 0;
+            currentFlightProgress = 0;
             updateSafetyHearts();
             updateCameraViewsData();
 
@@ -2026,7 +2432,6 @@ app_html = """
 
             if (planeMarker) map.removeLayer(planeMarker);
             planeMarker = L.marker(originAirport.coords, { icon: createCustomAircraftMapIcon(), zIndexOffset: 1000 }).addTo(map);
-            map.flyTo(originAirport.coords, 7, { duration: 1.8 });
 
             updateFlightTick();
             if (flightInterval) clearInterval(flightInterval);
@@ -2147,22 +2552,29 @@ app_html = """
             document.getElementById('cockpit-timer-display').innerText = timeFormatted;
             document.getElementById('cabin-timer-display').innerText = timeFormatted;
 
-            const progress = (totalFlightSeconds - remainingSeconds) / totalFlightSeconds;
-            document.getElementById('flight-progress').style.width = `${progress * 100}%`;
+            currentFlightProgress = (totalFlightSeconds - remainingSeconds) / totalFlightSeconds;
+            document.getElementById('flight-progress').style.width = `${currentFlightProgress * 100}%`;
 
-            const distLeft = Math.max(0, Math.round(currentDistance * (1 - progress)));
+            const distLeft = Math.max(0, Math.round(currentDistance * (1 - currentFlightProgress)));
             document.getElementById('fly-dist-left').innerText = distLeft;
             document.getElementById('cockpit-dist-display').innerText = `${distLeft} KM`;
             document.getElementById('cabin-dist-display').innerText = distLeft;
 
-            const lat = originAirport.coords[0] + (destAirport.coords[0] - originAirport.coords[0]) * progress;
-            const lng = originAirport.coords[1] + (destAirport.coords[1] - originAirport.coords[1]) * progress;
+            const lat = originAirport.coords[0] + (destAirport.coords[0] - originAirport.coords[0]) * currentFlightProgress;
+            const lng = originAirport.coords[1] + (destAirport.coords[1] - originAirport.coords[1]) * currentFlightProgress;
             if (planeMarker) planeMarker.setLatLng([lat, lng]);
         }
 
         function centerOnPlane() {
             setCameraView('map');
-            if (planeMarker) map.flyTo(planeMarker.getLatLng(), 8, { duration: 1.2 });
+            const curLat = originAirport.coords[0] + (destAirport.coords[0] - originAirport.coords[0]) * currentFlightProgress;
+            const curLng = originAirport.coords[1] + (destAirport.coords[1] - originAirport.coords[1]) * currentFlightProgress;
+            if (is2DMapActive && planeMarker) {
+                map.flyTo(planeMarker.getLatLng(), 7, { duration: 1.2 });
+            } else {
+                targetRot.y = (curLng + 90) * (Math.PI / 180);
+                targetRot.x = curLat * (Math.PI / 180) * 0.75;
+            }
         }
 
         function abortFlight() {
@@ -2178,7 +2590,7 @@ app_html = """
             updateBookingUI();
         }
 
-        // ================= 11. CHATBOT AI & MEDIA =================
+        // ================= 12. CHATBOT AI & MEDIA =================
         function toggleChatbotWindow() {
             const win = document.getElementById('chatbot-window');
             win.classList.toggle('hidden');
@@ -2245,7 +2657,7 @@ app_html = """
                 handleSuddenScheduleChange();
                 return `🌪️ Mình đã tự động dời các ca học chưa xong của <b>${profile.name}</b> sang khung giờ dự phòng rồi nhé!`;
             }
-            return `Xin chào <b>${profile.name}</b>! Thời gian học hiện đã được tính tự động hoàn toàn theo khoảng cách (km) giữa 2 sân bay và giờ thực tế.`;
+            return `Xin chào <b>${profile.name}</b>! Bạn có thể thu nhỏ bản đồ để xoay Quả Địa Cầu 3D giữa vũ trụ ngàn sao, hoặc phóng to để xem bản đồ vệ tinh 2D chi tiết!`;
         }
 
         function resetChat() {
@@ -2261,7 +2673,7 @@ app_html = """
                     <div>
                         <div class="bg-[#fae5be] p-1 rounded-2xl rounded-tl-sm shadow-sm">
                             <div class="bg-white rounded-xl p-2.5 text-xs text-slate-800 leading-relaxed">
-                                Xin chào <b>${profile.name}</b>! 🙋‍♀️<br>Thời gian học hiện được tính tự động theo khoảng cách bay và đồng hồ thời gian thực!
+                                Xin chào <b>${profile.name}</b>! 🙋‍♀️<br>Hãy thử bấm sang <b>✈️ Chuyến Bay Vũ Trụ 3D</b> để xoay Quả Địa Cầu ngoài không gian nhé!
                             </div>
                         </div>
                         <span class="text-[9px] text-slate-400 mt-0.5 block">${getCurrentTimeStr()}</span>
@@ -2347,8 +2759,9 @@ app_html = """
             closeMediaModal();
         }
 
-        // Khởi chạy ứng dụng
+        // Khởi chạy toàn bộ Hệ thống
         document.getElementById('member-select').value = currentMemberKey;
+        initThreeGlobe();
         updateRealTimeClock();
         initAirportDropdowns();
         syncEnvironmentWithRealTime();

@@ -2,7 +2,7 @@ import streamlit as st
 import streamlit.components.v1 as components
 
 st.set_page_config(
-    page_title="StudyHub & 3D Earth Flight Sim",
+    page_title="StudyHub & OpenStreetMap 3D/2D Flight Sim",
     page_icon="🌍",
     layout="wide",
     initial_sidebar_state="collapsed"
@@ -48,15 +48,30 @@ app_html = """
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
     <style>
         * { box-sizing: border-box; }
         body { font-family: 'Plus Jakarta Sans', sans-serif; background: #03060f; color: white; margin: 0; padding: 0; width: 100vw; height: 100vh; overflow: hidden; user-select: none; }
         .mono { font-family: 'JetBrains Mono', monospace; }
+
+        /* KHẮC PHỤC TRIỆT ĐỂ LỖI ĐEN BẢN ĐỒ 2D DO XUNG ĐỘT TAILWIND & LEAFLET */
+        .leaflet-container {
+            background-color: #aad3df !important;
+            width: 100% !important;
+            height: 100% !important;
+            font-family: 'Plus Jakarta Sans', sans-serif !important;
+        }
+        .leaflet-container img,
+        .leaflet-tile,
+        .leaflet-marker-icon,
+        .leaflet-marker-shadow {
+            max-width: none !important;
+            max-height: none !important;
+        }
 
         /* Không gian Vũ trụ & Quả địa cầu 3D */
         #globe-wrapper {
@@ -66,22 +81,23 @@ app_html = """
             background: radial-gradient(circle at center, #0a1636 0%, #040817 55%, #010308 100%);
             overflow: hidden;
             opacity: 1;
-            transition: opacity 0.55s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: opacity 0.4s ease;
         }
         #globe-wrapper.globe-hidden {
             opacity: 0;
             pointer-events: none;
+            z-index: 1;
         }
 
-        /* Bản đồ Vệ tinh Google 2D khi phóng to */
+        /* Bản đồ Mã nguồn mở OpenStreetMap 2D */
         #map-2d-wrapper {
             position: absolute;
             inset: 0;
             z-index: 1;
-            background: #071326;
+            background: #aad3df;
             opacity: 0;
             pointer-events: none;
-            transition: opacity 0.55s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: opacity 0.4s ease;
         }
         #map-2d-wrapper.active-2d {
             z-index: 3;
@@ -90,16 +106,17 @@ app_html = """
         }
         #map {
             position: absolute;
-            inset: 0;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
             width: 100% !important;
             height: 100% !important;
-            background: #071326;
-            transition: filter 0.7s ease;
         }
 
-        .map-night-filter { filter: brightness(0.55) contrast(1.25) saturate(0.85) hue-rotate(190deg); }
-        .map-sunset-filter { filter: brightness(0.82) contrast(1.15) sepia(0.3) hue-rotate(-15deg); }
-        .map-rain-filter { filter: brightness(0.62) contrast(1.2) saturate(0.65); }
+        .map-night-filter { filter: brightness(0.68) contrast(1.15) saturate(0.85); }
+        .map-sunset-filter { filter: brightness(0.88) contrast(1.1) sepia(0.25); }
+        .map-rain-filter { filter: brightness(0.75) contrast(1.15) saturate(0.75); }
 
         .page-layer-hidden {
             visibility: hidden !important;
@@ -113,10 +130,10 @@ app_html = """
         }
 
         .glass-panel {
-            background: rgba(11, 17, 30, 0.90);
+            background: rgba(11, 17, 30, 0.92);
             backdrop-filter: blur(22px);
             -webkit-backdrop-filter: blur(22px);
-            border: 1px solid rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.16);
         }
 
         .dash-card {
@@ -202,7 +219,7 @@ app_html = """
             <div class="flex items-center gap-2">
                 <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center text-black font-black text-base shadow">🌍</div>
                 <div class="hidden xl:block">
-                    <div class="text-[11px] font-extrabold tracking-wider text-white">STUDYHUB & EARTH 3D</div>
+                    <div class="text-[11px] font-extrabold tracking-wider text-white">STUDYHUB & OPENMAP 3D</div>
                     <div class="text-[9px] text-emerald-400" id="save-status-indicator">● Tự động lưu dữ liệu</div>
                 </div>
             </div>
@@ -240,7 +257,7 @@ app_html = """
                 <span id="nav-pending-badge" class="bg-black/30 text-white text-[10px] px-1.5 rounded-full">0</span>
             </button>
             <button id="nav-btn-flight" onclick="switchPage('flight')" class="px-3 py-1.5 rounded-lg text-xs font-extrabold text-slate-400 hover:text-white transition flex items-center gap-1.5">
-                <span>✈️ Chuyến Bay Vũ Trụ 3D</span>
+                <span>✈️ Chuyến Bay 3D / 2D</span>
             </button>
         </div>
 
@@ -438,15 +455,14 @@ app_html = """
     </main>
 
     <!-- ========================================================================================= -->
-    <!-- TRANG 2: QUẢ ĐỊA CẦU 3D VŨ TRỤ (THU NHỎ) ⟷ BẢN ĐỒ GOOGLE MAPS 2D (PHÓNG TO GẦN)           -->
+    <!-- TRANG 2: QUẢ ĐỊA CẦU 3D VŨ TRỤ (THU NHỎ) ⟷ BẢN ĐỒ MÃ NGUỒN MỞ OPENSTREETMAP 2D           -->
     <!-- ========================================================================================= -->
     <section id="page-flight" class="fixed inset-x-0 top-14 bottom-0 z-20 overflow-hidden page-layer-hidden">
 
-        <!-- LỚP 1: QUẢ ĐỊA CẦU 3D TRONG VŨ TRỤ NGÀN SAO (Khi ở xa / Thu nhỏ) -->
+        <!-- LỚP 1: QUẢ ĐỊA CẦU 3D TRONG VŨ TRỤ NGÀN SAO (Khi thu nhỏ) -->
         <div id="globe-wrapper">
             <canvas id="globe-canvas" class="w-full h-full block cursor-grab active:cursor-grabbing"></canvas>
 
-            <!-- Nhãn Sân Bay Đi, Sân Bay Đến & Máy Bay gắn trực tiếp lên tọa độ 3D của Quả Địa Cầu -->
             <div id="globe-origin-pin" class="fixed pointer-events-none z-10 -translate-x-1/2 -translate-y-1/2 hidden">
                 <div class="bg-cyan-400 text-black font-black text-[10px] px-2 py-0.5 rounded-md shadow-xl border border-black/40 whitespace-nowrap">✈️ <span id="globe-origin-code">SGN</span></div>
             </div>
@@ -461,24 +477,31 @@ app_html = """
             </div>
         </div>
 
-        <!-- LỚP 2: BẢN ĐỒ VỆ TINH GOOGLE MAPS 2D CHI TIẾT (Tự động hiện ra khi lăn chuột phóng to gần mặt đất) -->
+        <!-- LỚP 2: BẢN ĐỒ MÃ NGUỒN MỞ OPENSTREETMAP 2D (Hiện rõ 100% đường phố, thành phố, địa hình) -->
         <div id="map-2d-wrapper">
             <div id="map"></div>
         </div>
 
-        <!-- CỤM NÚT PHÓNG TO (2D GẦN) / THU NHỎ (QUẢ CẦU 3D VŨ TRỤ) Ở CẠNH PHẢI GIỐNG GOOGLE MAPS -->
-        <div id="zoom-mode-controls" class="fixed right-4 top-1/2 -translate-y-1/2 z-30 flex flex-col items-center gap-2">
+        <!-- CỤM NÚT PHÓNG TO (OPENSTREETMAP 2D) / THU NHỎ (QUẢ CẦU 3D) & CHỌN LỚP BẢN ĐỒ MÃ NGUỒN MỞ -->
+        <div id="zoom-mode-controls" class="fixed right-4 top-1/2 -translate-y-1/2 z-30 flex flex-col items-end gap-2">
             <div class="glass-panel p-1.5 rounded-2xl flex flex-col items-center gap-1.5 shadow-2xl border border-cyan-400/30">
-                <button onclick="zoomStepIn()" title="Phóng to (Xem gần Bản đồ 2D)" class="w-9 h-9 rounded-xl bg-slate-800 hover:bg-blue-600 text-white font-black text-base flex items-center justify-center transition border border-white/10">+</button>
+                <button onclick="zoomStepIn()" title="Phóng to (Xem gần Bản đồ 2D OpenStreetMap)" class="w-9 h-9 rounded-xl bg-slate-800 hover:bg-blue-600 text-white font-black text-base flex items-center justify-center transition border border-white/10">+</button>
                 <div id="projection-mode-badge" class="text-[9px] font-mono font-extrabold text-cyan-300 px-1 py-0.5 text-center leading-tight">
                     3D<br>CẦU
                 </div>
                 <button onclick="zoomStepOut()" title="Thu nhỏ (Ra ngoài Vũ trụ Hình cầu 3D)" class="w-9 h-9 rounded-xl bg-slate-800 hover:bg-blue-600 text-white font-black text-base flex items-center justify-center transition border border-white/10">−</button>
             </div>
 
-            <button onclick="toggleProjectionMode()" id="quick-switch-proj-btn" class="glass-panel px-2.5 py-2 rounded-xl text-[10px] font-extrabold text-amber-300 hover:text-white border border-amber-400/30 shadow-xl whitespace-nowrap">
-                🔍 Xem Bản Đồ 2D Gần
+            <button onclick="toggleProjectionMode()" id="quick-switch-proj-btn" class="glass-panel px-3 py-2 rounded-xl text-[11px] font-extrabold text-amber-300 hover:text-white border border-amber-400/40 shadow-xl whitespace-nowrap">
+                🗺️ Mở Bản Đồ 2D (OpenStreetMap)
             </button>
+
+            <!-- Bộ chọn 3 Nguồn Bản Đồ Mã Nguồn Mở khi đang ở chế độ 2D -->
+            <div id="osm-style-switcher" class="hidden glass-panel p-1.5 rounded-2xl flex-col gap-1 shadow-xl border border-white/15 text-[10px] font-bold">
+                <button id="layer-btn-osm" onclick="switchOpenMapLayer('osm')" class="px-2.5 py-1.5 rounded-xl bg-blue-600 text-white text-left whitespace-nowrap">🗺️ OpenStreetMap (Chuẩn)</button>
+                <button id="layer-btn-carto" onclick="switchOpenMapLayer('carto')" class="px-2.5 py-1.5 rounded-xl text-slate-300 hover:bg-slate-800 text-left whitespace-nowrap">🧭 Carto Voyager (Sáng)</button>
+                <button id="layer-btn-sat" onclick="switchOpenMapLayer('sat')" class="px-2.5 py-1.5 rounded-xl text-slate-300 hover:bg-slate-800 text-left whitespace-nowrap">🛰️ Bản đồ Vệ tinh</button>
+            </div>
         </div>
 
         <!-- ===================================================================================== -->
@@ -1068,7 +1091,7 @@ app_html = """
         let scene, camera, renderer, earthGroup, earthMesh, routeArcLine;
         const GLOBE_RADIUS = 100;
         let globeCameraZ = 275;
-        let targetGlobeZ = 275; // Biến đích giúp lăn chuột mượt mà không bị giật
+        let targetGlobeZ = 275;
         let isDraggingGlobe = false;
         let prevMouse = { x: 0, y: 0 };
         let targetRot = { x: 0.22, y: 3.4 };
@@ -1079,12 +1102,12 @@ app_html = """
             c.width = 1024; c.height = 512;
             const ctx = c.getContext('2d');
             const grad = ctx.createLinearGradient(0, 0, 0, 512);
-            grad.addColorStop(0, '#0c2d57');
-            grad.addColorStop(0.5, '#071936');
-            grad.addColorStop(1, '#0c2d57');
+            grad.addColorStop(0, '#0c4a6e');
+            grad.addColorStop(0.5, '#082f49');
+            grad.addColorStop(1, '#0c4a6e');
             ctx.fillStyle = grad;
             ctx.fillRect(0, 0, 1024, 512);
-            ctx.strokeStyle = 'rgba(56, 189, 248, 0.18)';
+            ctx.strokeStyle = 'rgba(56, 189, 248, 0.25)';
             ctx.lineWidth = 1;
             for (let x = 0; x < 1024; x += 32) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, 512); ctx.stroke(); }
             for (let y = 0; y < 512; y += 32) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(1024, y); ctx.stroke(); }
@@ -1114,7 +1137,7 @@ app_html = """
             renderer.setSize(w, h);
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
-            // 1. 2.000 Ngôi sao lấp lánh ngoài Vũ Trụ
+            // 2.000 Ngôi sao lấp lánh ngoài Vũ Trụ
             const starGeo = new THREE.BufferGeometry();
             const starCount = 2000;
             const starPos = new Float32Array(starCount * 3);
@@ -1137,7 +1160,7 @@ app_html = """
             const starMat = new THREE.PointsMaterial({ size: 2.2, vertexColors: true, transparent: true, opacity: 0.9 });
             scene.add(new THREE.Points(starGeo, starMat));
 
-            // 2. Quả Địa Cầu 3D
+            // Quả Địa Cầu 3D
             earthGroup = new THREE.Group();
             scene.add(earthGroup);
 
@@ -1203,19 +1226,17 @@ app_html = """
             }, { passive: true });
             window.addEventListener('touchend', () => { isDraggingGlobe = false; });
 
-            // LĂN CHUỘT MƯỢT NHƯ GOOGLE MAPS (Giới hạn tốc độ cuộn & nội suy êm ái)
+            // LĂN CHUỘT MƯỢT NHƯ GOOGLE MAPS -> TỰ CHUYỂN SANG OPENSTREETMAP 2D KHI PHÓNG TO
             canvas.addEventListener('wheel', (e) => {
                 e.preventDefault();
                 if (Date.now() - lastTransitionTime < 650) return;
 
-                // Chuẩn hóa bước lăn chuột nhỏ nhẹ để không bị phóng vèo quá nhanh
-                const step = Math.sign(e.deltaY) * Math.min(Math.abs(e.deltaY) * 0.16, 11);
+                const step = Math.sign(e.deltaY) * Math.min(Math.abs(e.deltaY) * 0.15, 10);
                 targetGlobeZ = Math.max(150, Math.min(430, targetGlobeZ + step));
 
-                // Khi phóng to tiến sát mặt đất -> Chuyển mượt sang Bản đồ Google 2D
-                if (targetGlobeZ <= 162 && e.deltaY < 0) {
-                    targetGlobeZ = 185;
-                    globeCameraZ = 185;
+                if (targetGlobeZ <= 165 && e.deltaY < 0) {
+                    targetGlobeZ = 190;
+                    globeCameraZ = 190;
                     activate2DSatelliteMap();
                 }
             }, { passive: false });
@@ -1293,7 +1314,6 @@ app_html = """
             requestAnimationFrame(animateThreeGlobe);
             if (!earthGroup || !renderer) return;
 
-            // Nội suy mượt cho cả góc xoay và khoảng cách phóng to/thu nhỏ
             earthGroup.rotation.y += (targetRot.y - earthGroup.rotation.y) * 0.08;
             earthGroup.rotation.x += (targetRot.x - earthGroup.rotation.x) * 0.08;
             globeCameraZ += (targetGlobeZ - globeCameraZ) * 0.085;
@@ -1314,40 +1334,95 @@ app_html = """
             }
         }
 
-        // ================= 3. CHUYỂN CẢNH MƯỢT MÀ GIỮA QUẢ CẦU 3D ⟷ BẢN ĐỒ GOOGLE 2D =================
+        // ================= 3. BẢN ĐỒ MÃ NGUỒN MỞ OPENSTREETMAP 2D (100% HIỂN THỊ RÕ NÉT) =================
+        const map = L.map('map', {
+            zoomControl: false,
+            minZoom: 3,
+            maxZoom: 19,
+            zoomSnap: 0.5,
+            zoomDelta: 0.5,
+            wheelPxPerZoomLevel: 120
+        }).setView([13.5, 107.5], 6);
+
+        // 3 Lớp Bản đồ Mã nguồn mở chuẩn quốc tế
+        const openMapLayers = {
+            osm: L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19
+            }),
+            carto: L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+                subdomains: 'abcd',
+                maxZoom: 19
+            }),
+            sat: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                maxZoom: 18
+            })
+        };
+
+        let currentOpenLayer = openMapLayers.osm;
+        currentOpenLayer.addTo(map);
+
+        function switchOpenMapLayer(key) {
+            if (currentOpenLayer) map.removeLayer(currentOpenLayer);
+            currentOpenLayer = openMapLayers[key] || openMapLayers.osm;
+            currentOpenLayer.addTo(map);
+
+            ['osm', 'carto', 'sat'].forEach(k => {
+                const btn = document.getElementById('layer-btn-' + k);
+                if (btn) {
+                    btn.className = (k === key)
+                        ? "px-2.5 py-1.5 rounded-xl bg-blue-600 text-white text-left whitespace-nowrap"
+                        : "px-2.5 py-1.5 rounded-xl text-slate-300 hover:bg-slate-800 text-left whitespace-nowrap";
+                }
+            });
+        }
+
+        // Khi đang ở Bản đồ 2D mà lăn chuột thu nhỏ ra xa (Zoom <= 4) -> Tự động chuyển về Quả Cầu 3D Vũ Trụ
+        map.getContainer().addEventListener('wheel', (e) => {
+            if (is2DMapActive && e.deltaY > 0 && map.getZoom() <= 4 && (Date.now() - lastTransitionTime > 650)) {
+                activate3DSpaceGlobe();
+            }
+        }, { passive: true });
+
+        let routeLine = null, originMarker = null, destMarker = null, planeMarker = null;
+
         function activate2DSatelliteMap() {
             lastTransitionTime = Date.now();
             is2DMapActive = true;
 
             document.getElementById('globe-wrapper').classList.add('globe-hidden');
             document.getElementById('map-2d-wrapper').classList.add('active-2d');
-            document.getElementById('projection-mode-badge').innerHTML = "2D<br>MAP";
+            document.getElementById('projection-mode-badge').innerHTML = "2D<br>OSM";
             document.getElementById('quick-switch-proj-btn').innerHTML = "🌍 Thu về Quả Cầu 3D";
+            document.getElementById('osm-style-switcher').classList.remove('hidden');
+            document.getElementById('osm-style-switcher').classList.add('flex');
 
-            // Bắt buộc làm mới kích thước Leaflet nhiều nhịp để tải ảnh vệ tinh Google 2D ngay lập tức
-            const sync2DView = () => {
+            const refresh2DMap = () => {
                 map.invalidateSize(true);
                 if (isFlying && planeMarker) {
                     map.setView(planeMarker.getLatLng(), 7, { animate: false });
                 } else if (routeLine) {
-                    map.fitBounds(routeLine.getBounds(), { padding: [80, 80], maxZoom: 8, animate: false });
+                    map.fitBounds(routeLine.getBounds(), { padding: [90, 90], maxZoom: 8, animate: false });
+                } else {
+                    map.setView([13.5, 107.5], 6, { animate: false });
                 }
             };
-            sync2DView();
-            setTimeout(sync2DView, 60);
-            setTimeout(sync2DView, 220);
+            refresh2DMap();
+            setTimeout(refresh2DMap, 80);
+            setTimeout(refresh2DMap, 250);
         }
 
         function activate3DSpaceGlobe() {
             lastTransitionTime = Date.now();
             is2DMapActive = false;
-            targetGlobeZ = 240;
-            globeCameraZ = 185;
+            targetGlobeZ = 245;
+            globeCameraZ = 190;
 
             document.getElementById('map-2d-wrapper').classList.remove('active-2d');
             document.getElementById('globe-wrapper').classList.remove('globe-hidden');
             document.getElementById('projection-mode-badge').innerHTML = "3D<br>CẦU";
-            document.getElementById('quick-switch-proj-btn').innerHTML = "🔍 Xem Bản Đồ 2D Gần";
+            document.getElementById('quick-switch-proj-btn').innerHTML = "🗺️ Mở Bản Đồ 2D (OpenStreetMap)";
+            document.getElementById('osm-style-switcher').classList.add('hidden');
+            document.getElementById('osm-style-switcher').classList.remove('flex');
         }
 
         function toggleProjectionMode() {
@@ -1357,8 +1432,8 @@ app_html = """
 
         function zoomStepIn() {
             if (!is2DMapActive) {
-                targetGlobeZ -= 28;
-                if (targetGlobeZ <= 165) activate2DSatelliteMap();
+                targetGlobeZ -= 30;
+                if (targetGlobeZ <= 168) activate2DSatelliteMap();
             } else {
                 map.zoomIn(1);
             }
@@ -1366,13 +1441,13 @@ app_html = """
 
         function zoomStepOut() {
             if (is2DMapActive) {
-                if (map.getZoom() <= 5) {
+                if (map.getZoom() <= 4.5) {
                     activate3DSpaceGlobe();
                 } else {
                     map.zoomOut(1);
                 }
             } else {
-                targetGlobeZ = Math.min(430, targetGlobeZ + 28);
+                targetGlobeZ = Math.min(430, targetGlobeZ + 30);
             }
         }
 
@@ -1516,6 +1591,32 @@ app_html = """
             return Math.round((brng + 360) % 360);
         }
 
+        function createAirportBadge(code, isDest) {
+            const cls = isDest ? 'bg-yellow-400 text-black' : 'bg-cyan-400 text-black';
+            return L.divIcon({
+                className: 'badge-icon',
+                html: `<div class="${cls} font-black text-[11px] px-2 py-0.5 rounded-md shadow-xl border border-black/40 flex items-center gap-1 whitespace-nowrap">✈️ ${code}</div>`,
+                iconSize: [56, 24],
+                iconAnchor: [28, 12]
+            });
+        }
+
+        function createCustomAircraftMapIcon() {
+            const brng = calcBearingDeg(originAirport.coords, destAirport.coords);
+            const svgHtml = getAircraftSVG(selectedAircraft, brng);
+            return L.divIcon({
+                className: 'custom-plane-leaflet-icon',
+                html: `
+                    <div class="relative w-16 h-16 flex items-center justify-center">
+                        <div class="radar-ring absolute inset-1 rounded-full border-2 border-blue-600/80"></div>
+                        <div class="w-14 h-14 relative z-10">${svgHtml}</div>
+                    </div>
+                `,
+                iconSize: [64, 64],
+                iconAnchor: [32, 32]
+            });
+        }
+
         // ================= 6. LƯU TRỮ DỮ LIỆU VĨNH VIỄN CHO 6 THÀNH VIÊN =================
         function createEmptyTimetable() {
             return { "T2": [], "T3": [], "T4": [], "T5": [], "T6": [], "T7": [], "CN": [] };
@@ -1561,61 +1662,7 @@ app_html = """
         loadPersistentState();
         let currentMemberKey = appState.lastMember || "huudai";
 
-        // ================= 7. BẢN ĐỒ VỆ TINH GOOGLE MAPS 2D (CÓ PHÓNG TO MƯỢT & HIỆN ĐƯỜNG PHỐ) =================
-        const map = L.map('map', {
-            zoomControl: false,
-            minZoom: 4,
-            maxZoom: 19,
-            zoomSnap: 0.25,
-            zoomDelta: 0.5,
-            wheelPxPerZoomLevel: 140,
-            worldCopyJump: false,
-            maxBounds: [[-85, -180], [85, 180]],
-            maxBoundsViscosity: 1.0
-        }).setView([14.0, 108.0], 6);
-
-        // Lớp Vệ tinh + Đường phố + Địa danh Google Maps Hybrid cực nét
-        L.tileLayer('https://mt1.google.com/vt/lyrs=y&hl=vi&x={x}&y={y}&z={z}', {
-            maxZoom: 19,
-            noWrap: true
-        }).addTo(map);
-
-        // Khi đang ở Bản đồ 2D mà lăn chuột thu nhỏ tới mức <= 4.2 -> Tự động chuyển mượt về Quả Cầu 3D Vũ Trụ
-        map.getContainer().addEventListener('wheel', (e) => {
-            if (is2DMapActive && e.deltaY > 0 && map.getZoom() <= 4.5 && (Date.now() - lastTransitionTime > 650)) {
-                activate3DSpaceGlobe();
-            }
-        }, { passive: true });
-
-        let routeLine = null, originMarker = null, destMarker = null, planeMarker = null;
-
-        function createAirportBadge(code, isDest) {
-            const cls = isDest ? 'bg-yellow-400 text-black' : 'bg-cyan-400 text-black';
-            return L.divIcon({
-                className: 'badge-icon',
-                html: `<div class="${cls} font-black text-[11px] px-2 py-0.5 rounded-md shadow-xl border border-black/40 flex items-center gap-1 whitespace-nowrap">✈️ ${code}</div>`,
-                iconSize: [56, 24],
-                iconAnchor: [28, 12]
-            });
-        }
-
-        function createCustomAircraftMapIcon() {
-            const brng = calcBearingDeg(originAirport.coords, destAirport.coords);
-            const svgHtml = getAircraftSVG(selectedAircraft, brng);
-            return L.divIcon({
-                className: 'custom-plane-leaflet-icon',
-                html: `
-                    <div class="relative w-16 h-16 flex items-center justify-center">
-                        <div class="radar-ring absolute inset-1 rounded-full border-2 border-cyan-400/70"></div>
-                        <div class="w-14 h-14 relative z-10">${svgHtml}</div>
-                    </div>
-                `,
-                iconSize: [64, 64],
-                iconAnchor: [32, 32]
-            });
-        }
-
-        // ================= 8. CHUYỂN ĐỔI GÓC NHÌN CAMERA TRONG CHẾ ĐỘ TẬP TRUNG =================
+        // ================= 7. CHUYỂN ĐỔI GÓC NHÌN CAMERA TRONG CHẾ ĐỘ TẬP TRUNG =================
         function setCameraView(view) {
             currentCamView = view;
             ['map', 'cockpit', 'cabin', 'window'].forEach(v => {
@@ -1732,7 +1779,7 @@ app_html = """
             document.getElementById('cabin-passenger-name').innerText = profile.name;
         }
 
-        // ================= 9. CHUYỂN ĐỔI 2 TRANG (DASHBOARD <-> CHUYẾN BAY VŨ TRỤ) =================
+        // ================= 8. CHUYỂN ĐỔI 2 TRANG (DASHBOARD <-> CHUYẾN BAY) =================
         function switchPage(page) {
             const pageDash = document.getElementById('page-dashboard');
             const pageFlight = document.getElementById('page-flight');
@@ -1774,7 +1821,7 @@ app_html = """
             resetChat();
         }
 
-        // ================= 10. QUẢN LÝ CÔNG VIỆC & THỜI KHÓA BIỂU =================
+        // ================= 9. QUẢN LÝ CÔNG VIỆC & THỜI KHÓA BIỂU =================
         function calcPriorityScore(task) {
             const urgency = Math.max(5, 100 - task.hoursLeft * 1.4);
             return Math.round(task.importance * 18 + urgency * 0.6);
@@ -1929,7 +1976,7 @@ app_html = """
             } else if (allTasks.length > 0 && pendingTasks.length === 0) {
                 aiBox.innerHTML = `<div class="text-xs text-emerald-400 font-bold py-1.5">🎉 Xuất sắc! ${profile.name} đã hoàn thành toàn bộ ${allTasks.length} công việc!</div>`;
             } else {
-                aiBox.innerHTML = `<div class="text-xs text-slate-400 py-1.5">Danh sách của <b>${profile.name}</b> đang trống. Hãy nhập công việc bên dưới hoặc bấm sang tab <b>✈️ Chuyến Bay Vũ Trụ 3D</b> để trải nghiệm ngay!</div>`;
+                aiBox.innerHTML = `<div class="text-xs text-slate-400 py-1.5">Danh sách của <b>${profile.name}</b> đang trống. Hãy nhập công việc bên dưới hoặc bấm sang tab <b>✈️ Chuyến Bay 3D / 2D</b> để trải nghiệm ngay!</div>`;
             }
 
             const listEl = document.getElementById('todo-drag-list');
@@ -2153,7 +2200,7 @@ app_html = """
             goToSeatSelection();
         }
 
-        // ================= 11. LOGIC TRẠM BAY & TỰ ĐỘNG TÍNH THỜI GIAN THEO KHOẢNG CÁCH =================
+        // ================= 10. LOGIC TRẠM BAY & TỰ ĐỘNG TÍNH THỜI GIAN THEO KHOẢNG CÁCH =================
         function toggleBookingCardSize() {
             const card = document.getElementById('screen-booking');
             const btn = document.getElementById('toggle-booking-btn');
@@ -2248,7 +2295,7 @@ app_html = """
             const mm = String(now.getMinutes()).padStart(2, '0');
             document.getElementById('booking-realtime-eta').innerText = `${hh}:${mm} ➔ ${calcRealTimeETA(selectedDuration)}`;
 
-            // Cập nhật đường bay trên Bản đồ 2D
+            // Cập nhật đường bay trên Bản đồ 2D OpenStreetMap
             if (routeLine) map.removeLayer(routeLine);
             if (originMarker) map.removeLayer(originMarker);
             if (destMarker) map.removeLayer(destMarker);
@@ -2257,12 +2304,12 @@ app_html = """
             destMarker = L.marker(destAirport.coords, { icon: createAirportBadge(destAirport.code, true) }).addTo(map);
 
             routeLine = L.polyline([originAirport.coords, destAirport.coords], {
-                color: '#38bdf8', weight: 3.5, dashArray: '8, 8', opacity: 0.95
+                color: '#0284c7', weight: 4, dashArray: '8, 8', opacity: 0.95
             }).addTo(map);
 
             if (is2DMapActive) {
                 map.invalidateSize(true);
-                map.fitBounds(routeLine.getBounds(), { padding: [80, 80], maxZoom: 8 });
+                map.fitBounds(routeLine.getBounds(), { padding: [90, 90], maxZoom: 8 });
             }
 
             // Cập nhật đường bay cong 3D trên Quả Địa Cầu Vũ Trụ
@@ -2614,7 +2661,6 @@ app_html = """
             if (flightInterval) clearInterval(flightInterval);
             if (planeMarker) map.removeLayer(planeMarker);
 
-            // Ẩn lại thanh chọn góc nhìn khi thoát chế độ tập trung
             const topHud = document.getElementById('flight-top-hud');
             topHud.classList.add('hidden');
             topHud.classList.remove('flex');
@@ -2626,7 +2672,7 @@ app_html = """
             updateBookingUI();
         }
 
-        // ================= 12. CHATBOT AI & MEDIA =================
+        // ================= 11. CHATBOT AI & MEDIA =================
         function toggleChatbotWindow() {
             const win = document.getElementById('chatbot-window');
             win.classList.toggle('hidden');
@@ -2693,7 +2739,7 @@ app_html = """
                 handleSuddenScheduleChange();
                 return `🌪️ Mình đã tự động dời các ca học chưa xong của <b>${profile.name}</b> sang khung giờ dự phòng rồi nhé!`;
             }
-            return `Xin chào <b>${profile.name}</b>! Khi lăn chuột phóng to gần mặt đất, Quả Địa Cầu 3D sẽ mượt mà chuyển sang Bản đồ Vệ tinh Google Maps 2D chi tiết!`;
+            return `Xin chào <b>${profile.name}</b>! Bản đồ 2D hiện đã dùng mã nguồn mở OpenStreetMap hiển thị rõ nét 100% đường phố và thành phố khi bạn phóng to!`;
         }
 
         function resetChat() {
@@ -2709,7 +2755,7 @@ app_html = """
                     <div>
                         <div class="bg-[#fae5be] p-1 rounded-2xl rounded-tl-sm shadow-sm">
                             <div class="bg-white rounded-xl p-2.5 text-xs text-slate-800 leading-relaxed">
-                                Xin chào <b>${profile.name}</b>! 🙋‍♀️<br>Bản đồ 2D Google Maps và hiệu ứng lăn chuột mượt từ Vũ trụ 3D xuống mặt đất đã sẵn sàng!
+                                Xin chào <b>${profile.name}</b>! 🙋‍♀️<br>Bản đồ 2D đã được tích hợp mã nguồn mở <b>OpenStreetMap</b> sáng rõ, không bao giờ bị đen màn hình!
                             </div>
                         </div>
                         <span class="text-[9px] text-slate-400 mt-0.5 block">${getCurrentTimeStr()}</span>

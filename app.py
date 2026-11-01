@@ -58,7 +58,6 @@ app_html = """
         body { font-family: 'Plus Jakarta Sans', sans-serif; background: #03060f; color: white; margin: 0; padding: 0; width: 100vw; height: 100vh; overflow: hidden; user-select: none; }
         .mono { font-family: 'JetBrains Mono', monospace; }
 
-        /* Đảm bảo các mảnh ghép Bản đồ Vệ tinh & Nhãn địa danh hiển thị chuẩn 100% */
         .leaflet-container {
             background-color: #040b18 !important;
             width: 100% !important;
@@ -89,7 +88,7 @@ app_html = """
             z-index: 1;
         }
 
-        /* Bản đồ Vệ tinh 2D kèm Địa danh Quận/Huyện/Thành phố */
+        /* Bản đồ Vệ tinh 2D Sạch Đẹp (Đã bỏ chữ Quận/Huyện rườm rà) */
         #map-2d-wrapper {
             position: absolute;
             inset: 0;
@@ -114,9 +113,9 @@ app_html = """
             height: 100% !important;
         }
 
-        .map-night-filter { filter: brightness(0.6) contrast(1.25) saturate(0.85) hue-rotate(190deg); }
+        .map-night-filter { filter: brightness(0.55) contrast(1.25) saturate(0.85) hue-rotate(190deg); }
         .map-sunset-filter { filter: brightness(0.82) contrast(1.15) sepia(0.28) hue-rotate(-12deg); }
-        .map-rain-filter { filter: brightness(0.68) contrast(1.2) saturate(0.7); }
+        .map-rain-filter { filter: brightness(0.65) contrast(1.2) saturate(0.7); }
 
         .page-layer-hidden {
             visibility: hidden !important;
@@ -195,10 +194,10 @@ app_html = """
         .turbulence-alert { animation: red-alert 0.7s infinite; backdrop-filter: blur(16px); }
 
         @keyframes bot-glow {
-            0%, 100% { box-shadow: 0 0 15px rgba(212, 163, 73, 0.7), 0 0 30px rgba(212, 163, 73, 0.35); transform: translateY(0px); }
-            50% { box-shadow: 0 0 25px rgba(234, 179, 8, 0.95), 0 0 45px rgba(212, 163, 73, 0.55); transform: translateY(-4px); }
+            0%, 100% { box-shadow: 0 0 15px rgba(212, 163, 73, 0.75), 0 0 30px rgba(212, 163, 73, 0.4); transform: translateY(0px); }
+            50% { box-shadow: 0 0 25px rgba(234, 179, 8, 1), 0 0 45px rgba(212, 163, 73, 0.65); transform: translateY(-4px); }
         }
-        .bot-launcher-glow { animation: bot-glow 3s infinite ease-in-out; }
+        .bot-launcher-glow { animation: bot-glow 2.8s infinite ease-in-out; }
 
         .dragging-card { opacity: 0.45; border: 2px dashed #38bdf8 !important; }
         ::-webkit-scrollbar { width: 5px; height: 5px; }
@@ -214,7 +213,7 @@ app_html = """
     </audio>
 
     <!-- ================= THANH ĐIỀU HƯỚNG CHÍNH + ĐỒNG HỒ THỜI GIAN THỰC ================= -->
-    <header class="fixed top-0 left-0 right-0 h-14 z-50 bg-[#080d1a]/95 backdrop-blur-xl border-b border-white/10 px-3 sm:px-5 flex items-center justify-between gap-2">
+    <header style="z-index: 8000;" class="fixed top-0 left-0 right-0 h-14 bg-[#080d1a]/95 backdrop-blur-xl border-b border-white/10 px-3 sm:px-5 flex items-center justify-between gap-2">
         <div class="flex items-center gap-2.5">
             <div class="flex items-center gap-2">
                 <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center text-black font-black text-base shadow">🌍</div>
@@ -278,7 +277,7 @@ app_html = """
     <!-- ========================================================================================= -->
     <!-- TRANG 1: BẢNG ĐIỀU KHIỂN HỌC TẬP, TO-DO LIST & THỜI KHÓA BIỂU CÁ NHÂN                    -->
     <!-- ========================================================================================= -->
-    <main id="page-dashboard" class="fixed inset-x-0 top-14 bottom-0 z-30 bg-[#03060f] overflow-y-auto px-4 sm:px-6 py-5 page-layer-visible">
+    <main id="page-dashboard" style="z-index: 30;" class="fixed inset-x-0 top-14 bottom-0 bg-[#03060f] overflow-y-auto px-4 sm:px-6 py-5 page-layer-visible">
         <div class="max-w-7xl mx-auto space-y-5 pb-20">
 
             <!-- CẢNH BÁO DEADLINE KHẨN CẤP -->
@@ -455,21 +454,21 @@ app_html = """
     </main>
 
     <!-- ========================================================================================= -->
-    <!-- TRANG 2: QUẢ ĐỊA CẦU 3D VŨ TRỤ (THU NHỎ) ⟷ BẢN ĐỒ VỆ TINH 2D CÓ TÊN TỈNH/QUẬN/HUYỆN       -->
+    <!-- TRANG 2: QUẢ ĐỊA CẦU 3D VŨ TRỤ (THU NHỎ) ⟷ BẢN ĐỒ VỆ TINH 2D SẠCH ĐẸP (KHÔNG QUẬN/HUYỆN)  -->
     <!-- ========================================================================================= -->
-    <section id="page-flight" class="fixed inset-x-0 top-14 bottom-0 z-20 overflow-hidden page-layer-hidden">
+    <section id="page-flight" style="z-index: 20;" class="fixed inset-x-0 top-14 bottom-0 overflow-hidden page-layer-hidden">
 
         <!-- LỚP 1: QUẢ ĐỊA CẦU 3D TRONG VŨ TRỤ NGÀN SAO (Khi thu nhỏ) -->
         <div id="globe-wrapper">
             <canvas id="globe-canvas" class="w-full h-full block cursor-grab active:cursor-grabbing"></canvas>
 
-            <div id="globe-origin-pin" class="fixed pointer-events-none z-10 -translate-x-1/2 -translate-y-1/2 hidden">
+            <div id="globe-origin-pin" style="z-index: 15;" class="fixed pointer-events-none -translate-x-1/2 -translate-y-1/2 hidden">
                 <div class="bg-cyan-400 text-black font-black text-[10px] px-2 py-0.5 rounded-md shadow-xl border border-black/40 whitespace-nowrap">✈️ <span id="globe-origin-code">SGN</span></div>
             </div>
-            <div id="globe-dest-pin" class="fixed pointer-events-none z-10 -translate-x-1/2 -translate-y-1/2 hidden">
+            <div id="globe-dest-pin" style="z-index: 15;" class="fixed pointer-events-none -translate-x-1/2 -translate-y-1/2 hidden">
                 <div class="bg-yellow-400 text-black font-black text-[10px] px-2 py-0.5 rounded-md shadow-xl border border-black/40 whitespace-nowrap">🏁 <span id="globe-dest-code">DAD</span></div>
             </div>
-            <div id="globe-plane-pin" class="fixed pointer-events-none z-15 -translate-x-1/2 -translate-y-1/2 hidden">
+            <div id="globe-plane-pin" style="z-index: 18;" class="fixed pointer-events-none -translate-x-1/2 -translate-y-1/2 hidden">
                 <div class="relative w-14 h-14 flex items-center justify-center">
                     <div class="radar-ring absolute inset-1 rounded-full border-2 border-cyan-400/80"></div>
                     <div id="globe-plane-svg" class="w-12 h-12 relative z-10"></div>
@@ -477,13 +476,13 @@ app_html = """
             </div>
         </div>
 
-        <!-- LỚP 2: BẢN ĐỒ VỆ TINH 2D KÈM ĐẦY ĐỦ TÊN TỈNH THÀNH, QUẬN HUYỆN & ĐƯỜNG XÁ -->
+        <!-- LỚP 2: BẢN ĐỒ VỆ TINH 2D SẠCH SẼ, HIỆN ĐẠI (ĐÃ BỎ CHỮ QUẬN/HUYỆN/PHƯỜNG CỔ LỖ SĨ) -->
         <div id="map-2d-wrapper">
             <div id="map"></div>
         </div>
 
         <!-- CỤM NÚT PHÓNG TO (VỆ TINH 2D) / THU NHỎ (QUẢ CẦU 3D) BÊN CẠNH PHẢI -->
-        <div id="zoom-mode-controls" class="fixed right-4 top-1/3 -translate-y-1/2 z-30 flex flex-col items-end gap-2">
+        <div id="zoom-mode-controls" style="z-index: 60;" class="fixed right-4 top-1/3 -translate-y-1/2 flex flex-col items-end gap-2">
             <div class="glass-panel p-1.5 rounded-2xl flex flex-col items-center gap-1.5 shadow-2xl border border-cyan-400/30">
                 <button onclick="zoomStepIn()" title="Phóng to (Xem gần Bản đồ Vệ tinh 2D)" class="w-9 h-9 rounded-xl bg-slate-800 hover:bg-blue-600 text-white font-black text-base flex items-center justify-center transition border border-white/10">+</button>
                 <div id="projection-mode-badge" class="text-[9px] font-mono font-extrabold text-cyan-300 px-1 py-0.5 text-center leading-tight">
@@ -493,50 +492,50 @@ app_html = """
             </div>
 
             <button onclick="toggleProjectionMode()" id="quick-switch-proj-btn" class="glass-panel px-3 py-2 rounded-xl text-[11px] font-extrabold text-amber-300 hover:text-white border border-amber-400/40 shadow-xl whitespace-nowrap">
-                🛰️ Xem Vệ Tinh 2D (Có Tên TP/Quận)
+                🛰️ Phóng to Vệ Tinh 2D
             </button>
         </div>
 
         <!-- ===================================================================================== -->
-        <!-- THANH CHỌN 4 GÓC NHÌN CAMERA & THỜI TIẾT: CHỈ HIỆN KHI ĐÃ VÀO CHẾ ĐỘ TẬP TRUNG BAY!  -->
+        <!-- THANH CHỌN 4 GÓC NHÌN CAMERA & THỜI TIẾT TRÊN ĐỈNH (Z-INDEX: 7500 - HIỆN KHI ĐANG BAY) -->
         <!-- ===================================================================================== -->
-        <div id="flight-top-hud" class="fixed top-16 left-1/2 -translate-x-1/2 z-45 w-[96%] max-w-4xl hidden flex-wrap items-center justify-between gap-2 pointer-events-none">
+        <div id="flight-top-hud" style="z-index: 7500;" class="fixed top-16 left-1/2 -translate-x-1/2 w-[96%] max-w-4xl hidden flex-wrap items-center justify-between gap-2 pointer-events-none">
             <div class="glass-panel p-1 rounded-2xl flex items-center gap-1 pointer-events-auto shadow-2xl border border-cyan-400/40">
-                <button id="cam-btn-map" onclick="setCameraView('map')" class="px-2.5 py-1.5 rounded-xl text-[11px] font-extrabold bg-cyan-500 text-black shadow transition">
-                    🌍 Bản Đồ 3D / 2D
+                <button onclick="setCameraView('map')" class="cam-switch-btn cam-map px-2.5 py-1.5 rounded-xl text-[11px] font-extrabold bg-cyan-500 text-black shadow transition">
+                    🌍 Bản Đồ 3D/2D
                 </button>
-                <button id="cam-btn-cockpit" onclick="setCameraView('cockpit')" class="px-2.5 py-1.5 rounded-xl text-[11px] font-extrabold text-slate-300 hover:text-white transition">
+                <button onclick="setCameraView('cockpit')" class="cam-switch-btn cam-cockpit px-2.5 py-1.5 rounded-xl text-[11px] font-extrabold text-slate-300 hover:text-white transition">
                     👨‍✈️ Buồng Lái Phi Công
                 </button>
-                <button id="cam-btn-cabin" onclick="setCameraView('cabin')" class="px-2.5 py-1.5 rounded-xl text-[11px] font-extrabold text-slate-300 hover:text-white transition">
+                <button onclick="setCameraView('cabin')" class="cam-switch-btn cam-cabin px-2.5 py-1.5 rounded-xl text-[11px] font-extrabold text-slate-300 hover:text-white transition">
                     💺 Trong Khoang Cabin
                 </button>
-                <button id="cam-btn-window" onclick="setCameraView('window')" class="px-2.5 py-1.5 rounded-xl text-[11px] font-extrabold text-slate-300 hover:text-white transition">
+                <button onclick="setCameraView('window')" class="cam-switch-btn cam-window px-2.5 py-1.5 rounded-xl text-[11px] font-extrabold text-slate-300 hover:text-white transition">
                     🪟 Qua Cửa Sổ
                 </button>
             </div>
 
             <div class="glass-panel p-1 rounded-2xl flex items-center gap-1 pointer-events-auto shadow-2xl border border-amber-400/40">
-                <button id="env-btn-auto" onclick="syncEnvironmentWithRealTime()" class="px-2.5 py-1.5 rounded-xl text-[11px] font-bold bg-amber-400 text-black shadow">
+                <button onclick="syncEnvironmentWithRealTime()" class="env-switch-btn env-auto px-2.5 py-1.5 rounded-xl text-[11px] font-bold bg-amber-400 text-black shadow">
                     🕒 Theo giờ thực
                 </button>
-                <button id="env-btn-day" onclick="setFlightEnvironment('day')" class="px-2 py-1.5 rounded-xl text-[11px] font-bold text-slate-300 hover:text-white">
+                <button onclick="setFlightEnvironment('day')" class="env-switch-btn env-day px-2 py-1.5 rounded-xl text-[11px] font-bold text-slate-300 hover:text-white">
                     ☀️ Ngày
                 </button>
-                <button id="env-btn-sunset" onclick="setFlightEnvironment('sunset')" class="px-2 py-1.5 rounded-xl text-[11px] font-bold text-slate-300 hover:text-white">
+                <button onclick="setFlightEnvironment('sunset')" class="env-switch-btn env-sunset px-2 py-1.5 rounded-xl text-[11px] font-bold text-slate-300 hover:text-white">
                     🌅 Hoàng hôn
                 </button>
-                <button id="env-btn-night" onclick="setFlightEnvironment('night')" class="px-2 py-1.5 rounded-xl text-[11px] font-bold text-slate-300 hover:text-white">
+                <button onclick="setFlightEnvironment('night')" class="env-switch-btn env-night px-2 py-1.5 rounded-xl text-[11px] font-bold text-slate-300 hover:text-white">
                     🌙 Bay Đêm
                 </button>
-                <button id="env-btn-rain" onclick="setFlightEnvironment('rain')" class="px-2 py-1.5 rounded-xl text-[11px] font-bold text-slate-300 hover:text-white">
+                <button onclick="setFlightEnvironment('rain')" class="env-switch-btn env-rain px-2 py-1.5 rounded-xl text-[11px] font-bold text-slate-300 hover:text-white">
                     🌧️ Mưa Đêm
                 </button>
             </div>
         </div>
 
-        <!-- ================= GÓC NHÌN 2: BUỒNG LÁI PHI CÔNG (COCKPIT HUD VIEW) ================= -->
-        <div id="view-cockpit" class="fixed inset-x-0 top-14 bottom-0 z-25 hidden flex-col justify-between overflow-hidden">
+        <!-- ================= GÓC NHÌN 2: BUỒNG LÁI PHI CÔNG (Z-INDEX: 45 - NỔI TRÊN BẢN ĐỒ) ================= -->
+        <div id="view-cockpit" style="z-index: 45;" class="fixed inset-x-0 top-14 bottom-0 hidden flex-col justify-between overflow-hidden">
             <div id="cockpit-sky-bg" class="absolute inset-0 bg-gradient-to-b from-[#040b1a] via-[#0c2249] to-[#1e3a8a] transition-all duration-700">
                 <div id="cockpit-stars" class="absolute inset-0 opacity-90" style="background-image: radial-gradient(white 1px, transparent 1px), radial-gradient(rgba(255,255,255,0.7) 1.5px, transparent 1.5px); background-size: 55px 55px, 95px 95px;"></div>
                 <div class="cloud-anim-1 absolute top-1/3 w-96 h-24 bg-white/10 blur-2xl rounded-full"></div>
@@ -544,10 +543,10 @@ app_html = """
                 <div id="cockpit-rain-layer" class="rain-overlay absolute inset-0 hidden pointer-events-none"></div>
             </div>
 
-            <div class="relative z-10 flex-1 flex items-center justify-center pointer-events-none mt-10">
+            <div class="relative z-10 flex-1 flex items-center justify-center pointer-events-none mt-8">
                 <div class="absolute inset-y-0 left-1/2 -translate-x-1/2 w-4 bg-gradient-to-r from-slate-950 via-slate-800 to-slate-950 border-x border-white/10"></div>
 
-                <div class="w-[320px] sm:w-[440px] h-[230px] sm:h-[260px] border-2 border-emerald-400/50 rounded-3xl bg-emerald-950/15 backdrop-blur-[1px] p-4 flex flex-col justify-between shadow-[0_0_50px_rgba(16,185,129,0.15)]">
+                <div class="w-[320px] sm:w-[440px] h-[220px] sm:h-[250px] border-2 border-emerald-400/50 rounded-3xl bg-emerald-950/15 backdrop-blur-[1px] p-4 flex flex-col justify-between shadow-[0_0_50px_rgba(16,185,129,0.15)]">
                     <div class="flex justify-between items-center text-[11px] font-mono font-bold text-emerald-400 border-b border-emerald-400/30 pb-1">
                         <span>SPD: <b id="hud-speed">840 KM/H</b></span>
                         <span class="bg-emerald-400/20 px-2 py-0.5 rounded border border-emerald-400/40">HDG <b id="hud-heading">045°</b></span>
@@ -570,7 +569,7 @@ app_html = """
                 </div>
             </div>
 
-            <div class="relative z-10 h-44 bg-gradient-to-t from-[#05070e] via-[#0d1322] to-[#1a243b] border-t-4 border-slate-700/80 px-4 py-2.5 shadow-2xl">
+            <div class="relative z-10 h-48 bg-gradient-to-t from-[#05070e] via-[#0d1322] to-[#1a243b] border-t-4 border-slate-700/80 px-4 py-2.5 shadow-2xl">
                 <div class="max-w-3xl mx-auto grid grid-cols-3 gap-3 h-24">
                     <div class="bg-[#060a12] border border-slate-700 rounded-xl p-2 flex flex-col justify-between font-mono">
                         <div class="text-[9px] text-cyan-400 font-bold flex justify-between"><span>PFD</span><span class="text-emerald-400">AP1+FD</span></div>
@@ -580,12 +579,12 @@ app_html = """
 
                     <div class="bg-[#060a12] border border-cyan-500/40 rounded-xl p-2 flex flex-col items-center justify-center font-mono">
                         <div class="text-[8px] text-amber-400 uppercase font-bold">DISTANCE TIMER</div>
-                        <div id="cockpit-timer-display" class="text-xl sm:text-2xl font-extrabold text-white">56:00</div>
+                        <div id="cockpit-timer-display" class="text-xl sm:text-2xl font-extrabold text-white">55:00</div>
                         <div id="cockpit-task-display" class="text-[9px] text-cyan-300 truncate max-w-[140px]">💻 Work</div>
                     </div>
 
                     <div class="bg-[#060a12] border border-slate-700 rounded-xl p-2 flex flex-col justify-between font-mono relative overflow-hidden">
-                        <div class="text-[9px] text-emerald-400 font-bold flex justify-between"><span>RADAR</span><span id="cockpit-dist-display">610 KM</span></div>
+                        <div class="text-[9px] text-emerald-400 font-bold flex justify-between"><span>RADAR</span><span id="cockpit-dist-display">605 KM</span></div>
                         <div class="w-11 h-11 rounded-full border border-emerald-500/40 mx-auto flex items-center justify-center relative">
                             <div class="radar-ring absolute inset-0 rounded-full border border-emerald-400"></div>
                             <span class="text-[10px]">✈️</span>
@@ -596,8 +595,8 @@ app_html = """
             </div>
         </div>
 
-        <!-- ================= GÓC NHÌN 3: TRONG KHOANG CABIN (CABIN INTERIOR VIEW) ================= -->
-        <div id="view-cabin" class="fixed inset-x-0 top-14 bottom-0 z-25 hidden flex-col items-center justify-center bg-gradient-to-b from-[#131129] via-[#0e172a] to-[#060913] p-4 overflow-hidden">
+        <!-- ================= GÓC NHÌN 3: TRONG KHOANG CABIN (Z-INDEX: 45 - NỔI TRÊN BẢN ĐỒ) ================= -->
+        <div id="view-cabin" style="z-index: 45;" class="fixed inset-x-0 top-14 bottom-0 hidden flex-col items-center justify-center bg-gradient-to-b from-[#131129] via-[#0e172a] to-[#060913] p-4 overflow-hidden">
             <div id="cabin-ceiling-glow" class="absolute top-0 inset-x-0 h-32 bg-gradient-to-b from-purple-500/30 via-cyan-500/15 to-transparent blur-2xl pointer-events-none transition-all duration-700"></div>
 
             <div class="relative z-10 flex items-center gap-2 mb-3">
@@ -611,7 +610,7 @@ app_html = """
                 </button>
             </div>
 
-            <div class="relative z-10 w-full max-w-lg bg-gradient-to-b from-[#1e293b] to-[#0f172a] border-4 border-slate-700/80 rounded-t-[40px] rounded-b-3xl p-4 sm:p-5 shadow-2xl mb-20">
+            <div class="relative z-10 w-full max-w-lg bg-gradient-to-b from-[#1e293b] to-[#0f172a] border-4 border-slate-700/80 rounded-t-[40px] rounded-b-3xl p-4 sm:p-5 shadow-2xl mb-28">
                 <div class="w-40 h-7 bg-slate-800 border border-white/10 rounded-b-xl mx-auto -mt-5 mb-3 flex items-center justify-center text-[10px] font-extrabold text-amber-300 tracking-widest">
                     SEAT <span id="cabin-seat-label" class="ml-1">06A</span>
                 </div>
@@ -632,30 +631,30 @@ app_html = """
 
                         <div class="bg-slate-900/90 border border-white/10 rounded-xl p-2.5 text-center">
                             <div class="text-[9px] text-slate-400 uppercase">Thời gian bay còn lại</div>
-                            <div id="cabin-timer-display" class="text-2xl font-black text-cyan-400 mono">56:00</div>
-                            <div class="text-[10px] text-amber-300">Còn <span id="cabin-dist-display">610</span> km</div>
+                            <div id="cabin-timer-display" class="text-2xl font-black text-cyan-400 mono">55:00</div>
+                            <div class="text-[10px] text-amber-300">Còn <span id="cabin-dist-display">605</span> km</div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- ================= GÓC NHÌN 4: QUA CỬA SỔ MÁY BAY (WINDOW SEAT VIEW) ================= -->
-        <div id="view-window" class="fixed inset-x-0 top-14 bottom-0 z-25 hidden flex-col items-center justify-center bg-[#090d18] p-4 overflow-hidden">
+        <!-- ================= GÓC NHÌN 4: QUA CỬA SỔ MÁY BAY (Z-INDEX: 45 - NỔI TRÊN BẢN ĐỒ) ================= -->
+        <div id="view-window" style="z-index: 45;" class="fixed inset-x-0 top-14 bottom-0 hidden flex-col items-center justify-center bg-[#090d18] p-4 overflow-hidden">
             <div class="relative z-20 flex items-center gap-3 mb-2">
                 <button onclick="toggleWindowShade()" class="glass-panel px-3.5 py-1 rounded-full text-xs font-extrabold text-amber-300 hover:text-white border border-amber-400/30">
                     🪟 Kéo Rèm Cửa Sổ Lên / Xuống
                 </button>
             </div>
 
-            <div class="relative w-[280px] sm:w-[330px] h-[360px] sm:h-[400px] rounded-[150px] border-[16px] border-[#1e293b] shadow-[inset_0_0_40px_rgba(0,0,0,0.9),0_25px_70px_rgba(0,0,0,0.95)] overflow-hidden bg-gradient-to-b from-[#040b1d] via-[#0f2557] to-[#1e3a8a] mb-20" id="window-sky-container">
+            <div class="relative w-[270px] sm:w-[320px] h-[330px] sm:h-[370px] rounded-[150px] border-[16px] border-[#1e293b] shadow-[inset_0_0_40px_rgba(0,0,0,0.9),0_25px_70px_rgba(0,0,0,0.95)] overflow-hidden bg-gradient-to-b from-[#040b1d] via-[#0f2557] to-[#1e3a8a] mb-28" id="window-sky-container">
                 <div id="window-stars" class="absolute inset-0 opacity-90" style="background-image: radial-gradient(white 1.2px, transparent 1.2px), radial-gradient(rgba(255,255,255,0.6) 1px, transparent 1px); background-size: 45px 45px, 80px 80px;"></div>
                 <div id="window-celestial" class="absolute top-10 right-12 w-11 h-11 rounded-full bg-yellow-100 shadow-[0_0_35px_#fef08a]"></div>
                 <div class="cloud-anim-1 absolute top-36 w-64 h-14 bg-white/20 blur-xl rounded-full"></div>
                 <div class="cloud-anim-3 absolute bottom-24 w-72 h-16 bg-white/15 blur-xl rounded-full"></div>
                 <div id="window-city-lights" class="absolute bottom-0 inset-x-0 h-14 bg-gradient-to-t from-amber-500/25 via-orange-500/10 to-transparent"></div>
 
-                <div class="absolute bottom-10 right-0 w-[240px] h-[125px] pointer-events-none">
+                <div class="absolute bottom-10 right-0 w-[230px] h-[120px] pointer-events-none">
                     <svg viewBox="0 0 300 160" class="w-full h-full drop-shadow-2xl">
                         <ellipse cx="145" cy="112" rx="34" ry="18" fill="#334155" stroke="#64748b" stroke-width="2"/>
                         <ellipse cx="115" cy="112" rx="8" ry="15" fill="#0f172a" stroke="#38bdf8" stroke-width="1.5"/>
@@ -673,12 +672,12 @@ app_html = """
         </div>
 
         <!-- Nút thu gọn bảng đặt vé -->
-        <button id="toggle-booking-btn" onclick="toggleBookingCardSize()" class="fixed bottom-3 left-3 z-30 glass-panel px-3 py-1.5 rounded-xl text-[11px] font-extrabold text-cyan-300 hover:text-white shadow-lg border border-cyan-500/30">
+        <button id="toggle-booking-btn" style="z-index: 60;" onclick="toggleBookingCardSize()" class="fixed bottom-3 left-3 glass-panel px-3 py-1.5 rounded-xl text-[11px] font-extrabold text-cyan-300 hover:text-white shadow-lg border border-cyan-500/30">
             🔽 Thu gọn bảng
         </button>
 
         <!-- MÀN HÌNH 1 TRONG TRẠM BAY: BẢNG ĐẶT VÉ TỰ ĐỘNG TÍNH THỜI GIAN HỌC THEO KHOẢNG CÁCH -->
-        <div id="screen-booking" class="fixed bottom-3 left-1/2 -translate-x-1/2 z-30 w-[95%] max-w-md glass-panel rounded-3xl p-3.5 shadow-2xl transition-all duration-300">
+        <div id="screen-booking" style="z-index: 60;" class="fixed bottom-3 left-1/2 -translate-x-1/2 w-[95%] max-w-md glass-panel rounded-3xl p-3.5 shadow-2xl transition-all duration-300">
             <div class="flex items-center justify-between gap-2 mb-2.5 pb-2 border-b border-white/10">
                 <div class="flex items-center gap-2.5">
                     <div id="booking-plane-svg-box" class="w-10 h-10 rounded-xl bg-slate-900 border border-cyan-400/30 flex items-center justify-center p-1 shrink-0"></div>
@@ -687,7 +686,7 @@ app_html = """
                             <span id="badge-origin" class="bg-cyan-400 text-black font-black text-[10px] px-1.5 py-0.5 rounded">SGN</span>
                             <span class="text-xs text-slate-400">➔</span>
                             <span id="badge-dest" class="bg-yellow-400 text-black font-black text-[10px] px-1.5 py-0.5 rounded">DAD</span>
-                            <span id="badge-dist" class="text-[11px] font-mono text-cyan-300 font-bold ml-1">610 km</span>
+                            <span id="badge-dist" class="text-[11px] font-mono text-cyan-300 font-bold ml-1">605 km</span>
                         </div>
                         <div id="banner-dest-title" class="text-xs font-extrabold text-white mt-0.5 truncate max-w-[175px]">TP.HCM ➔ Đà Nẵng</div>
                     </div>
@@ -721,8 +720,8 @@ app_html = """
                 <div>
                     <div class="text-[9px] text-cyan-300 font-bold uppercase tracking-wider">⏱️ Thời gian học (Tính theo khoảng cách)</div>
                     <div class="flex items-baseline gap-2 mt-0.5">
-                        <span id="auto-calc-duration-text" class="text-base font-black text-yellow-400 mono">56 phút</span>
-                        <span id="auto-calc-speed-text" class="text-[10px] text-slate-300">(610 km • 840 km/h)</span>
+                        <span id="auto-calc-duration-text" class="text-base font-black text-yellow-400 mono">55 phút</span>
+                        <span id="auto-calc-speed-text" class="text-[10px] text-slate-300">(605 km • 840 km/h)</span>
                     </div>
                 </div>
                 <div class="text-right font-mono">
@@ -742,12 +741,12 @@ app_html = """
         </div>
 
         <!-- MÀN HÌNH 2 TRONG TRẠM BAY: CHỌN GHẾ NGỒI -->
-        <div id="screen-seat" class="fixed inset-x-0 top-14 bottom-0 z-35 bg-[#070b14]/95 backdrop-blur-xl hidden flex-col items-center justify-between py-3 px-4">
+        <div id="screen-seat" style="z-index: 65;" class="fixed inset-x-0 top-14 bottom-0 bg-[#070b14]/95 backdrop-blur-xl hidden flex-col items-center justify-between py-3 px-4">
             <div class="w-full max-w-md flex items-center justify-between">
                 <button onclick="backToBooking()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-xl text-xs font-bold">‹ Đổi chặng bay</button>
                 <div class="text-center">
                     <div id="seat-header-aircraft" class="text-[10px] text-cyan-400 font-extrabold uppercase tracking-widest">AIRBUS A321NEO</div>
-                    <div id="seat-header-route" class="text-xs font-extrabold text-white">SGN ➔ DAD • 56 phút</div>
+                    <div id="seat-header-route" class="text-xs font-extrabold text-white">SGN ➔ DAD • 55 phút</div>
                 </div>
                 <span id="seat-selected-badge" class="bg-blue-600/30 border border-blue-400 text-blue-200 text-xs font-mono font-bold px-2 py-1 rounded-lg">06A</span>
             </div>
@@ -761,7 +760,7 @@ app_html = """
             </div>
 
             <!-- POPUP "What do you want to focus?" -->
-            <div id="focus-popover-backdrop" class="fixed inset-0 z-40 bg-black/65 backdrop-blur-sm hidden items-center justify-center p-4">
+            <div id="focus-popover-backdrop" style="z-index: 70;" class="fixed inset-0 bg-black/65 backdrop-blur-sm hidden items-center justify-center p-4">
                 <div class="focus-popover w-full max-w-[350px] rounded-[26px] p-5 text-white">
                     <div class="flex justify-between items-center mb-1">
                         <span class="text-xs font-bold text-blue-300">Seat: <span id="pop-seat-code" class="mono text-white">06A</span></span>
@@ -797,7 +796,7 @@ app_html = """
         </div>
 
         <!-- MÀN HÌNH 3 TRONG TRẠM BAY: VÉ BOARDING PASS THỜI GIAN THỰC -->
-        <div id="screen-ticket" class="fixed inset-x-0 top-14 bottom-0 z-40 bg-black/85 backdrop-blur-md hidden items-center justify-center p-4">
+        <div id="screen-ticket" style="z-index: 65;" class="fixed inset-x-0 top-14 bottom-0 bg-black/85 backdrop-blur-md hidden items-center justify-center p-4">
             <div class="w-full max-w-sm flex flex-col items-center">
                 <div class="w-full bg-[#121723] border border-white/15 rounded-3xl overflow-hidden shadow-2xl relative">
                     <div class="ticket-cutout-left"></div>
@@ -816,7 +815,7 @@ app_html = """
                             </div>
                             <div class="text-right">
                                 <div class="text-[9px] text-slate-400 uppercase">Giờ thực tế (STD ➔ ETA)</div>
-                                <div id="tk-realtime-span" class="text-xs font-extrabold text-emerald-400 mono">14:45 ➔ 15:41</div>
+                                <div id="tk-realtime-span" class="text-xs font-extrabold text-emerald-400 mono">15:44 ➔ 16:39</div>
                             </div>
                         </div>
 
@@ -827,7 +826,7 @@ app_html = """
                             </div>
                             <div class="flex flex-col items-center">
                                 <div id="tk-plane-svg" class="w-8 h-8"></div>
-                                <span id="tk-duration" class="text-xs font-extrabold text-yellow-400 mt-0.5">56 phút</span>
+                                <span id="tk-duration" class="text-xs font-extrabold text-yellow-400 mt-0.5">55 phút</span>
                             </div>
                             <div class="text-right">
                                 <div id="tk-dest-code" class="text-3xl font-black text-yellow-400">DAD</div>
@@ -842,7 +841,7 @@ app_html = """
                             </div>
                             <div>
                                 <div class="text-slate-500 text-[9px] uppercase">Khoảng cách</div>
-                                <div id="tk-dist" class="font-bold text-white mt-0.5">610 km</div>
+                                <div id="tk-dist" class="font-bold text-white mt-0.5">605 km</div>
                             </div>
                             <div class="text-right">
                                 <div class="text-slate-500 text-[9px] uppercase">Mục tiêu</div>
@@ -867,8 +866,27 @@ app_html = """
             </div>
         </div>
 
-        <!-- MÀN HÌNH 4 TRONG TRẠM BAY: ĐANG BAY & ĐẾM NGƯỢC THEO KHOẢNG CÁCH THỰC -->
-        <div id="screen-flying" class="fixed bottom-3 left-1/2 -translate-x-1/2 z-30 w-[95%] max-w-lg glass-panel rounded-3xl p-3.5 shadow-2xl hidden">
+        <!-- ===================================================================================== -->
+        <!-- MÀN HÌNH 4 TRONG TRẠM BAY: ĐANG BAY + TÍCH HỢP SẴN NÚT ĐỔI 4 GÓC NHÌN NGAY TRONG BẢNG -->
+        <!-- ===================================================================================== -->
+        <div id="screen-flying" style="z-index: 7500;" class="fixed bottom-3 left-1/2 -translate-x-1/2 w-[95%] max-w-lg glass-panel rounded-3xl p-3.5 shadow-2xl hidden border border-cyan-500/30">
+            <!-- Dải nút Đổi 4 Góc nhìn & Thời tiết tích hợp trực tiếp trong bảng điều khiển bay -->
+            <div class="flex flex-wrap items-center justify-between gap-1.5 pb-2.5 mb-2.5 border-b border-white/10">
+                <div class="flex items-center gap-1 bg-slate-900/90 p-1 rounded-xl border border-white/10">
+                    <button onclick="setCameraView('map')" class="cam-switch-btn cam-map px-2 py-1 rounded-lg text-[10px] font-extrabold bg-cyan-500 text-black transition">🌍 Bản đồ</button>
+                    <button onclick="setCameraView('cockpit')" class="cam-switch-btn cam-cockpit px-2 py-1 rounded-lg text-[10px] font-extrabold text-slate-300 hover:text-white transition">👨‍✈️ Phi công</button>
+                    <button onclick="setCameraView('cabin')" class="cam-switch-btn cam-cabin px-2 py-1 rounded-lg text-[10px] font-extrabold text-slate-300 hover:text-white transition">💺 Cabin</button>
+                    <button onclick="setCameraView('window')" class="cam-switch-btn cam-window px-2 py-1 rounded-lg text-[10px] font-extrabold text-slate-300 hover:text-white transition">🪟 Cửa sổ</button>
+                </div>
+
+                <div class="flex items-center gap-1 bg-slate-900/90 p-1 rounded-xl border border-white/10">
+                    <button onclick="setFlightEnvironment('day')" class="env-switch-btn env-day px-1.5 py-1 rounded-lg text-[10px] font-bold text-slate-300 hover:text-white" title="Ban ngày">☀️</button>
+                    <button onclick="setFlightEnvironment('sunset')" class="env-switch-btn env-sunset px-1.5 py-1 rounded-lg text-[10px] font-bold text-slate-300 hover:text-white" title="Hoàng hôn">🌅</button>
+                    <button onclick="setFlightEnvironment('night')" class="env-switch-btn env-night px-1.5 py-1 rounded-lg text-[10px] font-bold text-slate-300 hover:text-white" title="Bay qua đêm">🌙</button>
+                    <button onclick="setFlightEnvironment('rain')" class="env-switch-btn env-rain px-1.5 py-1 rounded-lg text-[10px] font-bold text-slate-300 hover:text-white" title="Mưa đêm">🌧️</button>
+                </div>
+            </div>
+
             <div class="flex items-center justify-between border-b border-white/10 pb-2 mb-2">
                 <div class="flex items-center gap-2.5">
                     <div id="fly-mini-svg" class="w-9 h-9 rounded-xl bg-slate-900 border border-cyan-400/40 p-1 flex items-center justify-center"></div>
@@ -889,12 +907,12 @@ app_html = """
                         <span>Thời gian bay còn lại</span>
                         <span id="telemetry-live-badge" class="text-[9px] text-emerald-400 font-mono">● 840 KM/H</span>
                     </div>
-                    <div id="countdown-timer" class="mono text-2xl sm:text-3xl font-extrabold text-white tracking-tight">56:00</div>
+                    <div id="countdown-timer" class="mono text-2xl sm:text-3xl font-extrabold text-white tracking-tight">55:00</div>
                 </div>
                 <div class="text-right">
-                    <div class="text-[11px] text-slate-300 font-semibold mb-1">Còn <span id="fly-dist-left" class="text-yellow-400 font-bold">610</span> km</div>
+                    <div class="text-[11px] text-slate-300 font-semibold mb-1">Còn <span id="fly-dist-left" class="text-yellow-400 font-bold">605</span> km</div>
                     <div class="flex gap-1.5">
-                        <button onclick="centerOnPlane()" class="bg-slate-800 hover:bg-slate-700 text-xs px-2.5 py-1.5 rounded-xl text-slate-200 border border-white/10 font-bold" title="Theo dõi máy bay">🎯</button>
+                        <button onclick="centerOnPlane()" class="bg-slate-800 hover:bg-slate-700 text-xs px-2.5 py-1.5 rounded-xl text-slate-200 border border-white/10 font-bold" title="Tâm máy bay">🎯</button>
                         <button onclick="completeFlightEarly()" class="bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/30 px-2.5 py-1.5 rounded-xl text-xs font-bold">✓ Xong sớm</button>
                         <button onclick="abortFlight()" class="bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-500/30 px-2.5 py-1.5 rounded-xl text-xs font-bold">Hủy</button>
                     </div>
@@ -908,7 +926,7 @@ app_html = """
     </section>
 
     <!-- ================= MODAL GIẢI THÍCH "TẠI SAO LẠI CÓ LỊCH NÀY?" ================= -->
-    <div id="why-schedule-modal" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-md hidden items-center justify-center p-4">
+    <div id="why-schedule-modal" style="z-index: 9000;" class="fixed inset-0 bg-black/75 backdrop-blur-md hidden items-center justify-center p-4">
         <div class="glass-panel w-full max-w-md rounded-3xl p-5 shadow-2xl border border-cyan-400/40">
             <div class="flex justify-between items-center mb-3">
                 <h3 class="text-sm font-extrabold text-white">🧠 Tại sao AI xếp lịch & chặng bay này?</h3>
@@ -920,7 +938,7 @@ app_html = """
     </div>
 
     <!-- ================= CẢNH BÁO ĐỎ STRICT MODE KHI CHUYỂN TAB ================= -->
-    <div id="turbulence-modal" class="fixed inset-0 z-50 turbulence-alert hidden flex-col items-center justify-center p-6 text-center">
+    <div id="turbulence-modal" style="z-index: 9500;" class="fixed inset-0 turbulence-alert hidden flex-col items-center justify-center p-6 text-center">
         <div class="text-5xl mb-2 animate-bounce">🚨</div>
         <h2 class="text-xl sm:text-2xl font-black text-white uppercase mb-2">CẢNH BÁO: BẠN ĐÃ RỜI KHỎI BUỒNG LÁI TẬP TRUNG!</h2>
         <p class="text-xs sm:text-sm text-red-100 max-w-md mb-4">Đồng hồ tập trung đã bị <b>TẠM DỪNG</b> vì bạn vừa chuyển sang cửa sổ khác!</p>
@@ -933,14 +951,14 @@ app_html = """
         </button>
     </div>
 
-    <div id="crash-modal" class="fixed inset-0 z-50 bg-black/95 backdrop-blur-xl hidden flex-col items-center justify-center p-6 text-center">
+    <div id="crash-modal" style="z-index: 9500;" class="fixed inset-0 bg-black/95 backdrop-blur-xl hidden flex-col items-center justify-center p-6 text-center">
         <div class="text-5xl mb-2">💥</div>
         <h2 class="text-xl font-black text-red-500 uppercase mb-2">CHUYẾN BAY BỊ HỦY DO MẤT TẬP TRUNG QUÁ 3 LẦN</h2>
         <button onclick="closeCrashModal()" class="mt-4 bg-red-600 hover:bg-red-500 text-white font-extrabold px-6 py-3 rounded-2xl text-xs uppercase">Quay lại</button>
     </div>
 
     <!-- MODAL TÙY CHỈNH ÂM THANH & BOT -->
-    <div id="media-modal" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-md hidden items-center justify-center p-4">
+    <div id="media-modal" style="z-index: 9000;" class="fixed inset-0 bg-black/75 backdrop-blur-md hidden items-center justify-center p-4">
         <div class="glass-panel w-full max-w-md rounded-3xl p-5 shadow-2xl">
             <div class="flex justify-between items-center mb-3">
                 <h3 class="text-sm font-extrabold text-white">🎧 Tùy Chỉnh Âm Thanh & Giao Diện</h3>
@@ -971,9 +989,9 @@ app_html = """
     </div>
 
     <!-- ===================================================================================== -->
-    <!-- CHATBOT AI VÀNG KIM ĐƯỢC ĐƯA LÊN CAO (bottom: 76px) ĐỂ KHÔNG BỊ NÚT MANAGE APP CHE!   -->
+    <!-- CHATBOT AI VÀNG KIM ĐƯỢC KHÓA Ở LỚP TRÊN CÙNG (z-index: 9999, bottom: 72px)           -->
     <!-- ===================================================================================== -->
-    <div id="chatbot-launcher" onclick="toggleChatbotWindow()" style="bottom: 76px; right: 20px;" class="fixed z-45 cursor-pointer flex items-center gap-2 bg-[#111827]/95 hover:bg-[#1e293b] border-2 border-[#d4a349] pl-3 pr-1.5 py-1.5 rounded-full bot-launcher-glow shadow-2xl">
+    <div id="chatbot-launcher" onclick="toggleChatbotWindow()" style="position: fixed; bottom: 72px; right: 20px; z-index: 9999;" class="cursor-pointer flex items-center gap-2 bg-[#111827] hover:bg-[#1e293b] border-2 border-[#d4a349] pl-3.5 pr-1.5 py-1.5 rounded-full bot-launcher-glow shadow-2xl">
         <span class="text-xs font-extrabold text-amber-300 tracking-wide">💬 Chat AI</span>
         <div class="relative w-10 h-10 rounded-full bg-white p-0.5">
             <img id="bot-launcher-img" src="https://cdn-icons-png.flaticon.com/512/4712/4712109.png" class="w-full h-full rounded-full object-cover bg-gradient-to-b from-yellow-300 to-amber-500 p-0.5" />
@@ -981,7 +999,7 @@ app_html = """
         </div>
     </div>
 
-    <div id="chatbot-window" style="bottom: 140px; right: 20px;" class="fixed z-50 w-[335px] sm:w-[360px] h-[430px] bg-[#f8f9fa] text-slate-800 rounded-2xl shadow-2xl border-2 border-[#d4a349] hidden flex-col overflow-hidden">
+    <div id="chatbot-window" style="position: fixed; bottom: 136px; right: 20px; z-index: 9999;" class="w-[335px] sm:w-[360px] h-[430px] bg-[#f8f9fa] text-slate-800 rounded-2xl shadow-2xl border-2 border-[#d4a349] hidden flex-col overflow-hidden">
         <div class="bg-[#d4a349] text-white px-4 py-2.5 flex items-center justify-between shadow">
             <div class="flex items-center gap-2">
                 <div class="w-7 h-7 rounded-full bg-white p-0.5 shadow">
@@ -1224,7 +1242,7 @@ app_html = """
             }, { passive: true });
             window.addEventListener('touchend', () => { isDraggingGlobe = false; });
 
-            // LĂN CHUỘT MƯỢT NHƯ GOOGLE MAPS -> TỰ CHUYỂN SANG VỆ TINH 2D KHI PHÓNG TO
+            // LĂN CHUỘT MƯỢT -> TỰ CHUYỂN SANG VỆ TINH 2D KHI PHÓNG TO
             canvas.addEventListener('wheel', (e) => {
                 e.preventDefault();
                 if (Date.now() - lastTransitionTime < 650) return;
@@ -1332,7 +1350,7 @@ app_html = """
             }
         }
 
-        // ================= 3. BẢN ĐỒ VỆ TINH 2D KÈM NHÃN TÊN TỈNH/THÀNH, QUẬN/HUYỆN & ĐƯỜNG XÁ =================
+        // ================= 3. BẢN ĐỒ VỆ TINH 2D SẠCH ĐẸP (KHÔNG CÓ CHỮ QUẬN/HUYỆN/PHƯỜNG CỔ LỖ SĨ) =================
         const map = L.map('map', {
             zoomControl: false,
             minZoom: 3,
@@ -1342,23 +1360,11 @@ app_html = """
             wheelPxPerZoomLevel: 120
         }).setView([13.5, 107.5], 6);
 
-        // Lớp 1 (Nền): Ảnh Vệ tinh thực tế độ phân giải cao (Đã xác nhận hoạt động 100% ở ảnh 3)
+        // Chỉ dùng duy nhất lớp Vệ tinh tự nhiên sắc nét (World_Imagery) - không đè chữ Phường/Quận/Huyện
         L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
             maxZoom: 18
         }).addTo(map);
 
-        // Lớp 2 (Chồng lên trên): Hệ thống Đường giao thông, Quốc lộ, Đường phố Quận/Huyện
-        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}', {
-            maxZoom: 18,
-            opacity: 0.85
-        }).addTo(map);
-
-        // Lớp 3 (Trên cùng): Tên Tỉnh/Thành phố, Quận/Huyện, Biên giới & Địa danh như lúc đầu
-        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
-            maxZoom: 18
-        }).addTo(map);
-
-        // Khi đang ở Bản đồ Vệ tinh 2D mà lăn chuột thu nhỏ ra xa (Zoom <= 4) -> Tự động chuyển về Quả Cầu 3D Vũ Trụ
         map.getContainer().addEventListener('wheel', (e) => {
             if (is2DMapActive && e.deltaY > 0 && map.getZoom() <= 4 && (Date.now() - lastTransitionTime > 650)) {
                 activate3DSpaceGlobe();
@@ -1379,9 +1385,9 @@ app_html = """
             const refresh2DMap = () => {
                 map.invalidateSize(true);
                 if (isFlying && planeMarker) {
-                    map.setView(planeMarker.getLatLng(), 8, { animate: false });
+                    map.setView(planeMarker.getLatLng(), 7, { animate: false });
                 } else if (routeLine) {
-                    map.fitBounds(routeLine.getBounds(), { padding: [90, 90], maxZoom: 8, animate: false });
+                    map.fitBounds(routeLine.getBounds(), { padding: [90, 90], maxZoom: 7, animate: false });
                 } else {
                     map.setView([13.5, 107.5], 6, { animate: false });
                 }
@@ -1400,7 +1406,7 @@ app_html = """
             document.getElementById('map-2d-wrapper').classList.remove('active-2d');
             document.getElementById('globe-wrapper').classList.remove('globe-hidden');
             document.getElementById('projection-mode-badge').innerHTML = "3D<br>CẦU";
-            document.getElementById('quick-switch-proj-btn').innerHTML = "🛰️ Xem Vệ Tinh 2D (Có Tên TP/Quận)";
+            document.getElementById('quick-switch-proj-btn').innerHTML = "🛰️ Phóng to Vệ Tinh 2D";
         }
 
         function toggleProjectionMode() {
@@ -1640,16 +1646,19 @@ app_html = """
         loadPersistentState();
         let currentMemberKey = appState.lastMember || "huudai";
 
-        // ================= 7. CHUYỂN ĐỔI GÓC NHÌN CAMERA TRONG CHẾ ĐỘ TẬP TRUNG =================
+        // ================= 7. CHUYỂN ĐỔI 4 GÓC NHÌN CAMERA TRONG CHẾ ĐỘ TẬP TRUNG =================
         function setCameraView(view) {
             currentCamView = view;
             ['map', 'cockpit', 'cabin', 'window'].forEach(v => {
-                const btn = document.getElementById('cam-btn-' + v);
-                if (btn) {
-                    btn.className = (v === view)
-                        ? "px-2.5 py-1.5 rounded-xl text-[11px] font-extrabold bg-cyan-500 text-black shadow transition"
-                        : "px-2.5 py-1.5 rounded-xl text-[11px] font-extrabold text-slate-300 hover:text-white transition";
-                }
+                document.querySelectorAll('.cam-' + v).forEach(btn => {
+                    if (v === view) {
+                        btn.classList.add('bg-cyan-500', 'text-black', 'shadow');
+                        btn.classList.remove('text-slate-300');
+                    } else {
+                        btn.classList.remove('bg-cyan-500', 'text-black', 'shadow');
+                        btn.classList.add('text-slate-300');
+                    }
+                });
             });
 
             document.getElementById('zoom-mode-controls').classList.toggle('hidden', view !== 'map');
@@ -1672,13 +1681,16 @@ app_html = """
         function setFlightEnvironment(mode, isAuto = false) {
             currentEnvMode = mode;
             ['auto', 'day', 'sunset', 'night', 'rain'].forEach(m => {
-                const btn = document.getElementById('env-btn-' + m);
-                if (btn) {
-                    const active = (isAuto && m === 'auto') || (!isAuto && m === mode);
-                    btn.className = active
-                        ? "px-2.5 py-1.5 rounded-xl text-[11px] font-bold bg-amber-400 text-black shadow"
-                        : "px-2 py-1.5 rounded-xl text-[11px] font-bold text-slate-300 hover:text-white";
-                }
+                const active = (isAuto && m === 'auto') || (!isAuto && m === mode);
+                document.querySelectorAll('.env-' + m).forEach(btn => {
+                    if (active) {
+                        btn.classList.add('bg-amber-400', 'text-black', 'shadow');
+                        btn.classList.remove('text-slate-300');
+                    } else {
+                        btn.classList.remove('bg-amber-400', 'text-black', 'shadow');
+                        btn.classList.add('text-slate-300');
+                    }
+                });
             });
 
             const mapEl = document.getElementById('map');
@@ -2287,7 +2299,7 @@ app_html = """
 
             if (is2DMapActive) {
                 map.invalidateSize(true);
-                map.fitBounds(routeLine.getBounds(), { padding: [90, 90], maxZoom: 8 });
+                map.fitBounds(routeLine.getBounds(), { padding: [90, 90], maxZoom: 7 });
             }
 
             // Cập nhật đường bay cong 3D trên Quả Địa Cầu Vũ Trụ
@@ -2625,7 +2637,7 @@ app_html = """
             const curLat = originAirport.coords[0] + (destAirport.coords[0] - originAirport.coords[0]) * currentFlightProgress;
             const curLng = originAirport.coords[1] + (destAirport.coords[1] - originAirport.coords[1]) * currentFlightProgress;
             if (is2DMapActive && planeMarker) {
-                map.flyTo(planeMarker.getLatLng(), 8, { duration: 1.2 });
+                map.flyTo(planeMarker.getLatLng(), 7, { duration: 1.2 });
             } else {
                 targetRot.y = (curLng + 90) * (Math.PI / 180);
                 targetRot.x = curLat * (Math.PI / 180) * 0.75;
@@ -2717,7 +2729,7 @@ app_html = """
                 handleSuddenScheduleChange();
                 return `🌪️ Mình đã tự động dời các ca học chưa xong của <b>${profile.name}</b> sang khung giờ dự phòng rồi nhé!`;
             }
-            return `Xin chào <b>${profile.name}</b>! Bản đồ Vệ tinh 2D đã được tích hợp đầy đủ tên Tỉnh/Thành phố, Quận/Huyện và đường xá rõ nét!`;
+            return `Xin chào <b>${profile.name}</b>! Khi đang bay bạn có thể bấm đổi trực tiếp giữa 4 góc nhìn (Bản đồ, Phi công, Cabin, Cửa sổ) ngay trên bảng đếm ngược!`;
         }
 
         function resetChat() {
@@ -2733,7 +2745,7 @@ app_html = """
                     <div>
                         <div class="bg-[#fae5be] p-1 rounded-2xl rounded-tl-sm shadow-sm">
                             <div class="bg-white rounded-xl p-2.5 text-xs text-slate-800 leading-relaxed">
-                                Xin chào <b>${profile.name}</b>! 🙋‍♀️<br>Mình là trợ lý AI học tập. Bạn có thể bấm vào đây bất cứ lúc nào mà không lo bị che khuất!
+                                Xin chào <b>${profile.name}</b>! 🙋‍♀️<br>Mình là trợ lý AI học tập. Nút Chat hiện đã nổi cố định ở góc phải trên thanh Manage app!
                             </div>
                         </div>
                         <span class="text-[9px] text-slate-400 mt-0.5 block">${getCurrentTimeStr()}</span>

@@ -9,6 +9,33 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
+BASE_DIR = Path(__file__).parent
+
+def read_source_file(filename: str) -> str:
+    # Tìm chính xác hoặc không phân biệt hoa thường / khoảng trắng thừa trên GitHub
+    target = BASE_DIR / filename
+    if target.exists():
+        return target.read_text(encoding="utf-8")
+    for p in BASE_DIR.iterdir():
+        if p.is_file() and p.name.strip().lower() == filename.lower():
+            return p.read_text(encoding="utf-8")
+    return ""
+
+css_content = read_source_file("styles.css")
+layout_content = read_source_file("layout.html")
+data_i18n_js = read_source_file("data_i18n.js")
+script_logic_js = read_source_file("script_logic.js")
+
+# Báo lỗi rõ ràng nếu thiếu file trên GitHub
+missing = []
+if not css_content: missing.append("styles.css")
+if not layout_content: missing.append("layout.html")
+if not script_logic_js: missing.append("script_logic.js")
+
+if missing:
+    st.error(f"⚠️ Thiếu hoặc sai tên file trên GitHub: {', '.join(missing)}. Hãy kiểm tra lại tên file cùng thư mục với app.py!")
+    st.stop()
+
 st.markdown("""
     <style>
         #MainMenu, header, footer, [data-testid="stHeader"], [data-testid="stToolbar"] {
@@ -43,21 +70,6 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Đọc 4 file thành phần từ cùng thư mục gốc
-BASE_DIR = Path(__file__).parent
-
-def read_source_file(filename: str) -> str:
-    file_path = BASE_DIR / filename
-    if file_path.exists():
-        return file_path.read_text(encoding="utf-8")
-    return ""
-
-css_content = read_source_file("styles.css")
-layout_content = read_source_file("layout.html")
-data_i18n_js = read_source_file("data_i18n.js")
-script_logic_js = read_source_file("script_logic.js")
-
-# Ghép thành ứng dụng hoàn chỉnh
 app_html = f"""<!DOCTYPE html>
 <html lang="vi" translate="no" class="notranslate">
 <head>
@@ -77,6 +89,8 @@ app_html = f"""<!DOCTYPE html>
 {layout_content}
     <script>
 {data_i18n_js}
+    </script>
+    <script>
 {script_logic_js}
     </script>
 </body>

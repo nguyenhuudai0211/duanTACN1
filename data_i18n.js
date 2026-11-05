@@ -48,7 +48,35 @@ const I18N = {
         autoSyncCheck: "⚡ Tự động đẩy sang Danh sách Nhiệm vụ & Báo giờ Chuyến bay bên trái",
         botHeader: "Trợ lý Học tập AI",
         emptyTasks: "Chưa có nhiệm vụ nào ở mục này",
-        emptySlots: "Chưa có lịch nào trong ngày này"
+        emptySlots: "Chưa có lịch nào trong ngày này",
+        // Nhãn Trạm bay, Đặt vé & Boarding Pass
+        originTitle: "Điểm khởi hành",
+        destTitle: "Điểm hạ cánh",
+        autoDurTitle: "⏱️ Thời gian học (Tính theo khoảng cách)",
+        btnPickSeat: "💺 Chọn Ghế & In Vé",
+        btnFlyNow: "🛫 Bay Ngay Lập Tức",
+        btnCollapse: "🔽 Thu gọn bảng",
+        btnExpand: "🔼 Mở bảng",
+        btnGlobe3D: "🌍 Quả cầu 3D",
+        btnMap2D: "🛰️ Bản đồ 2D",
+        unitMin: "phút",
+        unitHr: "giờ",
+        vnGroup: "🇻🇳 Việt Nam (22)",
+        intGroup: "🌏 Quốc tế (12)",
+        btnBackBooking: "‹ Quay lại",
+        seatHint: "Chạm vào ghế bất kỳ hoặc bấm Tiếp tục",
+        btnContinueTicket: "Tiếp tục ➔",
+        btnConfirmSeat: "Xác nhận & Xuất Vé Boarding Pass ➔",
+        strictSub: "Cảnh báo nếu rời khỏi màn hình học",
+        btnChangeSeat: "‹ Đổi ghế",
+        btnTakeoffTicket: "🛫 Cất Cánh Bắt Đầu Học",
+        btnDoneFlight: "✓ Xong",
+        btnAbortFlight: "Hủy",
+        btnReadingLight: "💡 Đèn đọc sách",
+        btnTrayTable: "🍱 Gấp/Mở bàn học",
+        btnMoodLight: "🌈 Đèn LED trần",
+        btnCallFA: "🛎️ Gọi tiếp viên",
+        btnWindowShade: "🪟 Kéo Rèm Cửa Sổ Lên / Xuống"
     },
     en: {
         memberTop: "Member",
@@ -95,7 +123,35 @@ const I18N = {
         autoSyncCheck: "⚡ Auto-push to Task List & Flight Alarm on the left",
         botHeader: "AI Study Assistant",
         emptyTasks: "No tasks in this view yet",
-        emptySlots: "No events scheduled for this date"
+        emptySlots: "No events scheduled for this date",
+        // Flight Sim, Booking & Boarding Pass Labels
+        originTitle: "Departure",
+        destTitle: "Destination",
+        autoDurTitle: "⏱️ Study Duration (Calculated by Distance)",
+        btnPickSeat: "💺 Select Seat & Ticket",
+        btnFlyNow: "🛫 Fly Immediately",
+        btnCollapse: "🔽 Collapse Panel",
+        btnExpand: "🔼 Expand Panel",
+        btnGlobe3D: "🌍 3D Globe",
+        btnMap2D: "🛰️ 2D Map",
+        unitMin: "mins",
+        unitHr: "hrs",
+        vnGroup: "🇻🇳 Vietnam Domestic (22)",
+        intGroup: "🌏 International (12)",
+        btnBackBooking: "‹ Back",
+        seatHint: "Tap any seat or click Continue",
+        btnContinueTicket: "Continue ➔",
+        btnConfirmSeat: "Confirm & Issue Boarding Pass ➔",
+        strictSub: "Alert if you leave the study screen",
+        btnChangeSeat: "‹ Change Seat",
+        btnTakeoffTicket: "🛫 Takeoff & Start Studying",
+        btnDoneFlight: "✓ Done",
+        btnAbortFlight: "Abort",
+        btnReadingLight: "💡 Reading Light",
+        btnTrayTable: "🍱 Tray Table",
+        btnMoodLight: "🌈 Cabin LED",
+        btnCallFA: "🛎️ Call Crew",
+        btnWindowShade: "🪟 Toggle Window Shade"
     },
     zh: {
         memberTop: "小組成員",
@@ -142,7 +198,35 @@ const I18N = {
         autoSyncCheck: "⚡ 自動同步至左側任務清單並設定專注航班鬧鐘",
         botHeader: "AI 智慧學習助理",
         emptyTasks: "目前尚無任何待辦任務",
-        emptySlots: "此日期尚無安排任何行程"
+        emptySlots: "此日期尚無安排任何行程",
+        // 航班預訂、選位與登機證標籤
+        originTitle: "出發機場",
+        destTitle: "目的地機場",
+        autoDurTitle: "⏱️ 專注學習時長（依航程距離計算）",
+        btnPickSeat: "💺 選擇座位 & 登機證",
+        btnFlyNow: "🛫 立即起飛",
+        btnCollapse: "🔽 收合面板",
+        btnExpand: "🔼 展開面板",
+        btnGlobe3D: "🌍 3D 地球儀",
+        btnMap2D: "🛰️ 2D 衛星圖",
+        unitMin: "分鐘",
+        unitHr: "小時",
+        vnGroup: "🇻🇳 越南國內線 (22)",
+        intGroup: "🌏 國際航線 (12)",
+        btnBackBooking: "‹ 返回",
+        seatHint: "點擊任意座位或按繼續",
+        btnContinueTicket: "繼續 ➔",
+        btnConfirmSeat: "確認座位並印製登機證 ➔",
+        strictSub: "離開學習畫面時將發出警報",
+        btnChangeSeat: "‹ 更換座位",
+        btnTakeoffTicket: "🛫 起飛開始專注學習",
+        btnDoneFlight: "✓ 完成",
+        btnAbortFlight: "取消",
+        btnReadingLight: "💡 閱讀燈",
+        btnTrayTable: "🍱 摺疊桌板",
+        btnMoodLight: "🌈 機艙氛圍燈",
+        btnCallFA: "🛎️ 呼叫空服員",
+        btnWindowShade: "🪟 拉起 / 放下遮陽板"
     }
 };
 
@@ -176,7 +260,6 @@ const AIRPORTS = [
     { code: "VCS", name: "Côn Đảo (Bà Rịa - VT)", group: "VN", coords: [8.7325, 106.6336] },
     { code: "DIN", name: "Điện Biên Phủ", group: "VN", coords: [21.3975, 103.0078] },
     { code: "CAH", name: "Cà Mau", group: "VN", coords: [9.1756, 105.1794] },
-    // 12 Sân bay Quốc tế
     { code: "TPE", name: "Đài Bắc - Đào Viên (Đài Loan 🇹🇼)", group: "INT", coords: [25.0797, 121.2342] },
     { code: "BKK", name: "Bangkok (Thái Lan)", group: "INT", coords: [13.6900, 100.7501] },
     { code: "SIN", name: "Singapore (Changi)", group: "INT", coords: [1.3644, 103.9915] },
@@ -212,4 +295,4 @@ const INITIAL_CLEAN_DB = {
     }
 };
 
-const STORAGE_KEY = "studyhub_focus_flight_clean_v4";data_i18n.js
+const STORAGE_KEY = "studyhub_focus_flight_clean_v4";

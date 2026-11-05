@@ -2,11 +2,11 @@ import streamlit as st
 import streamlit.components.v1 as components
 
 st.set_page_config(
-    page_title="StudyHub & 3D Flight Sim (VI / EN / 繁體)",
-    page_icon="🌍",
-    layout="wide",
-    initial_sidebar_state="collapsed"
-)
+                page_title="StudyHub & 3D Flight Sim (VI / EN / 繁體)",
+                page_icon="🌍",
+                layout="wide",
+                initial_sidebar_state="collapsed"
+)                        
 
 st.markdown("""
     <style>

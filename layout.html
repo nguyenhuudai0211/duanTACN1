@@ -1,0 +1,956 @@
+<!-- AUDIO LOFI -->
+<audio id="lofi-player" loop crossorigin="anonymous">
+    <source id="lofi-source" src="https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3" type="audio/mpeg">
+</audio>
+
+<!-- ================= THANH ĐIỀU HƯỚNG CHÍNH + CHỌN 3 NGÔN NGỮ (VI / EN / 繁體中文) ================= -->
+<header style="z-index: 8000;" class="fixed top-0 left-0 right-0 h-14 bg-[#080d1a]/95 backdrop-blur-xl border-b border-white/10 px-2.5 sm:px-4 flex items-center justify-between gap-2">
+    <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center text-black font-black text-base shadow">🌍</div>
+            <div class="hidden xl:block">
+                <div class="text-[11px] font-extrabold tracking-wider text-white">STUDYHUB & SATELLITE 3D</div>
+                <div class="text-[9px] text-emerald-400" id="save-status-indicator">● Авто-Save Ready</div>
+            </div>
+        </div>
+
+        <!-- Chọn Thành viên -->
+        <div class="bg-slate-900 border border-white/15 px-2.5 py-1 rounded-xl flex items-center gap-1.5">
+            <span class="text-xs">👤</span>
+            <div>
+                <div id="lbl-member-top" class="text-[8px] text-amber-400 font-bold uppercase tracking-wider leading-none">Thành viên</div>
+                <select id="member-select" onchange="switchMemberProfile()" class="bg-transparent text-white font-extrabold text-xs focus:outline-none cursor-pointer pr-1">
+                    <option value="huudai" class="bg-slate-900">Hữu Đại</option>
+                    <option value="quangminh" class="bg-slate-900">Quang Minh</option>
+                    <option value="khanhthi" class="bg-slate-900">Khánh Thi</option>
+                    <option value="minhchau" class="bg-slate-900">Minh Châu</option>
+                    <option value="uyennhi" class="bg-slate-900">Uyên Nhi</option>
+                    <option value="vanhoang" class="bg-slate-900">Văn Hoàng</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- ĐỒNG HỒ THỜI GIAN THỰC -->
+        <div class="hidden md:flex items-center gap-2 bg-slate-900/90 border border-cyan-500/30 px-2.5 py-1 rounded-xl">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+            <div>
+                <div id="realtime-clock" class="mono text-xs font-extrabold text-cyan-300 leading-none">00:00:00</div>
+                <div id="realtime-date" class="text-[9px] text-slate-400 font-semibold leading-none mt-0.5">--/--/----</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chuyển Đổi 2 Giao Diện Riêng Biệt -->
+    <div class="bg-slate-900/90 p-1 rounded-xl border border-white/10 flex items-center gap-1">
+        <button id="nav-btn-dashboard" onclick="switchPage('dashboard')" class="px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-extrabold bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow transition flex items-center gap-1.5">
+            <span id="lbl-tab-dashboard">📊 Bảng Điều Khiển Học Tập</span>
+            <span id="nav-pending-badge" class="bg-black/30 text-white text-[10px] px-1.5 rounded-full">0</span>
+        </button>
+        <button id="nav-btn-flight" onclick="switchPage('flight')" class="px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-extrabold text-slate-400 hover:text-white transition flex items-center gap-1.5">
+            <span id="lbl-tab-flight">✈️ Chuyến Bay 3D / 2D</span>
+        </button>
+    </div>
+
+    <!-- BỘ CHUYỂN ĐỔI 3 NGÔN NGỮ (VI / EN / 繁體中文) & NHẠC LOFI -->
+    <div class="flex items-center gap-1.5">
+        <div class="bg-slate-900 border border-amber-400/40 p-0.5 rounded-xl flex items-center text-[10px] font-extrabold">
+            <button id="lang-btn-vi" onclick="setAppLanguage('vi')" class="px-2 py-1 rounded-lg bg-amber-400 text-black transition">🇻🇳 VI</button>
+            <button id="lang-btn-en" onclick="setAppLanguage('en')" class="px-2 py-1 rounded-lg text-slate-300 hover:text-white transition">🇬🇧 EN</button>
+            <button id="lang-btn-zh" onclick="setAppLanguage('zh')" class="px-2 py-1 rounded-lg text-slate-300 hover:text-white transition">🇹🇼 繁體</button>
+        </div>
+
+        <button onclick="toggleLofi()" class="bg-slate-900 hover:bg-slate-800 border border-white/10 px-2.5 py-1.5 rounded-xl flex items-center gap-1.5 text-xs font-bold text-slate-200 transition">
+            <div id="eq-icon" class="hidden items-end gap-[2px] h-3.5">
+                <div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div>
+            </div>
+            <span id="lofi-btn-text">🎵 Lofi</span>
+        </button>
+        <button onclick="openMediaModal()" class="bg-slate-900 hover:bg-slate-800 border border-cyan-500/30 px-2 py-1.5 rounded-xl text-xs font-bold text-cyan-400 transition" title="Cài đặt Âm thanh & Avatar Bot">
+            ⚙️
+        </button>
+    </div>
+</header>
+
+<!-- ========================================================================================= -->
+<!-- TRANG 1: BẢNG ĐIỀU KHIỂN HỌC TẬP, TO-DO LIST & LỊCH VẠN NIÊN THÁNG/NĂM ĐỒNG BỘ            -->
+<!-- ========================================================================================= -->
+<main id="page-dashboard" style="z-index: 30;" class="fixed inset-x-0 top-14 bottom-0 bg-[#03060f] overflow-y-auto px-3 sm:px-6 py-4 page-layer-visible">
+    <div class="max-w-7xl mx-auto space-y-4 pb-20">
+
+        <!-- CẢNH BÁO DEADLINE & BÁO GIỜ CHUYẾN BAY TỰ ĐỘNG -->
+        <div id="deadline-banner" class="hidden bg-gradient-to-r from-blue-600/90 via-indigo-600/90 to-cyan-600/90 rounded-2xl p-3.5 shadow-xl border border-cyan-300/30 items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <span class="text-xl animate-bounce">✈️</span>
+                <div>
+                    <div id="lbl-banner-tag" class="text-[9px] font-black uppercase tracking-widest bg-black/30 px-2 py-0.5 rounded inline-block text-yellow-300">Thông báo Chuyến bay từ Lịch cá nhân</div>
+                    <div id="deadline-banner-text" class="text-xs sm:text-sm font-extrabold text-white mt-0.5"></div>
+                </div>
+            </div>
+            <button onclick="startFocusFromTopTask()" id="lbl-banner-btn" class="bg-yellow-400 text-black hover:bg-yellow-300 font-black text-xs px-3.5 py-2 rounded-xl shadow shrink-0">
+                🛫 Cất cánh học ngay
+            </button>
+        </div>
+
+        <!-- 4 THẺ THỐNG KÊ KPI -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <div class="dash-card rounded-2xl p-3.5 flex items-center justify-between">
+                <div>
+                    <div id="lbl-kpi-1-title" class="text-[11px] text-slate-400 font-semibold">Hồ sơ thành viên</div>
+                    <div id="stat-member-name" class="text-base font-black text-amber-400 mt-0.5">Hữu Đại</div>
+                    <div id="lbl-kpi-1-sub" class="text-[10px] text-slate-500">Đồng bộ Lịch ➔ Chuyến bay</div>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-lg">👤</div>
+            </div>
+
+            <div class="dash-card rounded-2xl p-3.5 flex items-center justify-between">
+                <div>
+                    <div id="lbl-kpi-2-title" class="text-[11px] text-slate-400 font-semibold">Nhiệm vụ & Lịch bay</div>
+                    <div id="stat-pending-count" class="text-xl font-black text-white mt-0.5 mono">0</div>
+                    <div id="lbl-kpi-2-sub" class="text-[10px] text-cyan-400">Đang chờ cất cánh</div>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-lg">📋</div>
+            </div>
+
+            <div class="dash-card rounded-2xl p-3.5 flex items-center justify-between">
+                <div>
+                    <div id="lbl-kpi-3-title" class="text-[11px] text-slate-400 font-semibold">Đã hoàn thành (✓)</div>
+                    <div id="stat-done-count" class="text-xl font-black text-emerald-400 mt-0.5 mono">0</div>
+                    <div id="stat-done-percent" class="text-[10px] text-emerald-500">Tiến độ: 0%</div>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-lg">✅</div>
+            </div>
+
+            <div class="dash-card rounded-2xl p-3.5 flex items-center justify-between">
+                <div>
+                    <div id="lbl-kpi-4-title" class="text-[11px] text-slate-400 font-semibold">Dặm bay tích lũy</div>
+                    <div id="stat-miles-count" class="text-lg font-black text-blue-400 mt-0.5 mono">0 km</div>
+                    <div id="stat-flights-count" class="text-[10px] text-slate-400">Đã hạ cánh: 0 chuyến</div>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-lg">🛂</div>
+            </div>
+        </div>
+
+        <!-- KHU VỰC AI ĐỀ XUẤT "HÔM NAY NÊN HỌC GÌ?" -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+            <div class="lg:col-span-8 bg-gradient-to-br from-blue-950/85 via-slate-900 to-slate-900 border border-cyan-500/30 rounded-3xl p-4 shadow-xl flex flex-col justify-between">
+                <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+                    <div class="flex items-center gap-2">
+                        <span id="lbl-ai-badge" class="bg-cyan-400 text-black font-black text-[10px] px-2.5 py-0.5 rounded-full uppercase tracking-wider">💡 Hôm nay nên học gì? (AI Đề xuất)</span>
+                        <span id="lbl-ai-sub" class="text-xs text-slate-400">Báo giờ bay tự động theo khung giờ đã đặt</span>
+                    </div>
+                    <button onclick="sendStudyReminderAlert()" id="lbl-remind-btn" class="bg-white/10 hover:bg-white/15 text-amber-300 border border-amber-400/30 px-3 py-1 rounded-xl text-xs font-bold transition">
+                        🔔 Kiểm tra báo thức bay
+                    </button>
+                </div>
+                <div id="ai-today-suggestion" class="bg-black/40 border border-white/10 rounded-2xl p-3"></div>
+            </div>
+
+            <div class="lg:col-span-4 dash-card rounded-3xl p-4 flex flex-col justify-between">
+                <div>
+                    <h3 id="lbl-smart-ctrl-title" class="text-sm font-extrabold text-white mb-1">⚡ Điều phối Lịch AI Thông Minh</h3>
+                    <p id="lbl-smart-ctrl-desc" class="text-xs text-slate-400 leading-relaxed">
+                        Sắp xếp thứ tự ưu tiên theo Deadline hoặc tự động dời toàn bộ ca học khi bạn có việc đột xuất.
+                    </p>
+                </div>
+                <div class="space-y-2 mt-3">
+                    <button onclick="aiSortTasks()" id="lbl-btn-aisort" class="w-full bg-gradient-to-r from-amber-500 to-yellow-500 hover:opacity-95 text-black font-black py-2 px-4 rounded-xl text-xs shadow transition">
+                        🤖 AI Sắp xếp Thứ tự Ưu tiên
+                    </button>
+                    <button onclick="handleSuddenScheduleChange()" id="lbl-btn-sudden" class="w-full bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-cyan-500/30 font-bold py-2 px-4 rounded-xl text-xs transition">
+                        🌪️ Có lịch đột xuất (Tự động dời ca)
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- CỘT TRÁI: DANH SÁCH NHIỆM VỤ & CHẶNG BAY | CỘT PHẢI: LỊCH VẠN NIÊN THÁNG/NĂM & CHU KỲ TỰ CHỌN -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+
+            <!-- CỘT TRÁI (6 PHẦN): DANH SÁCH NHIỆM VỤ & CHẶNG BAY -->
+            <div class="lg:col-span-6 dash-card rounded-3xl p-4 sm:p-5 flex flex-col">
+                <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                    <div>
+                        <h2 class="text-sm sm:text-base font-extrabold text-white flex items-center gap-2">
+                            <span id="lbl-todo-header">✅ Danh Sách Nhiệm Vụ & Chặng Bay</span>
+                            <span id="lbl-todo-sync-tag" class="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-lg border border-emerald-400/30">⚡ Tự động nhận từ Lịch</span>
+                        </h2>
+                        <p id="lbl-todo-sub" class="text-[11px] text-slate-400">Thêm môn học ở Lịch bên phải sẽ tự động nhảy sang đây kèm giờ bay!</p>
+                    </div>
+
+                    <div class="flex bg-slate-900 p-1 rounded-xl border border-white/10 text-xs font-bold">
+                        <button id="filter-all" onclick="setTaskFilter('all')" class="px-2.5 py-1 rounded-lg bg-blue-600 text-white">Tất cả</button>
+                        <button id="filter-pending" onclick="setTaskFilter('pending')" class="px-2.5 py-1 rounded-lg text-slate-400 hover:text-white">Đang làm</button>
+                        <button id="filter-done" onclick="setTaskFilter('done')" class="px-2.5 py-1 rounded-lg text-slate-400 hover:text-white">Đã xong ✓</button>
+                    </div>
+                </div>
+
+                <!-- Khung thêm nhiệm vụ lẻ -->
+                <div class="bg-slate-900/90 border border-white/15 rounded-2xl p-3 mb-4 space-y-2">
+                    <div class="flex items-center justify-between">
+                        <span id="lbl-quick-add-title" class="text-xs font-bold text-cyan-400">+ Thêm nhanh bài tập / deadline lẻ:</span>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-12 gap-2">
+                        <input type="text" id="quick-task-title" onkeydown="if(event.key==='Enter') addNewTask()" placeholder="Nhập tên công việc (VD: Giải đề Toán, Tạo app...)" class="sm:col-span-6 bg-slate-800 text-white text-xs px-3 py-2 rounded-xl border border-white/10 focus:outline-none focus:border-cyan-400" />
+                        <div class="sm:col-span-3 flex items-center bg-slate-800 rounded-xl border border-white/10 px-2.5">
+                            <span id="lbl-quick-deadline" class="text-[10px] text-amber-300 font-bold mr-1.5 shrink-0">Hạn (Giờ):</span>
+                            <input type="number" id="quick-task-hours" value="24" min="1" max="720" class="w-full bg-transparent text-white text-xs py-2 focus:outline-none font-bold" />
+                        </div>
+                        <select id="quick-task-importance" class="sm:col-span-3 bg-slate-800 text-amber-300 text-xs px-2 py-2 rounded-xl border border-white/10 font-bold focus:outline-none">
+                            <option value="5">⭐⭐⭐⭐⭐</option>
+                            <option value="4" selected>⭐⭐⭐⭐</option>
+                            <option value="3">⭐⭐⭐</option>
+                            <option value="2">⭐⭐</option>
+                        </select>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 items-center">
+                        <div class="sm:col-span-5 flex items-center justify-between bg-slate-800 rounded-xl border border-cyan-500/30 px-2.5 py-1.5">
+                            <span class="text-[10px] text-cyan-300 font-bold">⏰</span>
+                            <input type="time" id="quick-task-start" value="19:30" class="bg-transparent text-white text-xs font-mono font-bold focus:outline-none" />
+                            <span class="text-xs text-slate-400">➔</span>
+                            <input type="time" id="quick-task-end" value="20:25" class="bg-transparent text-amber-300 text-xs font-mono font-bold focus:outline-none" />
+                        </div>
+                        <div class="sm:col-span-4 flex items-center bg-slate-800 rounded-xl border border-white/10 px-2.5 py-1.5">
+                            <select id="quick-task-dest" class="w-full bg-transparent text-white text-xs font-bold focus:outline-none"></select>
+                        </div>
+                        <button onclick="addNewTask()" id="lbl-btn-save-task" class="sm:col-span-3 bg-gradient-to-r from-blue-600 to-cyan-500 hover:opacity-95 text-white font-extrabold py-2 px-3 rounded-xl text-xs shadow-lg transition">
+                            + Lưu Việc
+                        </button>
+                    </div>
+                </div>
+
+                <div id="todo-drag-list" class="space-y-2 flex-1 max-h-[540px] overflow-y-auto pr-1"></div>
+            </div>
+
+            <!-- CỘT PHẢI (6 PHẦN): BẢNG LỊCH THÁNG (DƯƠNG LỊCH + ÂM LỊCH) & FORM CHU KỲ TÙY CHỌN -->
+            <div class="lg:col-span-6 dash-card rounded-3xl p-4 sm:p-5 flex flex-col">
+                <div class="flex flex-wrap items-center justify-between gap-2 mb-2.5">
+                    <div>
+                        <h2 class="text-sm sm:text-base font-extrabold text-white flex items-center gap-2">
+                            <span id="lbl-cal-header">🗓️ Lịch Biểu & Việc Cá Nhân</span>
+                            <span id="timetable-owner-badge" class="text-xs text-amber-400 font-black"></span>
+                        </h2>
+                        <p id="lbl-cal-sub" class="text-[11px] text-slate-400">Bấm chọn trực tiếp ngày trên tờ lịch để xem Thứ/Ngày/Tháng/Năm & Âm lịch</p>
+                    </div>
+
+                    <button onclick="toggleLunarDisplay()" id="btn-toggle-lunar" class="bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-400/40 px-2.5 py-1 rounded-xl text-[11px] font-extrabold transition">
+                        🌙 Âm lịch: BẬT
+                    </button>
+                </div>
+
+                <!-- THANH ĐIỀU KHIỂN TỜ LỊCH THÁNG -->
+                <div class="bg-gradient-to-r from-emerald-700 via-emerald-600 to-teal-600 rounded-t-2xl px-3.5 py-2 flex flex-wrap items-center justify-between gap-2 shadow">
+                    <div class="flex items-center gap-2">
+                        <button onclick="changeCalendarMonth(-1)" class="w-7 h-7 rounded-full bg-white text-emerald-800 hover:bg-yellow-200 font-black flex items-center justify-center shadow">‹</button>
+                        <span id="calendar-header-title" class="text-sm sm:text-base font-black text-white tracking-wide uppercase">THÁNG 11 - 2026</span>
+                        <button onclick="changeCalendarMonth(1)" class="w-7 h-7 rounded-full bg-white text-emerald-800 hover:bg-yellow-200 font-black flex items-center justify-center shadow">›</button>
+                    </div>
+
+                    <div class="flex items-center gap-1.5 text-xs">
+                        <select id="cal-month-select" onchange="onMonthYearDropdownChange()" class="bg-white text-slate-900 font-extrabold text-xs px-2 py-1 rounded-lg focus:outline-none cursor-pointer">
+                            <option value="1">Tháng 1</option><option value="2">Tháng 2</option><option value="3">Tháng 3</option>
+                            <option value="4">Tháng 4</option><option value="5">Tháng 5</option><option value="6">Tháng 6</option>
+                            <option value="7">Tháng 7</option><option value="8">Tháng 8</option><option value="9">Tháng 9</option>
+                            <option value="10">Tháng 10</option><option value="11" selected>Tháng 11</option><option value="12">Tháng 12</option>
+                        </select>
+                        <select id="cal-year-select" onchange="onMonthYearDropdownChange()" class="bg-white text-slate-900 font-extrabold text-xs px-2 py-1 rounded-lg focus:outline-none cursor-pointer">
+                            <option value="2025">2025</option>
+                            <option value="2026" selected>2026</option>
+                            <option value="2027">2027</option>
+                            <option value="2028">2028</option>
+                            <option value="2029">2029</option>
+                        </select>
+                        <button onclick="jumpToToday()" id="lbl-btn-today" class="bg-slate-900/90 hover:bg-black text-amber-300 font-extrabold px-2.5 py-1 rounded-lg text-[11px]">Hôm nay</button>
+                    </div>
+                </div>
+
+                <!-- TIÊU ĐỀ 7 CỘT THỨ HAI -> CHỦ NHẬT -->
+                <div id="calendar-weekdays-row" class="grid grid-cols-7 bg-slate-900 border-x border-b border-white/15 text-center py-1.5 text-[11px] font-extrabold text-slate-300">
+                    <div>Thứ 2</div><div>Thứ 3</div><div>Thứ 4</div><div>Thứ 5</div><div>Thứ 6</div><div>Thứ 7</div><div class="text-red-400">CN</div>
+                </div>
+
+                <!-- LƯỚI LỊCH THÁNG 7 CỘT -->
+                <div id="calendar-days-grid" class="grid grid-cols-7 gap-1 bg-slate-950/90 p-2 rounded-b-2xl border-x border-b border-white/15 mb-3"></div>
+
+                <!-- FORM THÊM LỊCH VÀO NGÀY ĐANG CHỌN + CHU KỲ LẶP LẠI TÙY Ý -->
+                <div class="bg-slate-900/95 border border-emerald-500/35 rounded-2xl p-3.5 mb-3 space-y-2.5 shadow-lg">
+                    <div class="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 pb-2">
+                        <div>
+                            <div id="selected-full-date-banner" class="text-xs sm:text-sm font-black text-amber-300">
+                                📅 Thứ Tư, Ngày 04/11/2026
+                            </div>
+                            <div id="selected-lunar-date-banner" class="text-[11px] text-cyan-300 font-semibold">
+                                🌙 Âm lịch: Ngày 26/09 • Năm Bính Ngọ
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-1.5 bg-slate-800 border border-white/15 px-2.5 py-1 rounded-xl">
+                            <span class="text-[10px] text-slate-300 font-bold" id="lbl-pick-date">Chọn ngày:</span>
+                            <input type="date" id="direct-date-picker" value="2026-11-04" onchange="onDirectDateInputChange()" class="bg-transparent text-white text-xs font-mono font-bold focus:outline-none cursor-pointer" />
+                        </div>
+                    </div>
+
+                    <!-- Hàng 1: Chọn Giờ bắt đầu ➔ Giờ kết thúc -->
+                    <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 items-center">
+                        <div class="sm:col-span-5 bg-slate-800 border border-white/15 rounded-xl px-2.5 py-1.5 flex items-center justify-between">
+                            <span id="lbl-start-time" class="text-[10px] text-slate-300 font-bold">⏰ Bắt đầu:</span>
+                            <input type="time" id="new-slot-start" value="14:00" onchange="updateSlotDurationPreview()" class="bg-transparent text-cyan-300 font-mono font-extrabold text-xs focus:outline-none cursor-pointer" />
+                        </div>
+                        <div class="sm:col-span-5 bg-slate-800 border border-white/15 rounded-xl px-2.5 py-1.5 flex items-center justify-between">
+                            <span id="lbl-end-time" class="text-[10px] text-slate-300 font-bold">🏁 Kết thúc:</span>
+                            <input type="time" id="new-slot-end" value="15:30" onchange="updateSlotDurationPreview()" class="bg-transparent text-amber-300 font-mono font-extrabold text-xs focus:outline-none cursor-pointer" />
+                        </div>
+                        <div class="sm:col-span-2 text-center">
+                            <span id="calc-slot-mins-preview" class="text-[10px] font-mono bg-cyan-500/20 text-cyan-300 px-2 py-1 rounded-lg font-bold block">90p</span>
+                        </div>
+                    </div>
+
+                    <!-- Hàng 2: Phân loại Lịch học / Việc cá nhân & CHU KỲ TỰ CHỌN -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <div>
+                            <div id="lbl-cat-type" class="text-[9px] text-slate-400 font-bold uppercase mb-0.5">Phân loại lịch</div>
+                            <select id="new-slot-type" class="w-full bg-slate-800 text-white text-xs px-2.5 py-2 rounded-xl border border-white/15 font-bold focus:outline-none cursor-pointer">
+                                <option value="study">📚 Lịch học / Ôn bài (Tạo chuyến bay)</option>
+                                <option value="school">🔴 Lịch học trên trường (Cố định)</option>
+                                <option value="personal">🟣 Việc cá nhân (Đi làm, sự kiện...)</option>
+                                <option value="free">🟢 Khung giờ trống tự học</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <div id="lbl-repeat-cycle" class="text-[9px] text-emerald-400 font-bold uppercase mb-0.5">Chu kỳ lặp lại (Tự chọn)</div>
+                            <select id="slot-repeat-mode" onchange="onRepeatModeChange()" class="w-full bg-slate-800 text-emerald-300 text-xs px-2.5 py-2 rounded-xl border border-emerald-500/30 font-extrabold focus:outline-none cursor-pointer">
+                                <option value="none">1️⃣ Không lặp lại (Chỉ ngày này)</option>
+                                <option value="weekly">🔄 Hàng tuần (Cùng Thứ mỗi tuần)</option>
+                                <option value="monthly" selected>🗓️ Hàng tháng (Cùng Ngày này mỗi tháng)</option>
+                                <option value="yearly">📆 Hàng năm (Cùng Ngày/Tháng mỗi năm)</option>
+                                <option value="daily">☀️ Hàng ngày (Mỗi ngày)</option>
+                                <option value="custom">⚙️ Tùy chỉnh chu kỳ (Tự nhập bao lâu tùy ý)...</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Hộp tự nhập chu kỳ tùy ý -->
+                    <div id="custom-repeat-box" class="hidden bg-slate-800/90 border border-amber-400/40 rounded-xl p-2.5 flex flex-wrap items-center justify-between gap-2 text-xs">
+                        <span class="text-amber-300 font-bold">⚙️ Lặp lại mỗi:</span>
+                        <div class="flex items-center gap-1.5">
+                            <input type="number" id="custom-repeat-interval" value="2" min="1" max="365" class="w-14 bg-slate-900 text-white font-mono font-bold text-center py-1 rounded-lg border border-white/15" />
+                            <select id="custom-repeat-unit" class="bg-slate-900 text-cyan-300 font-bold px-2 py-1 rounded-lg border border-white/15">
+                                <option value="ngày">Ngày</option>
+                                <option value="tuần" selected>Tuần</option>
+                                <option value="tháng">Tháng</option>
+                                <option value="năm">Năm</option>
+                            </select>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-slate-300">Trong:</span>
+                            <input type="text" id="custom-repeat-duration" value="3 tháng" placeholder="VD: 3 tháng, 1 năm..." class="w-24 bg-slate-900 text-amber-300 font-bold px-2 py-1 rounded-lg border border-white/15 text-xs" />
+                        </div>
+                    </div>
+
+                    <!-- Hàng 3: Tên môn học / công việc + Nút Thêm -->
+                    <div class="flex gap-2">
+                        <input type="text" id="new-slot-subject" onkeydown="if(event.key==='Enter') saveNewTimetableSlot()" placeholder="Nhập môn học, ca làm, sự kiện (VD: Toán, Đi làm, Họp CLB...)" class="flex-1 bg-slate-800 text-white text-xs px-3 py-2 rounded-xl border border-white/15 focus:outline-none focus:border-emerald-400" />
+                        <button onclick="saveNewTimetableSlot()" id="lbl-btn-add-slot" class="bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold px-4 py-2 rounded-xl text-xs shrink-0 shadow-lg transition">
+                            + Thêm Lịch
+                        </button>
+                    </div>
+
+                    <label class="flex items-center gap-2 pt-0.5 cursor-pointer text-[11px] text-cyan-300 font-semibold">
+                        <input type="checkbox" id="auto-sync-to-flight" checked class="w-4 h-4 accent-emerald-500 rounded cursor-pointer" />
+                        <span id="lbl-autosync-check">⚡ Tự động đẩy sang Danh sách Nhiệm vụ & Báo giờ Chuyến bay bên trái</span>
+                    </label>
+                </div>
+
+                <!-- Danh sách các ca học / sự kiện của ngày đang chọn -->
+                <div id="timetable-slots-list" class="space-y-2 flex-1 max-h-[220px] overflow-y-auto pr-1"></div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- ========================================================================================= -->
+<!-- TRANG 2: QUẢ ĐỊA CẦU 3D VŨ TRỤ ⟷ BẢN ĐỒ VỆ TINH 2D                                        -->
+<!-- ========================================================================================= -->
+<section id="page-flight" style="z-index: 20;" class="fixed inset-x-0 top-14 bottom-0 overflow-hidden page-layer-hidden">
+
+    <div id="globe-wrapper">
+        <canvas id="globe-canvas" class="w-full h-full block cursor-grab active:cursor-grabbing"></canvas>
+
+        <div id="globe-origin-pin" style="z-index: 15;" class="fixed pointer-events-none -translate-x-1/2 -translate-y-1/2 hidden">
+            <div class="bg-cyan-400 text-black font-black text-[10px] px-2 py-0.5 rounded-md shadow-xl border border-black/40 whitespace-nowrap">✈️ <span id="globe-origin-code">SGN</span></div>
+        </div>
+        <div id="globe-dest-pin" style="z-index: 15;" class="fixed pointer-events-none -translate-x-1/2 -translate-y-1/2 hidden">
+            <div class="bg-yellow-400 text-black font-black text-[10px] px-2 py-0.5 rounded-md shadow-xl border border-black/40 whitespace-nowrap">🏁 <span id="globe-dest-code">DAD</span></div>
+        </div>
+        <div id="globe-plane-pin" style="z-index: 18;" class="fixed pointer-events-none -translate-x-1/2 -translate-y-1/2 hidden">
+            <div class="relative w-14 h-14 flex items-center justify-center">
+                <div class="radar-ring absolute inset-1 rounded-full border-2 border-cyan-400/80"></div>
+                <div id="globe-plane-svg" class="w-12 h-12 relative z-10"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="map-2d-wrapper">
+        <div id="map"></div>
+    </div>
+
+    <div id="zoom-mode-controls" style="z-index: 60;" class="fixed right-4 top-1/3 -translate-y-1/2 flex flex-col items-end gap-2">
+        <div class="glass-panel p-1.5 rounded-2xl flex flex-col items-center gap-1.5 shadow-2xl border border-cyan-400/30">
+            <button onclick="zoomStepIn()" class="w-9 h-9 rounded-xl bg-slate-800 hover:bg-blue-600 text-white font-black text-base flex items-center justify-center transition border border-white/10">+</button>
+            <div id="projection-mode-badge" class="text-[9px] font-mono font-extrabold text-cyan-300 px-1 py-0.5 text-center leading-tight">3D</div>
+            <button onclick="zoomStepOut()" class="w-9 h-9 rounded-xl bg-slate-800 hover:bg-blue-600 text-white font-black text-base flex items-center justify-center transition border border-white/10">−</button>
+        </div>
+
+        <button onclick="toggleProjectionMode()" id="quick-switch-proj-btn" class="glass-panel px-3 py-2 rounded-xl text-[11px] font-extrabold text-amber-300 hover:text-white border border-amber-400/40 shadow-xl whitespace-nowrap">
+            🛰️ Bản đồ 2D
+        </button>
+    </div>
+
+    <!-- GÓC NHÌN 2: BUỒNG LÁI PHI CÔNG -->
+    <div id="view-cockpit" style="z-index: 45;" class="fixed inset-x-0 top-14 bottom-0 hidden flex-col justify-between overflow-hidden">
+        <div id="cockpit-sky-bg" class="absolute inset-0 bg-gradient-to-b from-sky-500 via-blue-400 to-sky-200 transition-all duration-700 overflow-hidden">
+            <div id="cockpit-stars" class="absolute inset-0 opacity-0 transition-opacity duration-700" style="background-image: radial-gradient(white 1.2px, transparent 1.2px), radial-gradient(rgba(255,255,255,0.7) 1.5px, transparent 1.5px); background-size: 55px 55px, 95px 95px;"></div>
+
+            <div class="svg-cloud-1 absolute top-10 left-0 w-72 text-white/85 pointer-events-none">
+                <svg viewBox="0 0 200 80" fill="currentColor"><path d="M45 65 h115 a22 22 0 0 0 0 -44 a28 28 0 0 0 -52 -12 a34 34 0 0 0 -63 18 a20 20 0 0 0 0 38 z"/></svg>
+            </div>
+            <div class="svg-cloud-2 absolute top-28 left-0 w-96 text-white/70 pointer-events-none">
+                <svg viewBox="0 0 200 80" fill="currentColor"><path d="M45 65 h115 a22 22 0 0 0 0 -44 a28 28 0 0 0 -52 -12 a34 34 0 0 0 -63 18 a20 20 0 0 0 0 38 z"/></svg>
+            </div>
+            <div class="svg-cloud-3 absolute top-44 left-0 w-80 text-white/90 pointer-events-none">
+                <svg viewBox="0 0 200 80" fill="currentColor"><path d="M45 65 h115 a22 22 0 0 0 0 -44 a28 28 0 0 0 -52 -12 a34 34 0 0 0 -63 18 a20 20 0 0 0 0 38 z"/></svg>
+            </div>
+            <div class="svg-cloud-4 absolute top-16 left-0 w-64 text-white/60 pointer-events-none">
+                <svg viewBox="0 0 200 80" fill="currentColor"><path d="M45 65 h115 a22 22 0 0 0 0 -44 a28 28 0 0 0 -52 -12 a34 34 0 0 0 -63 18 a20 20 0 0 0 0 38 z"/></svg>
+            </div>
+            <div class="svg-cloud-5 absolute top-56 left-0 w-[420px] text-white/80 pointer-events-none">
+                <svg viewBox="0 0 200 80" fill="currentColor"><path d="M45 65 h115 a22 22 0 0 0 0 -44 a28 28 0 0 0 -52 -12 a34 34 0 0 0 -63 18 a20 20 0 0 0 0 38 z"/></svg>
+            </div>
+
+            <div id="cockpit-rain-layer" class="rain-overlay absolute inset-0 hidden pointer-events-none"></div>
+        </div>
+
+        <div class="relative z-10 w-full bg-gradient-to-b from-[#070b14] to-[#111827]/90 border-b-2 border-slate-700 px-4 py-1.5 flex items-center justify-center gap-6 text-[10px] font-mono text-slate-400 shadow-lg">
+            <span class="text-emerald-400 font-bold">● APU GEN ON</span>
+            <span>● SEATBELT SIGN: ON</span>
+            <span class="hidden sm:inline">● ANTI-ICE: AUTO</span>
+            <span class="text-cyan-400 font-bold">● AUTOPILOT: NAV + VNAV</span>
+        </div>
+
+        <div class="relative z-10 flex-1 flex items-center justify-center pointer-events-none">
+            <div class="absolute inset-y-0 left-1/2 -translate-x-1/2 w-3.5 bg-gradient-to-r from-slate-950 via-slate-800 to-slate-950 border-x border-white/10"></div>
+
+            <div class="w-[300px] sm:w-[390px] h-[185px] sm:h-[210px] border-2 border-emerald-400/60 rounded-3xl bg-emerald-950/15 backdrop-blur-[1px] p-3.5 flex flex-col justify-between shadow-[0_0_40px_rgba(16,185,129,0.2)]">
+                <div class="flex justify-between items-center text-[11px] font-mono font-bold text-emerald-300 border-b border-emerald-400/30 pb-1">
+                    <span>SPD: <b id="hud-speed">840 KM/H</b></span>
+                    <span class="bg-emerald-400/20 px-2 py-0.5 rounded border border-emerald-400/40">HDG <b id="hud-heading">045°</b></span>
+                    <span>ALT: <b id="hud-alt">36,000 FT</b></span>
+                </div>
+
+                <div class="relative flex-1 flex items-center justify-center overflow-hidden my-1">
+                    <div class="hud-horizon w-48 flex flex-col items-center space-y-2">
+                        <div class="w-24 border-b border-dashed border-emerald-300/70 text-[9px] font-mono text-emerald-300 flex justify-between"><span>+10</span><span>+10</span></div>
+                        <div class="w-40 border-b-2 border-emerald-300 text-[10px] font-mono text-emerald-200 flex justify-between"><span>0</span><span>PITCH</span><span>0</span></div>
+                        <div class="w-24 border-b border-dashed border-emerald-300/70 text-[9px] font-mono text-emerald-300 flex justify-between"><span>-10</span><span>-10</span></div>
+                    </div>
+                    <div class="absolute text-emerald-300 font-mono font-black text-base">─ ✛ ─</div>
+                </div>
+
+                <div class="flex justify-between items-center text-[10px] font-mono text-emerald-200 border-t border-emerald-400/30 pt-1">
+                    <span id="hud-aircraft-name">AIRBUS A321NEO</span>
+                    <span id="hud-route-code">SGN ➔ DAD</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="relative z-10 bg-gradient-to-t from-[#04070e] via-[#0d1322] to-[#1a243b] border-t-4 border-slate-600 px-4 pt-3 pb-24 shadow-2xl">
+            <div class="max-w-4xl mx-auto grid grid-cols-3 gap-3 h-28">
+                <div class="bg-[#060a12] border-2 border-slate-700 rounded-xl p-2.5 flex flex-col justify-between font-mono shadow-inner">
+                    <div class="text-[10px] text-cyan-400 font-bold flex justify-between"><span>PFD • ATTITUDE</span><span class="text-emerald-400">AP1+FD</span></div>
+                    <div class="flex items-center justify-between px-2">
+                        <span class="text-[10px] text-amber-300">MACH 0.79</span>
+                        <div id="cockpit-plane-svg-preview" class="w-10 h-10"></div>
+                        <span class="text-[10px] text-cyan-300">FL360</span>
+                    </div>
+                    <div class="text-[10px] text-slate-400 flex justify-between"><span id="cockpit-real-clock">00:00:00</span><span>ETA <b id="cockpit-eta" class="text-emerald-400">--:--</b></span></div>
+                </div>
+
+                <div class="bg-[#060a12] border-2 border-cyan-500/40 rounded-xl p-2.5 flex flex-col items-center justify-center font-mono shadow-inner">
+                    <div class="text-[9px] text-amber-400 uppercase font-bold tracking-wider">FOCUS MISSION TIMER</div>
+                    <div id="cockpit-timer-display" class="text-2xl sm:text-3xl font-extrabold text-white my-0.5">55:00</div>
+                    <div id="cockpit-task-display" class="text-[10px] text-cyan-300 truncate max-w-[180px]">💻 Work</div>
+                </div>
+
+                <div class="bg-[#060a12] border-2 border-slate-700 rounded-xl p-2.5 flex flex-col justify-between font-mono relative overflow-hidden shadow-inner">
+                    <div class="text-[10px] text-emerald-400 font-bold flex justify-between"><span>NAV RADAR</span><span id="cockpit-dist-display" class="text-yellow-400">605 KM</span></div>
+                    <div class="w-12 h-12 rounded-full border border-emerald-500/40 mx-auto flex items-center justify-center relative">
+                        <div class="radar-ring absolute inset-0 rounded-full border border-emerald-400"></div>
+                        <span class="text-xs">✈️</span>
+                    </div>
+                    <div class="text-[9px] text-slate-400 text-center">WX RADAR + TCAS ON</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- GÓC NHÌN 3: TRONG KHOANG CABIN -->
+    <div id="view-cabin" style="z-index: 45;" class="fixed inset-x-0 top-14 bottom-0 hidden flex-col justify-between bg-gradient-to-b from-[#15192b] via-[#0e1526] to-[#070b14] overflow-hidden">
+        <div id="cabin-ceiling-glow" class="absolute top-0 inset-x-0 h-28 bg-gradient-to-b from-cyan-500/30 via-blue-500/15 to-transparent blur-xl pointer-events-none transition-all duration-700"></div>
+
+        <div class="relative z-10 w-full bg-gradient-to-b from-[#1e293b] to-[#0f172a] border-b-2 border-slate-700 px-4 py-2 flex flex-wrap items-center justify-between gap-2 shadow-xl">
+            <div class="flex items-center gap-3 text-xs">
+                <span class="bg-amber-500/20 text-amber-300 border border-amber-400/30 px-2.5 py-0.5 rounded-full font-extrabold text-[10px]">🔔 FASTEN SEATBELT</span>
+                <span class="bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 px-2.5 py-0.5 rounded-full font-extrabold text-[10px]">🚭 NO SMOKING</span>
+                <span id="cabin-air-status" class="text-[11px] text-cyan-300 font-semibold hidden sm:inline">❄️ Cabin: 22°C</span>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-1.5">
+                <button onclick="toggleReadingLight()" id="btn-reading-light" class="bg-slate-800 hover:bg-slate-700 border border-white/15 px-2.5 py-1 rounded-xl text-[11px] font-bold text-slate-200 transition">
+                    💡 Đèn đọc sách
+                </button>
+                <button onclick="toggleTrayTable()" id="btn-tray-table" class="bg-blue-600/30 hover:bg-blue-600/40 border border-blue-400/40 px-2.5 py-1 rounded-xl text-[11px] font-bold text-cyan-200 transition">
+                    🍱 Gấp/Mở bàn học
+                </button>
+                <button onclick="cycleCabinMoodLight()" class="bg-slate-800 hover:bg-slate-700 border border-white/15 px-2.5 py-1 rounded-xl text-[11px] font-bold text-amber-300 transition">
+                    🌈 Đèn LED trần
+                </button>
+                <button onclick="callFlightAttendant()" class="bg-slate-800 hover:bg-slate-700 border border-white/15 px-2.5 py-1 rounded-xl text-[11px] font-bold text-emerald-300 transition">
+                    🛎️ Gọi tiếp viên
+                </button>
+            </div>
+        </div>
+
+        <div id="reading-light-beam" class="fixed top-24 left-1/2 -translate-x-1/2 w-[420px] h-[420px] bg-yellow-200/15 blur-3xl rounded-full pointer-events-none hidden z-10"></div>
+
+        <div class="relative z-10 flex-1 flex items-center justify-center gap-4 sm:gap-8 px-4 pb-20 overflow-y-auto">
+            <div class="hidden md:flex flex-col items-center">
+                <div id="cabin-side-window" class="relative w-36 h-52 rounded-[70px] border-[10px] border-slate-700 bg-gradient-to-b from-sky-500 via-blue-400 to-sky-200 shadow-2xl overflow-hidden">
+                    <div class="win-cloud-fast absolute top-14 w-32 text-white/85">
+                        <svg viewBox="0 0 200 80" fill="currentColor"><path d="M45 65 h115 a22 22 0 0 0 0 -44 a28 28 0 0 0 -52 -12 a34 34 0 0 0 -63 18 a20 20 0 0 0 0 38 z"/></svg>
+                    </div>
+                    <div class="win-cloud-slow absolute top-28 w-36 text-white/70">
+                        <svg viewBox="0 0 200 80" fill="currentColor"><path d="M45 65 h115 a22 22 0 0 0 0 -44 a28 28 0 0 0 -52 -12 a34 34 0 0 0 -63 18 a20 20 0 0 0 0 38 z"/></svg>
+                    </div>
+                    <svg viewBox="0 0 120 80" class="absolute bottom-2 right-0 w-28">
+                        <polygon points="120,25 15,60 25,70 120,55" fill="#cbd5e1"/>
+                        <polygon points="15,60 5,38 14,36 25,70" fill="#0ea5e9"/>
+                        <circle cx="9" cy="38" r="3" fill="#ef4444" class="strobe-light"/>
+                    </svg>
+                </div>
+                <span class="text-[10px] text-slate-400 font-bold mt-1.5">SEAT <b id="cabin-window-seat-tag" class="text-cyan-300">06A</b></span>
+            </div>
+
+            <div class="w-full max-w-md bg-gradient-to-b from-[#1e293b] to-[#0f172a] border-4 border-slate-700 rounded-t-[44px] rounded-b-3xl p-4 shadow-2xl relative">
+                <div class="w-36 h-6 bg-slate-800 border border-white/10 rounded-b-xl mx-auto -mt-4 mb-2.5 flex items-center justify-center text-[10px] font-extrabold text-amber-300 tracking-widest">
+                    SEAT <span id="cabin-seat-label" class="ml-1">06A</span>
+                </div>
+
+                <div class="bg-[#060a14] border-4 border-slate-950 rounded-2xl p-3.5 shadow-inner">
+                    <div class="flex items-center justify-between border-b border-white/10 pb-1.5 mb-2">
+                        <span id="cabin-aircraft-label" class="text-[11px] font-bold text-cyan-400 mono">Airbus A321neo</span>
+                        <span id="cabin-real-clock" class="text-[10px] text-slate-400 mono">00:00:00</span>
+                        <span id="cabin-route-label" class="text-[11px] font-extrabold text-yellow-400 mono">SGN ➔ DAD</span>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2.5 items-center">
+                        <div>
+                            <div class="text-[9px] text-slate-400 uppercase font-bold">Mục tiêu đang học</div>
+                            <div id="cabin-task-title" class="text-xs sm:text-sm font-extrabold text-white mt-0.5 truncate">💻 Work</div>
+                            <div class="text-[10px] text-emerald-400 mt-0.5">👤 <b id="cabin-passenger-name">Hữu Đại</b></div>
+                            <div class="text-[10px] text-slate-400 font-mono">ETA: <b id="cabin-eta" class="text-amber-300">--:--</b></div>
+                        </div>
+
+                        <div class="bg-slate-900/90 border border-white/10 rounded-xl p-2 text-center">
+                            <div class="text-[8px] text-slate-400 uppercase">Thời gian còn lại</div>
+                            <div id="cabin-timer-display" class="text-xl font-black text-cyan-400 mono">55:00</div>
+                            <div class="text-[9px] text-amber-300"><span id="cabin-dist-display">605</span> km</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="cabin-tray-table-open" class="mt-3 bg-gradient-to-b from-slate-200 to-slate-300 text-slate-900 rounded-2xl p-3 shadow-xl border-b-4 border-slate-400 transition-all">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2.5">
+                            <span class="text-2xl">💻</span>
+                            <div>
+                                <div class="text-[10px] font-black uppercase text-slate-600">Bàn học cá nhân trên máy bay</div>
+                                <div class="text-xs font-extrabold text-slate-900">Đang mở bàn • Tập trung tối đa</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2 text-xl"><span>☕</span><span>📓</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- GÓC NHÌN 4: QUA CỬA SỔ MÁY BAY -->
+    <div id="view-window" style="z-index: 45;" class="fixed inset-x-0 top-14 bottom-0 hidden flex-col items-center justify-center bg-[#090d18] p-4 overflow-hidden">
+        <div class="relative z-20 flex items-center gap-3 mb-2">
+            <button onclick="toggleWindowShade()" class="glass-panel px-3.5 py-1 rounded-full text-xs font-extrabold text-amber-300 hover:text-white border border-amber-400/30">
+                🪟 Kéo Rèm Cửa Sổ Lên / Xuống
+            </button>
+        </div>
+
+        <div class="relative w-[270px] sm:w-[320px] h-[330px] sm:h-[365px] rounded-[150px] border-[16px] border-[#1e293b] shadow-[inset_0_0_40px_rgba(0,0,0,0.9),0_25px_70px_rgba(0,0,0,0.95)] overflow-hidden bg-gradient-to-b from-sky-500 via-blue-400 to-sky-200 mb-20" id="window-sky-container">
+            <div id="window-stars" class="absolute inset-0 opacity-0 transition-opacity duration-700" style="background-image: radial-gradient(white 1.2px, transparent 1.2px), radial-gradient(rgba(255,255,255,0.6) 1px, transparent 1px); background-size: 45px 45px, 80px 80px;"></div>
+            <div id="window-celestial" class="absolute top-10 right-12 w-11 h-11 rounded-full bg-yellow-300 shadow-[0_0_35px_#fef08a]"></div>
+
+            <div class="win-cloud-fast absolute top-24 w-48 text-white/90 pointer-events-none">
+                <svg viewBox="0 0 200 80" fill="currentColor"><path d="M45 65 h115 a22 22 0 0 0 0 -44 a28 28 0 0 0 -52 -12 a34 34 0 0 0 -63 18 a20 20 0 0 0 0 38 z"/></svg>
+            </div>
+            <div class="win-cloud-slow absolute top-44 w-56 text-white/75 pointer-events-none">
+                <svg viewBox="0 0 200 80" fill="currentColor"><path d="M45 65 h115 a22 22 0 0 0 0 -44 a28 28 0 0 0 -52 -12 a34 34 0 0 0 -63 18 a20 20 0 0 0 0 38 z"/></svg>
+            </div>
+
+            <div id="window-city-lights" class="absolute bottom-0 inset-x-0 h-14 bg-gradient-to-t from-amber-500/25 via-orange-500/10 to-transparent"></div>
+
+            <div class="absolute bottom-10 right-0 w-[230px] h-[120px] pointer-events-none">
+                <svg viewBox="0 0 300 160" class="w-full h-full drop-shadow-2xl">
+                    <ellipse cx="145" cy="112" rx="34" ry="18" fill="#334155" stroke="#64748b" stroke-width="2"/>
+                    <ellipse cx="115" cy="112" rx="8" ry="15" fill="#0f172a" stroke="#38bdf8" stroke-width="1.5"/>
+                    <polygon points="300,35 35,95 55,112 300,98" fill="#cbd5e1" stroke="#94a3b8" stroke-width="2"/>
+                    <polygon points="35,95 15,62 28,60 55,112" fill="#0ea5e9"/>
+                    <circle cx="22" cy="62" r="5" fill="#ef4444" class="strobe-light"/>
+                </svg>
+            </div>
+
+            <div id="window-rain-layer" class="rain-overlay absolute inset-0 hidden pointer-events-none"></div>
+            <div id="window-shade-panel" class="absolute inset-x-0 top-0 h-0 bg-gradient-to-b from-slate-800 to-slate-900 border-b-4 border-slate-600 transition-all duration-500 flex items-end justify-center pb-2 overflow-hidden">
+                <div class="w-12 h-1.5 rounded-full bg-slate-400"></div>
+            </div>
+        </div>
+    </div>
+
+    <button id="toggle-booking-btn" style="z-index: 60;" onclick="toggleBookingCardSize()" class="fixed bottom-3 left-3 glass-panel px-3 py-1.5 rounded-xl text-[11px] font-extrabold text-cyan-300 hover:text-white shadow-lg border border-cyan-500/30">
+        🔽 Thu gọn bảng
+    </button>
+
+    <!-- MÀN HÌNH 1 TRONG TRẠM BAY: BẢNG ĐẶT VÉ -->
+    <div id="screen-booking" style="z-index: 60;" class="fixed bottom-3 left-1/2 -translate-x-1/2 w-[95%] max-w-md glass-panel rounded-3xl p-3.5 shadow-2xl transition-all duration-300">
+        <div class="flex items-center justify-between gap-2 mb-2.5 pb-2 border-b border-white/10">
+            <div class="flex items-center gap-2.5">
+                <div id="booking-plane-svg-box" class="w-10 h-10 rounded-xl bg-slate-900 border border-cyan-400/30 flex items-center justify-center p-1 shrink-0"></div>
+                <div>
+                    <div class="flex items-center gap-1.5">
+                        <span id="badge-origin" class="bg-cyan-400 text-black font-black text-[10px] px-1.5 py-0.5 rounded">SGN</span>
+                        <span class="text-xs text-slate-400">➔</span>
+                        <span id="badge-dest" class="bg-yellow-400 text-black font-black text-[10px] px-1.5 py-0.5 rounded">DAD</span>
+                        <span id="badge-dist" class="text-[11px] font-mono text-cyan-300 font-bold ml-1">605 km</span>
+                    </div>
+                    <div id="banner-dest-title" class="text-xs font-extrabold text-white mt-0.5 truncate max-w-[175px]">TP.HCM ➔ Đà Nẵng</div>
+                </div>
+            </div>
+
+            <select id="aircraft-select" onchange="updateAircraft()" class="bg-slate-800 text-cyan-300 text-[11px] font-bold px-2 py-1.5 rounded-xl border border-cyan-500/30 focus:outline-none cursor-pointer">
+                <option value="Airbus A321neo">🛩️ A321neo (840 km/h)</option>
+                <option value="Boeing 787-9">✈️ B787-9 (910 km/h)</option>
+                <option value="Airbus A350-900">🛫 A350-900 (905 km/h)</option>
+                <option value="ATR 72-600">⚙️ ATR 72 (510 km/h)</option>
+            </select>
+        </div>
+
+        <div class="grid grid-cols-11 gap-1.5 items-center bg-slate-900/90 p-2 rounded-2xl border border-white/10 mb-2.5">
+            <div class="col-span-5">
+                <div id="lbl-origin-title" class="text-[9px] text-slate-400 uppercase font-bold mb-0.5">Điểm khởi hành</div>
+                <select id="origin-select" onchange="onRouteChange()" class="w-full bg-slate-800 text-white font-bold text-[11px] px-2 py-1.5 rounded-lg border border-white/10 focus:outline-none cursor-pointer"></select>
+            </div>
+            <div class="col-span-1 flex justify-center pt-3">
+                <button onclick="swapRoute()" class="w-7 h-7 rounded-full bg-slate-800 hover:bg-blue-600 text-cyan-400 hover:text-white font-bold text-xs flex items-center justify-center transition border border-white/10">⇄</button>
+            </div>
+            <div class="col-span-5">
+                <div id="lbl-dest-title" class="text-[9px] text-yellow-400 uppercase font-bold mb-0.5">Điểm hạ cánh</div>
+                <select id="dest-select" onchange="onRouteChange()" class="w-full bg-slate-800 text-white font-bold text-[11px] px-2 py-1.5 rounded-lg border border-yellow-400/40 focus:outline-none cursor-pointer"></select>
+            </div>
+        </div>
+
+        <div class="bg-blue-950/50 border border-cyan-400/30 rounded-2xl p-2.5 mb-2.5 flex items-center justify-between">
+            <div>
+                <div id="lbl-auto-dur-title" class="text-[9px] text-cyan-300 font-bold uppercase tracking-wider">⏱️ Thời gian học (Tính theo khoảng cách)</div>
+                <div class="flex items-baseline gap-2 mt-0.5">
+                    <span id="auto-calc-duration-text" class="text-base font-black text-yellow-400 mono">55 phút</span>
+                    <span id="auto-calc-speed-text" class="text-[10px] text-slate-300">(605 km • 840 km/h)</span>
+                </div>
+            </div>
+            <div class="text-right font-mono">
+                <div class="text-[9px] text-slate-400">ETA</div>
+                <div id="booking-realtime-eta" class="text-xs font-extrabold text-emerald-400">--:--</div>
+            </div>
+        </div>
+
+        <div class="flex gap-2">
+            <button onclick="goToSeatSelection()" id="lbl-btn-pick-seat" class="w-1/2 bg-slate-800 hover:bg-slate-700 text-cyan-300 font-extrabold py-2.5 rounded-2xl text-xs border border-cyan-500/30 transition">
+                💺 Chọn Ghế & In Vé
+            </button>
+            <button onclick="startFlight()" id="lbl-btn-fly-now" class="w-1/2 bg-gradient-to-r from-emerald-500 to-cyan-500 hover:opacity-95 text-black font-black py-2.5 rounded-2xl shadow-lg text-xs uppercase tracking-wider transition">
+                🛫 Bay Ngay Lập Tức
+            </button>
+        </div>
+    </div>
+
+    <!-- MÀN HÌNH 2 TRONG TRẠM BAY: CHỌN GHẾ NGỒI -->
+    <div id="screen-seat" style="z-index: 65;" class="fixed inset-x-0 top-14 bottom-0 bg-[#070b14]/95 backdrop-blur-xl hidden flex-col items-center justify-between py-3 px-4">
+        <div class="w-full max-w-md flex items-center justify-between">
+            <button onclick="backToBooking()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-xl text-xs font-bold">‹ Quay lại</button>
+            <div class="text-center">
+                <div id="seat-header-aircraft" class="text-[10px] text-cyan-400 font-extrabold uppercase tracking-widest">AIRBUS A321NEO</div>
+                <div id="seat-header-route" class="text-xs font-extrabold text-white">SGN ➔ DAD • 55 phút</div>
+            </div>
+            <span id="seat-selected-badge" class="bg-blue-600/30 border border-blue-400 text-blue-200 text-xs font-mono font-bold px-2 py-1 rounded-lg">06A</span>
+        </div>
+
+        <div class="relative w-full max-w-[320px] flex-1 max-h-[62vh] fuselage flex flex-col items-center pt-8 pb-6 px-5 overflow-y-auto my-2">
+            <div class="w-28 h-5 border-b border-slate-700/80 mb-3 flex items-center justify-center text-[9px] font-mono text-slate-500 tracking-widest uppercase">Cockpit</div>
+            <div class="grid grid-cols-5 w-full text-center text-xs font-extrabold text-slate-400 mb-2 px-1">
+                <div>A</div><div>C</div><div></div><div>D</div><div>F</div>
+            </div>
+            <div id="seat-grid" class="w-full space-y-1.5 pb-4"></div>
+        </div>
+
+        <div id="focus-popover-backdrop" style="z-index: 70;" class="fixed inset-0 bg-black/65 backdrop-blur-sm hidden items-center justify-center p-4">
+            <div class="focus-popover w-full max-w-[350px] rounded-[26px] p-5 text-white">
+                <div class="flex justify-between items-center mb-1">
+                    <span class="text-xs font-bold text-blue-300">Seat: <span id="pop-seat-code" class="mono text-white">06A</span></span>
+                    <button onclick="closeFocusPopover()" class="text-slate-400 hover:text-white text-sm font-bold">✕</button>
+                </div>
+                <h3 class="text-sm font-extrabold text-white mb-3">What do you want to focus?</h3>
+                <div class="flex flex-wrap gap-1.5 mb-3" id="focus-pills-container"></div>
+                <div id="custom-focus-box" class="mb-3">
+                    <input type="text" id="custom-focus-input" placeholder="Nhập mục tiêu (VD: Toán, Tạo app...)" class="w-full bg-slate-900/90 text-xs text-white px-3 py-2 rounded-xl border border-blue-400/40 focus:outline-none" />
+                </div>
+                <div class="bg-red-500/15 border border-red-400/30 p-2.5 rounded-2xl flex items-center justify-between mb-3.5">
+                    <div>
+                        <div class="text-xs font-extrabold text-red-200">🔒 Strict Mode</div>
+                        <div class="text-[10px] text-slate-300">Cảnh báo nếu rời khỏi màn hình học</div>
+                    </div>
+                    <input type="checkbox" id="strict-mode-toggle" checked class="w-4 h-4 accent-red-500 cursor-pointer" />
+                </div>
+                <button onclick="confirmSeatAndFocus()" class="w-full bg-gradient-to-r from-blue-600 to-cyan-500 hover:opacity-95 text-white font-extrabold py-3 rounded-2xl text-xs shadow-lg">
+                    Xác nhận & Xuất Vé Boarding Pass ➔
+                </button>
+            </div>
+        </div>
+
+        <div class="w-full max-w-md flex items-center justify-between px-2">
+            <div class="text-xs text-slate-400">Chạm vào ghế bất kỳ hoặc bấm Tiếp tục</div>
+            <button onclick="showBoardingPass()" class="bg-blue-600 hover:bg-blue-500 text-white font-extrabold px-5 py-2 rounded-xl text-xs shadow-lg">Tiếp tục ➔</button>
+        </div>
+    </div>
+
+    <!-- MÀN HÌNH 3 TRONG TRẠM BAY: VÉ BOARDING PASS -->
+    <div id="screen-ticket" style="z-index: 65;" class="fixed inset-x-0 top-14 bottom-0 bg-black/85 backdrop-blur-md hidden items-center justify-center p-4">
+        <div class="w-full max-w-sm flex flex-col items-center">
+            <div class="w-full bg-[#121723] border border-white/15 rounded-3xl overflow-hidden shadow-2xl relative">
+                <div class="ticket-cutout-left"></div>
+                <div class="ticket-cutout-right"></div>
+
+                <div class="bg-gradient-to-r from-blue-600 to-cyan-500 px-5 py-2.5 flex justify-between items-center">
+                    <span class="text-xs font-black tracking-widest uppercase text-white">BOARDING PASS</span>
+                    <span id="tk-aircraft" class="text-[11px] font-mono font-bold bg-black/25 text-white px-2 py-0.5 rounded">Airbus A321neo</span>
+                </div>
+
+                <div class="p-5">
+                    <div class="flex justify-between items-start mb-3">
+                        <div>
+                            <div class="text-[9px] text-slate-400 uppercase">PASSENGER</div>
+                            <div id="tk-passenger" class="text-sm font-black text-amber-300 uppercase">HỮU ĐẠI</div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-[9px] text-slate-400 uppercase">STD ➔ ETA</div>
+                            <div id="tk-realtime-span" class="text-xs font-extrabold text-emerald-400 mono">15:44 ➔ 16:39</div>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-between items-center my-3">
+                        <div>
+                            <div id="tk-origin-code" class="text-3xl font-black text-white">SGN</div>
+                            <div id="tk-origin-name" class="text-[11px] text-slate-400">TP.HCM</div>
+                        </div>
+                        <div class="flex flex-col items-center">
+                            <div id="tk-plane-svg" class="w-8 h-8"></div>
+                            <span id="tk-duration" class="text-xs font-extrabold text-yellow-400 mt-0.5">55 phút</span>
+                        </div>
+                        <div class="text-right">
+                            <div id="tk-dest-code" class="text-3xl font-black text-yellow-400">DAD</div>
+                            <div id="tk-dest-name" class="text-[11px] text-slate-400">Đà Nẵng</div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-2 pt-3 border-t border-white/10 text-xs mb-4">
+                        <div>
+                            <div class="text-slate-500 text-[9px] uppercase">SEAT</div>
+                            <div id="tk-seat" class="font-extrabold text-cyan-400 mt-0.5 mono">06A</div>
+                        </div>
+                        <div>
+                            <div class="text-slate-500 text-[9px] uppercase">DISTANCE</div>
+                            <div id="tk-dist" class="font-bold text-white mt-0.5">605 km</div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-slate-500 text-[9px] uppercase">FOCUS</div>
+                            <div id="tk-focus" class="font-extrabold text-blue-300 mt-0.5 truncate">💻 Work</div>
+                        </div>
+                    </div>
+
+                    <div class="border-b-2 border-dashed border-slate-700/80 my-3"></div>
+                    <div class="flex justify-between items-center text-[10px] font-mono text-slate-400">
+                        <span id="tk-strict-badge" class="text-red-400 font-bold">🔒 STRICT LOCK ON</span>
+                        <span class="text-cyan-400 font-bold">GATE 04 • READY</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex gap-2 w-full mt-3.5">
+                <button onclick="backToSeatFromTicket()" class="w-1/3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-3 rounded-2xl text-xs">‹ Đổi ghế</button>
+                <button onclick="startFlight()" class="w-2/3 bg-gradient-to-r from-emerald-500 to-cyan-500 hover:opacity-95 text-black font-black py-3 rounded-2xl shadow-xl text-xs uppercase tracking-wider">
+                    🛫 Cất Cánh Bắt Đầu Học
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MÀN HÌNH 4 TRONG TRẠM BAY: THANH DOCK NHỎ GỌN Ở ĐÁY -->
+    <div id="screen-flying" style="z-index: 7500;" class="fixed bottom-2.5 left-1/2 -translate-x-1/2 w-[96%] max-w-4xl glass-panel rounded-2xl px-3.5 py-2 shadow-2xl hidden border border-cyan-500/30">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+            <div class="flex items-center gap-2.5">
+                <div id="fly-mini-svg" class="w-8 h-8 rounded-xl bg-slate-900 border border-cyan-400/40 p-1 flex items-center justify-center shrink-0"></div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs font-extrabold text-white" id="fly-route-text">TP.HCM ➔ Đà Nẵng</span>
+                        <span class="text-[10px] text-amber-300 font-mono"><b id="fly-dist-left">605</b>km</span>
+                        <span class="text-[10px] text-slate-400 font-mono hidden sm:inline">• ETA <b id="fly-eta-badge" class="text-emerald-400">--:--</b></span>
+                    </div>
+                    <div class="text-[10px] text-cyan-400 font-semibold flex items-center gap-2">
+                        <span id="fly-sub-info">A321neo • 06A</span>
+                        <span id="safety-hearts" class="text-[10px] tracking-widest">❤️❤️❤️</span>
+                    </div>
+                </div>
+                <div id="countdown-timer" class="mono text-xl sm:text-2xl font-black text-yellow-400 tracking-tight ml-1">55:00</div>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-1.5">
+                <div class="flex items-center gap-1 bg-slate-900/90 p-1 rounded-xl border border-white/10">
+                    <button onclick="setCameraView('map')" class="cam-switch-btn cam-map px-2 py-1 rounded-lg text-[10px] font-extrabold bg-cyan-500 text-black transition">🌍 Map</button>
+                    <button onclick="setCameraView('cockpit')" class="cam-switch-btn cam-cockpit px-2 py-1 rounded-lg text-[10px] font-extrabold text-slate-300 hover:text-white transition">👨‍✈️ Cockpit</button>
+                    <button onclick="setCameraView('cabin')" class="cam-switch-btn cam-cabin px-2 py-1 rounded-lg text-[10px] font-extrabold text-slate-300 hover:text-white transition">💺 Cabin</button>
+                    <button onclick="setCameraView('window')" class="cam-switch-btn cam-window px-2 py-1 rounded-lg text-[10px] font-extrabold text-slate-300 hover:text-white transition">🪟 Window</button>
+                </div>
+
+                <div class="flex items-center gap-0.5 bg-slate-900/90 p-1 rounded-xl border border-white/10">
+                    <button onclick="setFlightEnvironment('day')" class="env-switch-btn env-day px-1.5 py-1 rounded-lg text-[10px] font-bold text-slate-300 hover:text-white">☀️</button>
+                    <button onclick="setFlightEnvironment('sunset')" class="env-switch-btn env-sunset px-1.5 py-1 rounded-lg text-[10px] font-bold text-slate-300 hover:text-white">🌅</button>
+                    <button onclick="setFlightEnvironment('night')" class="env-switch-btn env-night px-1.5 py-1 rounded-lg text-[10px] font-bold text-slate-300 hover:text-white">🌙</button>
+                    <button onclick="setFlightEnvironment('rain')" class="env-switch-btn env-rain px-1.5 py-1 rounded-lg text-[10px] font-bold text-slate-300 hover:text-white">🌧️</button>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-1.5">
+                <button onclick="centerOnPlane()" class="bg-slate-800 hover:bg-slate-700 text-xs px-2 py-1.5 rounded-xl text-slate-200 border border-white/10 font-bold">🎯</button>
+                <button onclick="completeFlightEarly()" class="bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/30 px-2.5 py-1.5 rounded-xl text-[11px] font-bold">✓ Xong</button>
+                <button onclick="abortFlight()" class="bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-500/30 px-2.5 py-1.5 rounded-xl text-[11px] font-bold">Hủy</button>
+            </div>
+        </div>
+
+        <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden mt-1.5">
+            <div id="flight-progress" class="bg-gradient-to-r from-blue-500 via-cyan-400 to-yellow-400 h-full w-0 transition-all duration-500"></div>
+        </div>
+    </div>
+</section>
+
+<!-- MODAL GIẢI THÍCH -->
+<div id="why-schedule-modal" style="z-index: 9000;" class="fixed inset-0 bg-black/75 backdrop-blur-md hidden items-center justify-center p-4">
+    <div class="glass-panel w-full max-w-md rounded-3xl p-5 shadow-2xl border border-cyan-400/40">
+        <div class="flex justify-between items-center mb-3">
+            <h3 class="text-sm font-extrabold text-white">🧠 Chi tiết Lịch & Chuyến bay</h3>
+            <button onclick="closeWhyModal()" class="text-slate-400 hover:text-white font-bold">✕</button>
+        </div>
+        <div id="why-modal-content" class="space-y-2.5 text-xs text-slate-200"></div>
+        <button onclick="closeWhyModal()" class="mt-4 w-full bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-extrabold py-2.5 rounded-xl text-xs">OK</button>
+    </div>
+</div>
+
+<!-- CẢNH BÁO ĐỎ STRICT MODE -->
+<div id="turbulence-modal" style="z-index: 9500;" class="fixed inset-0 turbulence-alert hidden flex-col items-center justify-center p-6 text-center">
+    <div class="text-5xl mb-2 animate-bounce">🚨</div>
+    <h2 class="text-xl sm:text-2xl font-black text-white uppercase mb-2">CẢNH BÁO: BẠN ĐÃ RỜI KHỎI BUỒNG LÁI TẬP TRUNG!</h2>
+    <p class="text-xs sm:text-sm text-red-100 max-w-md mb-4">Đồng hồ tập trung đã bị <b>TẠM DỪNG</b> vì bạn vừa chuyển sang cửa sổ khác!</p>
+    <div class="bg-black/50 border border-red-300/30 rounded-2xl p-3.5 w-full max-w-xs mb-5">
+        <div class="text-[11px] text-red-200 uppercase font-bold">Vi phạm kỷ luật</div>
+        <div id="violation-count-text" class="text-xl font-black text-yellow-400 mono">1 / 3</div>
+    </div>
+    <button onclick="resumeFromTurbulence()" class="bg-white hover:bg-yellow-300 text-red-900 font-black px-6 py-3.5 rounded-2xl shadow-2xl text-xs uppercase">
+        🔒 Quay lại Học tiếp ngay
+    </button>
+</div>
+
+<div id="crash-modal" style="z-index: 9500;" class="fixed inset-0 bg-black/95 backdrop-blur-xl hidden flex-col items-center justify-center p-6 text-center">
+    <div class="text-5xl mb-2">💥</div>
+    <h2 class="text-xl font-black text-red-500 uppercase mb-2">CHUYẾN BAY BỊ HỦY DO MẤT TẬP TRUNG QUÁ 3 LẦN</h2>
+    <button onclick="closeCrashModal()" class="mt-4 bg-red-600 hover:bg-red-500 text-white font-extrabold px-6 py-3 rounded-2xl text-xs uppercase">Quay lại</button>
+</div>
+
+<!-- MODAL TÙY CHỈNH ÂM THANH & BOT -->
+<div id="media-modal" style="z-index: 9000;" class="fixed inset-0 bg-black/75 backdrop-blur-md hidden items-center justify-center p-4">
+    <div class="glass-panel w-full max-w-md rounded-3xl p-5 shadow-2xl">
+        <div class="flex justify-between items-center mb-3">
+            <h3 class="text-sm font-extrabold text-white">🎧 Tùy Chỉnh Âm Thanh & Giao Diện</h3>
+            <button onclick="closeMediaModal()" class="text-slate-400 hover:text-white text-lg font-bold">✕</button>
+        </div>
+        <div class="space-y-3 text-xs">
+            <div class="bg-slate-900/90 p-3 rounded-2xl border border-white/10">
+                <label class="font-bold text-cyan-400 block mb-1">1. Chọn file nhạc Lofi từ máy (.mp3, .wav):</label>
+                <input type="file" accept="audio/*" onchange="handleLocalAudio(this)" class="w-full text-slate-300 file:mr-2 file:py-1 file:px-3 file:rounded-xl file:border-0 file:font-bold file:bg-blue-600 file:text-white cursor-pointer mb-1.5" />
+                <input type="text" id="audio-url-input" placeholder="Hoặc dán link MP3..." class="w-full bg-slate-800 text-white px-3 py-1.5 rounded-xl border border-white/10" />
+            </div>
+
+            <div class="bg-slate-900/90 p-3 rounded-2xl border border-white/10 flex items-center justify-between">
+                <div>
+                    <div class="font-bold text-white">🛫 Tiếng động cơ máy bay (Cabin White Noise)</div>
+                    <div class="text-[10px] text-slate-400">Giúp tập trung sâu như ngồi trên máy bay thật</div>
+                </div>
+                <input type="checkbox" onchange="toggleCabinNoise(this.checked)" class="w-5 h-5 accent-cyan-400 cursor-pointer" />
+            </div>
+
+            <div class="bg-slate-900/90 p-3 rounded-2xl border border-amber-400/30">
+                <label class="font-bold text-amber-300 block mb-1">2. Đổi ảnh đại diện Chatbot AI:</label>
+                <input type="file" accept="image/*" onchange="handleBotAvatarUpload(this)" class="w-full text-slate-300 file:mr-2 file:py-1 file:px-3 file:rounded-xl file:border-0 file:font-bold file:bg-amber-500 file:text-black cursor-pointer" />
+            </div>
+        </div>
+        <button onclick="applyCustomMedia()" class="mt-4 w-full bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-extrabold py-2.5 rounded-xl text-xs">Lưu & Đóng</button>
+    </div>
+</div>
+
+<!-- CHATBOT AI VÀNG KIM -->
+<div id="chatbot-launcher" onclick="toggleChatbotWindow()" style="position: fixed; bottom: 78px; right: 16px; z-index: 9999;" class="cursor-pointer flex items-center gap-2 bg-[#111827] hover:bg-[#1e293b] border-2 border-[#d4a349] pl-3 pr-1.5 py-1 rounded-full bot-launcher-glow shadow-2xl">
+    <span class="text-xs font-extrabold text-amber-300 tracking-wide">💬 Chat AI</span>
+    <div class="relative w-9 h-9 rounded-full bg-white p-0.5">
+        <img id="bot-launcher-img" src="https://cdn-icons-png.flaticon.com/512/4712/4712109.png" class="w-full h-full rounded-full object-cover bg-gradient-to-b from-yellow-300 to-amber-500 p-0.5" />
+        <span class="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 border-2 border-white rounded-full"></span>
+    </div>
+</div>
+
+<div id="chatbot-window" style="position: fixed; bottom: 136px; right: 16px; z-index: 9999;" class="w-[335px] sm:w-[360px] h-[430px] bg-[#f8f9fa] text-slate-800 rounded-2xl shadow-2xl border-2 border-[#d4a349] hidden flex-col overflow-hidden">
+    <div class="bg-[#d4a349] text-white px-4 py-2.5 flex items-center justify-between shadow">
+        <div class="flex items-center gap-2">
+            <div class="w-7 h-7 rounded-full bg-white p-0.5 shadow">
+                <img id="bot-header-img" src="https://cdn-icons-png.flaticon.com/512/4712/4712109.png" class="w-full h-full rounded-full object-cover bg-amber-400" />
+            </div>
+            <span id="lbl-bot-header" class="font-bold text-xs">Trợ lý Học tập AI</span>
+        </div>
+        <div class="flex items-center gap-3 text-white">
+            <button onclick="resetChat()" title="Làm mới" class="text-xs font-bold">↺</button>
+            <button onclick="toggleChatbotWindow()" class="text-base font-bold leading-none">✕</button>
+        </div>
+    </div>
+
+    <div id="chat-messages" class="flex-1 p-3 overflow-y-auto space-y-2.5 bg-[#f7f8fc]"></div>
+
+    <div class="px-2.5 py-1.5 bg-white border-t border-slate-100 flex gap-1.5 overflow-x-auto">
+        <button onclick="sendQuickChat('Hôm nay mình nên học gì?')" class="shrink-0 bg-amber-50 hover:bg-amber-100 text-[#b07d2b] border border-[#d4a349]/40 text-[10px] font-semibold px-2 py-1 rounded-full">💡 Hôm nay học gì?</button>
+        <button onclick="sendQuickChat('Kiểm tra công việc chưa xong')" class="shrink-0 bg-amber-50 hover:bg-amber-100 text-[#b07d2b] border border-[#d4a349]/40 text-[10px] font-semibold px-2 py-1 rounded-full">📋 Việc đang làm</button>
+        <button onclick="sendQuickChat('Mình có lịch đột xuất')" class="shrink-0 bg-amber-50 hover:bg-amber-100 text-[#b07d2b] border border-[#d4a349]/40 text-[10px] font-semibold px-2 py-1 rounded-full">🌪️ Dời lịch</button>
+    </div>
+
+    <div class="p-2 bg-white border-t border-slate-200 flex items-center gap-2">
+        <input type="text" id="chat-input" onkeydown="if(event.key==='Enter') sendChatMessage()" placeholder="Nhập tin nhắn..." class="flex-1 text-xs text-slate-800 px-2 py-1 focus:outline-none" />
+        <button onclick="sendChatMessage()" class="w-7 h-7 rounded-full bg-[#d4a349] hover:bg-[#c29138] text-white flex items-center justify-center shadow text-xs">➤</button>
+    </div>
+</div>

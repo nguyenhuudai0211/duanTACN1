@@ -1,3 +1,152 @@
+// ================= 0. BẢO VỆ DỮ LIỆU DỰ PHÒNG (CHỐNG LỖI UNDEFINED) =================
+if (typeof currentLang === 'undefined') { window.currentLang = "vi"; }
+if (typeof showLunarCalendar === 'undefined') { window.showLunarCalendar = true; }
+
+if (typeof CAN_VI === 'undefined') {
+    window.CAN_VI = ["Giáp", "Ất", "Bính", "Đinh", "Mậu", "Kỷ", "Canh", "Tân", "Nhâm", "Quý"];
+    window.CHI_VI = ["Tý", "Sửu", "Dần", "Mão", "Thìn", "Tỵ", "Ngọ", "Mùi", "Thân", "Dậu", "Tuất", "Hợi"];
+    window.CAN_ZH = ["甲", "乙", "丙", "丁", "戊", "己", "庚", "辛", "壬", "癸"];
+    window.CHI_ZH = ["子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"];
+}
+
+if (typeof I18N === 'undefined') {
+    window.I18N = {
+        vi: {
+            memberTop: "Thành viên", tabDash: "📊 Bảng Điều Khiển Học Tập", tabFlight: "✈️ Chuyến Bay 3D / 2D",
+            bannerTag: "Thông báo Chuyến bay từ Lịch cá nhân", bannerBtn: "🛫 Cất cánh học ngay",
+            kpi1Title: "Hồ sơ thành viên", kpi1Sub: "Đồng bộ Lịch ➔ Chuyến bay",
+            kpi2Title: "Nhiệm vụ & Lịch bay", kpi2Sub: "Đang chờ cất cánh",
+            kpi3Title: "Đã hoàn thành (✓)", kpi4Title: "Dặm bay tích lũy",
+            aiBadge: "💡 Hôm nay nên học gì? (AI Đề xuất)", aiSub: "Báo giờ bay tự động theo khung giờ đã đặt",
+            remindBtn: "🔔 Kiểm tra báo thức bay", smartCtrlTitle: "⚡ Điều phối Lịch AI Thông Minh",
+            smartCtrlDesc: "Sắp xếp thứ tự ưu tiên theo Deadline hoặc tự động dời toàn bộ ca học khi bạn có việc đột xuất.",
+            btnAiSort: "🤖 AI Sắp xếp Thứ tự Ưu tiên", btnSudden: "🌪️ Có lịch đột xuất (Tự động dời ca)",
+            todoHeader: "✅ Danh Sách Nhiệm Vụ & Chặng Bay", todoSyncTag: "⚡ Tự động nhận từ Lịch",
+            todoSub: "Thêm môn học ở Lịch bên phải sẽ tự động nhảy sang đây kèm giờ bay!",
+            filterAll: "Tất cả", filterPending: "Đang làm", filterDone: "Đã xong ✓",
+            quickAddTitle: "+ Thêm nhanh bài tập / deadline lẻ:", quickDeadline: "Hạn (Giờ):", btnSaveTask: "+ Lưu Việc",
+            calHeader: "🗓️ Lịch Biểu & Việc Cá Nhân", calSub: "Bấm chọn trực tiếp ngày trên tờ lịch để xem Thứ/Ngày/Tháng/Năm & Âm lịch",
+            lunarOn: "🌙 Âm lịch: BẬT", lunarOff: "🌙 Âm lịch: TẮT", btnToday: "Hôm nay",
+            weekdays: ["Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "CN"],
+            fullWeekdays: ["Chủ Nhật", "Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy"],
+            monthPrefix: "THÁNG", pickDate: "Chọn ngày:", startTime: "⏰ Bắt đầu:", endTime: "🏁 Kết thúc:",
+            catType: "Phân loại lịch", repeatCycle: "Chu kỳ lặp lại (Tự chọn)", btnAddSlot: "+ Thêm Lịch",
+            autoSyncCheck: "⚡ Tự động đẩy sang Danh sách Nhiệm vụ & Báo giờ Chuyến bay bên trái",
+            botHeader: "Trợ lý Học tập AI", emptyTasks: "Chưa có nhiệm vụ nào ở mục này", emptySlots: "Chưa có lịch nào trong ngày này"
+        },
+        en: {
+            memberTop: "Member", tabDash: "📊 Study Dashboard", tabFlight: "✈️ 3D / 2D Flight Sim",
+            bannerTag: "Flight Alert from Personal Schedule", bannerBtn: "🛫 Takeoff & Study Now",
+            kpi1Title: "Active Profile", kpi1Sub: "Auto-Sync Schedule ➔ Flight",
+            kpi2Title: "Pending Tasks & Flights", kpi2Sub: "Ready for takeoff",
+            kpi3Title: "Completed (✓)", kpi4Title: "Total Flight Miles",
+            aiBadge: "💡 What to study today? (AI Recommended)", aiSub: "Automatic flight alarm synced with your schedule",
+            remindBtn: "🔔 Check Flight Alarm", smartCtrlTitle: "⚡ Smart AI Schedule Dispatcher",
+            smartCtrlDesc: "Automatically prioritize tasks by deadline or reschedule sessions when unexpected events happen.",
+            btnAiSort: "🤖 AI Sort by Priority", btnSudden: "🌪️ Unexpected Event (Auto-Reschedule)",
+            todoHeader: "✅ Task List & Flight Routes", todoSyncTag: "⚡ Auto-Synced from Calendar",
+            todoSub: "Adding a schedule on the right automatically creates a flight task here!",
+            filterAll: "All", filterPending: "Pending", filterDone: "Done ✓",
+            quickAddTitle: "+ Quick add standalone task / deadline:", quickDeadline: "Due (Hrs):", btnSaveTask: "+ Save Task",
+            calHeader: "🗓️ Monthly Calendar & Personal Events", calSub: "Click any date on the calendar grid to view Day of Week, Solar & Lunar Date",
+            lunarOn: "🌙 Lunar: ON", lunarOff: "🌙 Lunar: OFF", btnToday: "Today",
+            weekdays: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+            fullWeekdays: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+            monthPrefix: "MONTH", pickDate: "Pick Date:", startTime: "⏰ Start:", endTime: "🏁 End:",
+            catType: "Category", repeatCycle: "Recurrence Cycle (Custom)", btnAddSlot: "+ Add Event",
+            autoSyncCheck: "⚡ Auto-push to Task List & Flight Alarm on the left",
+            botHeader: "AI Study Assistant", emptyTasks: "No tasks in this view yet", emptySlots: "No events scheduled for this date"
+        },
+        zh: {
+            memberTop: "小組成員", tabDash: "📊 學習與日程儀表板", tabFlight: "✈️ 3D / 2D 專注飛行艙",
+            bannerTag: "來自個人行事曆的航班提醒", bannerBtn: "🛫 立即起飛專注學習",
+            kpi1Title: "當前成員檔案", kpi1Sub: "行事曆 ➔ 航班自動同步",
+            kpi2Title: "待辦任務與航班", kpi2Sub: "準備起飛",
+            kpi3Title: "已完成任務 (✓)", kpi4Title: "累計飛行里程",
+            aiBadge: "💡 今天該學什麼？（AI 智慧推薦）", aiSub: "根據您設定的時段自動提醒航班起飛時間",
+            remindBtn: "🔔 檢查航班鬧鐘", smartCtrlTitle: "⚡ AI 智慧排程調度中心",
+            smartCtrlDesc: "根據截止時間自動排序優先級，或在遇到突發狀況時自動順延學習時段。",
+            btnAiSort: "🤖 AI 智慧優先級排序", btnSudden: "🌪️ 突發行程（自動順延時段）",
+            todoHeader: "✅ 任務清單與飛行航線", todoSyncTag: "⚡ 與右側行事曆自動同步",
+            todoSub: "在右側行事曆新增課程或個人事項，將自動同步至此並設定航班時間！",
+            filterAll: "全部", filterPending: "進行中", filterDone: "已完成 ✓",
+            quickAddTitle: "+ 快速新增單獨作業 / 截止期限：", quickDeadline: "期限(小時):", btnSaveTask: "+ 儲存任務",
+            calHeader: "🗓️ 萬年曆與個人行程表", calSub: "直接點擊月曆上的日期，即可查看星期、國曆與農曆日期",
+            lunarOn: "🌙 農曆：開啟", lunarOff: "🌙 農曆：關閉", btnToday: "今天",
+            weekdays: ["週一", "週二", "週三", "週四", "週五", "週六", "週日"],
+            fullWeekdays: ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"],
+            monthPrefix: "月份", pickDate: "選擇日期:", startTime: "⏰ 開始時間:", endTime: "🏁 結束時間:",
+            catType: "行程類別", repeatCycle: "重複週期（自由設定）", btnAddSlot: "+ 新增行程",
+            autoSyncCheck: "⚡ 自動同步至左側任務清單並設定專注航班鬧鐘",
+            botHeader: "AI 智慧學習助理", emptyTasks: "目前尚無任何待辦任務", emptySlots: "此日期尚無安排任何行程"
+        }
+    };
+}
+
+if (typeof AIRPORTS === 'undefined') {
+    window.AIRPORTS = [
+        { code: "SGN", name: "TP.HCM (Tân Sơn Nhất)", group: "VN", coords: [10.8188, 106.6519] },
+        { code: "HAN", name: "Hà Nội (Nội Bài)", group: "VN", coords: [21.2212, 105.8072] },
+        { code: "DAD", name: "Đà Nẵng", group: "VN", coords: [16.0439, 108.1994] },
+        { code: "CXR", name: "Cam Ranh (Khánh Hòa)", group: "VN", coords: [11.9982, 109.2194] },
+        { code: "UIH", name: "Phù Cát (Quy Nhơn)", group: "VN", coords: [13.9550, 109.0422] },
+        { code: "LTH", name: "Long Thành (Đồng Nai)", group: "VN", coords: [10.7850, 107.0650] },
+        { code: "PQC", name: "Phú Quốc (Kiên Giang)", group: "VN", coords: [10.1698, 103.9931] },
+        { code: "DLI", name: "Đà Lạt (Liên Khương)", group: "VN", coords: [11.7500, 108.3667] },
+        { code: "HPH", name: "Hải Phòng (Cát Bi)", group: "VN", coords: [20.8194, 106.7250] },
+        { code: "VII", name: "Vinh (Nghệ An)", group: "VN", coords: [18.7376, 105.6708] },
+        { code: "HUI", name: "Huế (Phú Bài)", group: "VN", coords: [16.4015, 107.7026] },
+        { code: "VCA", name: "Cần Thơ", group: "VN", coords: [10.0851, 105.7119] },
+        { code: "VDH", name: "Đồng Hới (Quảng Bình)", group: "VN", coords: [17.5150, 106.5905] },
+        { code: "THD", name: "Thanh Hóa (Thọ Xuân)", group: "VN", coords: [19.9017, 105.4678] },
+        { code: "VDO", name: "Vân Đồn (Quảng Ninh)", group: "VN", coords: [21.1178, 107.4142] },
+        { code: "VCL", name: "Chu Lai (Quảng Nam)", group: "VN", coords: [15.4061, 108.7056] },
+        { code: "TBB", name: "Tuy Hòa (Phú Yên)", group: "VN", coords: [13.0494, 109.3336] },
+        { code: "BMV", name: "Buôn Ma Thuột (Đắk Lắk)", group: "VN", coords: [12.6683, 108.1200] },
+        { code: "PXU", name: "Pleiku (Gia Lai)", group: "VN", coords: [14.0045, 108.0172] },
+        { code: "VCS", name: "Côn Đảo (Bà Rịa - VT)", group: "VN", coords: [8.7325, 106.6336] },
+        { code: "DIN", name: "Điện Biên Phủ", group: "VN", coords: [21.3975, 103.0078] },
+        { code: "CAH", name: "Cà Mau", group: "VN", coords: [9.1756, 105.1794] },
+        { code: "TPE", name: "Đài Bắc - Đào Viên (Đài Loan 🇹🇼)", group: "INT", coords: [25.0797, 121.2342] },
+        { code: "BKK", name: "Bangkok (Thái Lan)", group: "INT", coords: [13.6900, 100.7501] },
+        { code: "SIN", name: "Singapore (Changi)", group: "INT", coords: [1.3644, 103.9915] },
+        { code: "KUL", name: "Kuala Lumpur (Malaysia)", group: "INT", coords: [2.7456, 101.7072] },
+        { code: "HKG", name: "Hong Kong", group: "INT", coords: [22.3080, 113.9185] },
+        { code: "ICN", name: "Seoul Incheon (Hàn Quốc)", group: "INT", coords: [37.4602, 126.4407] },
+        { code: "HND", name: "Tokyo Haneda (Nhật Bản)", group: "INT", coords: [35.5494, 139.7798] },
+        { code: "MNL", name: "Manila (Philippines)", group: "INT", coords: [14.5086, 121.0194] },
+        { code: "PEK", name: "Bắc Kinh (Trung Quốc)", group: "INT", coords: [40.0799, 116.6031] },
+        { code: "SYD", name: "Sydney (Úc)", group: "INT", coords: [-33.9399, 151.1753] },
+        { code: "CDG", name: "Paris (Pháp)", group: "INT", coords: [49.0097, 2.5479] },
+        { code: "JFK", name: "New York (Mỹ)", group: "INT", coords: [40.6413, -73.7781] }
+    ];
+}
+
+if (typeof FOCUS_MODES === 'undefined') {
+    window.FOCUS_MODES = [
+        { id: "focus", label: "Focus", icon: "⚛️", color: "bg-slate-600/90 border-slate-400 text-white" },
+        { id: "work", label: "Work", icon: "💻", color: "bg-blue-600 border-blue-300 text-white" },
+        { id: "meditate", label: "Meditate", icon: "🧘", color: "bg-indigo-500 border-indigo-300 text-white" },
+        { id: "read", label: "Read", icon: "📖", color: "bg-teal-600 border-teal-300 text-white" },
+        { id: "exercise", label: "Exercise", icon: "🏃", color: "bg-sky-500 border-sky-300 text-white" }
+    ];
+}
+
+if (typeof INITIAL_CLEAN_DB === 'undefined') {
+    window.INITIAL_CLEAN_DB = {
+        lastMember: "huudai",
+        members: {
+            huudai:    { name: "Hữu Đại",    seat: "06A", miles: 0, flights: 0, tasks: [], calendarEvents: [] },
+            quangminh: { name: "Quang Minh", seat: "06A", miles: 0, flights: 0, tasks: [], calendarEvents: [] },
+            khanhthi:  { name: "Khánh Thi",  seat: "04F", miles: 0, flights: 0, tasks: [], calendarEvents: [] },
+            minhchau:  { name: "Minh Châu",  seat: "05A", miles: 0, flights: 0, tasks: [], calendarEvents: [] },
+            uyennhi:   { name: "Uyên Nhi",   seat: "03C", miles: 0, flights: 0, tasks: [], calendarEvents: [] },
+            vanhoang:  { name: "Văn Hoàng",  seat: "07F", miles: 0, flights: 0, tasks: [], calendarEvents: [] }
+        }
+    };
+}
+if (typeof STORAGE_KEY === 'undefined') { window.STORAGE_KEY = "studyhub_focus_flight_clean_v4"; }
+
 // ================= 1. CHUYỂN ĐỔI NGÔN NGỮ & TÍNH ÂM LỊCH =================
 function setAppLanguage(lang) {
     currentLang = lang;
@@ -398,88 +547,97 @@ function latLngToVec3(lat, lng, radius = GLOBE_RADIUS) {
 }
 
 function initThreeGlobe() {
-    const canvas = document.getElementById('globe-canvas');
-    scene = new THREE.Scene();
-    const w = window.innerWidth || 1200, h = (window.innerHeight - 56) || 700;
-    camera = new THREE.PerspectiveCamera(45, w / h, 1, 2000);
-    camera.position.z = globeCameraZ;
+    try {
+        if (typeof THREE === 'undefined') return;
+        const canvas = document.getElementById('globe-canvas');
+        if (!canvas) return;
+        scene = new THREE.Scene();
+        const w = window.innerWidth || 1200, h = Math.max(400, (window.innerHeight - 56) || 700);
+        camera = new THREE.PerspectiveCamera(45, w / h, 1, 2000);
+        camera.position.z = globeCameraZ;
 
-    renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
-    renderer.setSize(w, h);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
+        renderer.setSize(w, h);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
 
-    const starGeo = new THREE.BufferGeometry();
-    const starCount = 2000;
-    const starPos = new Float32Array(starCount * 3);
-    const starColors = new Float32Array(starCount * 3);
-    for (let i = 0; i < starCount * 3; i += 3) {
-        const r = 450 + Math.random() * 850;
-        const theta = Math.random() * Math.PI * 2;
-        const phi = Math.acos(2 * Math.random() - 1);
-        starPos[i] = r * Math.sin(phi) * Math.cos(theta);
-        starPos[i+1] = r * Math.sin(phi) * Math.sin(theta);
-        starPos[i+2] = r * Math.cos(phi);
-        const tint = 0.75 + Math.random() * 0.25;
-        starColors[i] = tint; starColors[i+1] = tint; starColors[i+2] = 1.0;
-    }
-    starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
-    starGeo.setAttribute('color', new THREE.BufferAttribute(starColors, 3));
-    scene.add(new THREE.Points(starGeo, new THREE.PointsMaterial({ size: 2.2, vertexColors: true, transparent: true, opacity: 0.9 })));
-
-    earthGroup = new THREE.Group();
-    scene.add(earthGroup);
-
-    const sphereGeo = new THREE.SphereGeometry(GLOBE_RADIUS, 64, 64);
-    const earthMat = new THREE.MeshPhongMaterial({ map: createFallbackEarthCanvas(), shininess: 16, specular: new THREE.Color(0x1e3a8a) });
-    earthMesh = new THREE.Mesh(sphereGeo, earthMat);
-    earthGroup.add(earthMesh);
-
-    const loader = new THREE.TextureLoader();
-    loader.setCrossOrigin('anonymous');
-    loader.load('https://unpkg.com/three-globe@2.31.0/example/img/earth-blue-marble.jpg', (tex) => {
-        earthMat.map = tex; earthMat.needsUpdate = true;
-    });
-
-    earthGroup.add(new THREE.Mesh(
-        new THREE.SphereGeometry(GLOBE_RADIUS * 1.035, 64, 64),
-        new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.16, side: THREE.BackSide })
-    ));
-
-    scene.add(new THREE.AmbientLight(0xdbeafe, 0.85));
-    const dirLight = new THREE.DirectionalLight(0xffffff, 0.95);
-    dirLight.position.set(250, 180, 300);
-    scene.add(dirLight);
-
-    canvas.addEventListener('mousedown', (e) => { isDraggingGlobe = true; prevMouse = { x: e.clientX, y: e.clientY }; });
-    window.addEventListener('mousemove', (e) => {
-        if (!isDraggingGlobe) return;
-        targetRot.y += (e.clientX - prevMouse.x) * 0.0055;
-        targetRot.x = Math.max(-1.2, Math.min(1.2, targetRot.x + (e.clientY - prevMouse.y) * 0.0055));
-        prevMouse = { x: e.clientX, y: e.clientY };
-    });
-    window.addEventListener('mouseup', () => { isDraggingGlobe = false; });
-
-    canvas.addEventListener('wheel', (e) => {
-        e.preventDefault();
-        if (Date.now() - lastTransitionTime < 650) return;
-        const step = Math.sign(e.deltaY) * Math.min(Math.abs(e.deltaY) * 0.15, 10);
-        targetGlobeZ = Math.max(150, Math.min(430, targetGlobeZ + step));
-        if (targetGlobeZ <= 165 && e.deltaY < 0) {
-            targetGlobeZ = 190; globeCameraZ = 190; activate2DSatelliteMap();
+        const starGeo = new THREE.BufferGeometry();
+        const starCount = 2000;
+        const starPos = new Float32Array(starCount * 3);
+        const starColors = new Float32Array(starCount * 3);
+        for (let i = 0; i < starCount * 3; i += 3) {
+            const r = 450 + Math.random() * 850;
+            const theta = Math.random() * Math.PI * 2;
+            const phi = Math.acos(2 * Math.random() - 1);
+            starPos[i] = r * Math.sin(phi) * Math.cos(theta);
+            starPos[i+1] = r * Math.sin(phi) * Math.sin(theta);
+            starPos[i+2] = r * Math.cos(phi);
+            const tint = 0.75 + Math.random() * 0.25;
+            starColors[i] = tint; starColors[i+1] = tint; starColors[i+2] = 1.0;
         }
-    }, { passive: false });
+        starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+        starGeo.setAttribute('color', new THREE.BufferAttribute(starColors, 3));
+        scene.add(new THREE.Points(starGeo, new THREE.PointsMaterial({ size: 2.2, vertexColors: true, transparent: true, opacity: 0.9 })));
 
-    window.addEventListener('resize', () => {
-        const nw = window.innerWidth, nh = window.innerHeight - 56;
-        camera.aspect = nw / nh; camera.updateProjectionMatrix();
-        renderer.setSize(nw, nh); map.invalidateSize(true);
-    });
+        earthGroup = new THREE.Group();
+        scene.add(earthGroup);
 
-    animateThreeGlobe();
+        const sphereGeo = new THREE.SphereGeometry(GLOBE_RADIUS, 64, 64);
+        const earthMat = new THREE.MeshPhongMaterial({ map: createFallbackEarthCanvas(), shininess: 16, specular: new THREE.Color(0x1e3a8a) });
+        earthMesh = new THREE.Mesh(sphereGeo, earthMat);
+        earthGroup.add(earthMesh);
+
+        const loader = new THREE.TextureLoader();
+        loader.setCrossOrigin('anonymous');
+        loader.load('https://unpkg.com/three-globe@2.31.0/example/img/earth-blue-marble.jpg', (tex) => {
+            earthMat.map = tex; earthMat.needsUpdate = true;
+        });
+
+        earthGroup.add(new THREE.Mesh(
+            new THREE.SphereGeometry(GLOBE_RADIUS * 1.035, 64, 64),
+            new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.16, side: THREE.BackSide })
+        ));
+
+        scene.add(new THREE.AmbientLight(0xdbeafe, 0.85));
+        const dirLight = new THREE.DirectionalLight(0xffffff, 0.95);
+        dirLight.position.set(250, 180, 300);
+        scene.add(dirLight);
+
+        canvas.addEventListener('mousedown', (e) => { isDraggingGlobe = true; prevMouse = { x: e.clientX, y: e.clientY }; });
+        window.addEventListener('mousemove', (e) => {
+            if (!isDraggingGlobe) return;
+            targetRot.y += (e.clientX - prevMouse.x) * 0.0055;
+            targetRot.x = Math.max(-1.2, Math.min(1.2, targetRot.x + (e.clientY - prevMouse.y) * 0.0055));
+            prevMouse = { x: e.clientX, y: e.clientY };
+        });
+        window.addEventListener('mouseup', () => { isDraggingGlobe = false; });
+
+        canvas.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            if (Date.now() - lastTransitionTime < 650) return;
+            const step = Math.sign(e.deltaY) * Math.min(Math.abs(e.deltaY) * 0.15, 10);
+            targetGlobeZ = Math.max(150, Math.min(430, targetGlobeZ + step));
+            if (targetGlobeZ <= 165 && e.deltaY < 0) {
+                targetGlobeZ = 190; globeCameraZ = 190; activate2DSatelliteMap();
+            }
+        }, { passive: false });
+
+        window.addEventListener('resize', () => {
+            const nw = window.innerWidth || 1200, nh = Math.max(400, (window.innerHeight - 56) || 700);
+            if (camera && renderer) {
+                camera.aspect = nw / nh; camera.updateProjectionMatrix();
+                renderer.setSize(nw, nh);
+            }
+            if (map) map.invalidateSize(true);
+        });
+
+        animateThreeGlobe();
+    } catch (err) {
+        console.error("ThreeGlobe init error:", err);
+    }
 }
 
 function update3DGlobeRouteArc() {
-    if (!earthGroup) return;
+    if (!earthGroup || typeof THREE === 'undefined') return;
     if (routeArcLine) { earthGroup.remove(routeArcLine); routeArcLine.geometry.dispose(); }
     const startVec = latLngToVec3(originAirport.coords[0], originAirport.coords[1], GLOBE_RADIUS * 1.005);
     const endVec = latLngToVec3(destAirport.coords[0], destAirport.coords[1], GLOBE_RADIUS * 1.005);
@@ -505,7 +663,7 @@ function update3DGlobeRouteArc() {
 
 function update3DPinOverlay(elId, lat, lng, lift = 1.02) {
     const el = document.getElementById(elId);
-    if (!el || is2DMapActive || currentCamView !== 'map') { if (el) el.classList.add('hidden'); return; }
+    if (!el || !earthGroup || !camera || is2DMapActive || currentCamView !== 'map') { if (el) el.classList.add('hidden'); return; }
     const worldVec = latLngToVec3(lat, lng, GLOBE_RADIUS * lift).applyMatrix4(earthGroup.matrixWorld);
     if (camera.position.clone().normalize().dot(worldVec.clone().normalize()) < 0.15) { el.classList.add('hidden'); return; }
     const projected = worldVec.clone().project(camera);
@@ -516,7 +674,7 @@ function update3DPinOverlay(elId, lat, lng, lift = 1.02) {
 
 function animateThreeGlobe() {
     requestAnimationFrame(animateThreeGlobe);
-    if (!earthGroup || !renderer) return;
+    if (!earthGroup || !renderer || !camera) return;
     earthGroup.rotation.y += (targetRot.y - earthGroup.rotation.y) * 0.08;
     earthGroup.rotation.x += (targetRot.x - earthGroup.rotation.x) * 0.08;
     globeCameraZ += (targetGlobeZ - globeCameraZ) * 0.085;
@@ -535,13 +693,20 @@ function animateThreeGlobe() {
     }
 }
 
-const map = L.map('map', { zoomControl: false, minZoom: 3, maxZoom: 18, zoomSnap: 0.5, zoomDelta: 0.5, wheelPxPerZoomLevel: 120 }).setView([13.5, 107.5], 6);
-L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 18 }).addTo(map);
-L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', { maxZoom: 18 }).addTo(map);
+let map = null;
+try {
+    if (typeof L !== 'undefined') {
+        map = L.map('map', { zoomControl: false, minZoom: 3, maxZoom: 18, zoomSnap: 0.5, zoomDelta: 0.5, wheelPxPerZoomLevel: 120 }).setView([13.5, 107.5], 6);
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 18 }).addTo(map);
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', { maxZoom: 18 }).addTo(map);
 
-map.getContainer().addEventListener('wheel', (e) => {
-    if (is2DMapActive && e.deltaY > 0 && map.getZoom() <= 4 && (Date.now() - lastTransitionTime > 650)) activate3DSpaceGlobe();
-}, { passive: true });
+        map.getContainer().addEventListener('wheel', (e) => {
+            if (is2DMapActive && e.deltaY > 0 && map.getZoom() <= 4 && (Date.now() - lastTransitionTime > 650)) activate3DSpaceGlobe();
+        }, { passive: true });
+    }
+} catch (err) {
+    console.error("Leaflet init error:", err);
+}
 
 let routeLine = null, originMarker = null, destMarker = null, planeMarker = null;
 
@@ -552,6 +717,7 @@ function activate2DSatelliteMap() {
     document.getElementById('projection-mode-badge').innerHTML = "2D";
     document.getElementById('quick-switch-proj-btn').innerHTML = "🌍 Quả cầu 3D";
     const refresh2DMap = () => {
+        if (!map) return;
         map.invalidateSize(true);
         if (isFlying && planeMarker) map.setView(planeMarker.getLatLng(), 7, { animate: false });
         else if (routeLine) map.fitBounds(routeLine.getBounds(), { padding: [90, 90], maxZoom: 7, animate: false });
@@ -568,8 +734,8 @@ function activate3DSpaceGlobe() {
 }
 
 function toggleProjectionMode() { if (is2DMapActive) activate3DSpaceGlobe(); else activate2DSatelliteMap(); }
-function zoomStepIn() { if (!is2DMapActive) { targetGlobeZ -= 30; if (targetGlobeZ <= 168) activate2DSatelliteMap(); } else map.zoomIn(1); }
-function zoomStepOut() { if (is2DMapActive) { if (map.getZoom() <= 4.5) activate3DSpaceGlobe(); else map.zoomOut(1); } else targetGlobeZ = Math.min(430, targetGlobeZ + 30); }
+function zoomStepIn() { if (!is2DMapActive) { targetGlobeZ -= 30; if (targetGlobeZ <= 168) activate2DSatelliteMap(); } else if (map) map.zoomIn(1); }
+function zoomStepOut() { if (is2DMapActive) { if (map && map.getZoom() <= 4.5) activate3DSpaceGlobe(); else if (map) map.zoomOut(1); } else targetGlobeZ = Math.min(430, targetGlobeZ + 30); }
 
 // ================= 5. TÍNH GIỜ BAY & MÔ HÌNH MÁY BAY SVG =================
 function getAircraftSpecs(aircraftType) {
@@ -688,7 +854,7 @@ function setCameraView(view) {
     document.getElementById('view-cabin').classList.toggle('flex', view === 'cabin');
     document.getElementById('view-window').classList.toggle('hidden', view !== 'window');
     document.getElementById('view-window').classList.toggle('flex', view === 'window');
-    if (view === 'map' && is2DMapActive) setTimeout(() => map.invalidateSize(true), 60);
+    if (view === 'map' && is2DMapActive && map) setTimeout(() => map.invalidateSize(true), 60);
     updateCameraViewsData();
 }
 
@@ -702,10 +868,12 @@ function setFlightEnvironment(mode) {
     });
 
     const mapEl = document.getElementById('map');
-    mapEl.className = "";
-    if (mode === 'night') mapEl.classList.add('map-night-filter');
-    if (mode === 'sunset') mapEl.classList.add('map-sunset-filter');
-    if (mode === 'rain') mapEl.classList.add('map-rain-filter');
+    if (mapEl) {
+        mapEl.className = "";
+        if (mode === 'night') mapEl.classList.add('map-night-filter');
+        if (mode === 'sunset') mapEl.classList.add('map-sunset-filter');
+        if (mode === 'rain') mapEl.classList.add('map-rain-filter');
+    }
 
     const cSky = document.getElementById('cockpit-sky-bg');
     const wSky = document.getElementById('window-sky-container');
@@ -809,7 +977,15 @@ function switchPage(page) {
         pageFlight.classList.remove('page-layer-hidden'); pageFlight.classList.add('page-layer-visible');
         btnFlight.className = "px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-extrabold bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow transition flex items-center gap-1.5";
         btnDash.className = "px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-extrabold text-slate-400 hover:text-white transition flex items-center gap-1.5";
-        setTimeout(() => { map.invalidateSize(true); updateBookingUI(); }, 80);
+        setTimeout(() => {
+            const nw = window.innerWidth || 1200, nh = Math.max(400, (window.innerHeight - 56) || 700);
+            if (camera && renderer) {
+                camera.aspect = nw / nh; camera.updateProjectionMatrix();
+                renderer.setSize(nw, nh);
+            }
+            if (map) map.invalidateSize(true);
+            updateBookingUI();
+        }, 80);
     } else {
         pageFlight.classList.remove('page-layer-visible'); pageFlight.classList.add('page-layer-hidden');
         pageDash.classList.remove('page-layer-hidden'); pageDash.classList.add('page-layer-visible');
@@ -1291,8 +1467,8 @@ function onRouteChange() {
         const alt = AIRPORTS.find(a => a.code !== oCode);
         document.getElementById('dest-select').value = alt.code;
     }
-    originAirport = AIRPORTS.find(a => a.code === document.getElementById('origin-select').value);
-    destAirport = AIRPORTS.find(a => a.code === document.getElementById('dest-select').value);
+    originAirport = AIRPORTS.find(a => a.code === document.getElementById('origin-select').value) || AIRPORTS[0];
+    destAirport = AIRPORTS.find(a => a.code === document.getElementById('dest-select').value) || AIRPORTS[2];
     currentDistance = calcDistanceKm(originAirport.coords, destAirport.coords);
     selectedDuration = calcStudyDurationFromDistance(currentDistance, selectedAircraft);
     updateBookingUI();
@@ -1325,15 +1501,17 @@ function updateBookingUI() {
     const now = new Date();
     document.getElementById('booking-realtime-eta').innerText = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')} ➔ ${calcRealTimeETA(selectedDuration)}`;
 
-    if (routeLine) map.removeLayer(routeLine);
-    if (originMarker) map.removeLayer(originMarker);
-    if (destMarker) map.removeLayer(destMarker);
+    if (map && typeof L !== 'undefined') {
+        if (routeLine) map.removeLayer(routeLine);
+        if (originMarker) map.removeLayer(originMarker);
+        if (destMarker) map.removeLayer(destMarker);
 
-    originMarker = L.marker(originAirport.coords, { icon: createAirportBadge(originAirport.code, false) }).addTo(map);
-    destMarker = L.marker(destAirport.coords, { icon: createAirportBadge(destAirport.code, true) }).addTo(map);
-    routeLine = L.polyline([originAirport.coords, destAirport.coords], { color: '#38bdf8', weight: 3.5, dashArray: '8, 8', opacity: 0.95 }).addTo(map);
+        originMarker = L.marker(originAirport.coords, { icon: createAirportBadge(originAirport.code, false) }).addTo(map);
+        destMarker = L.marker(destAirport.coords, { icon: createAirportBadge(destAirport.code, true) }).addTo(map);
+        routeLine = L.polyline([originAirport.coords, destAirport.coords], { color: '#38bdf8', weight: 3.5, dashArray: '8, 8', opacity: 0.95 }).addTo(map);
 
-    if (is2DMapActive) { map.invalidateSize(true); map.fitBounds(routeLine.getBounds(), { padding: [90, 90], maxZoom: 7 }); }
+        if (is2DMapActive) { map.invalidateSize(true); map.fitBounds(routeLine.getBounds(), { padding: [90, 90], maxZoom: 7 }); }
+    }
     update3DGlobeRouteArc();
     updateCameraViewsData();
 }
@@ -1484,7 +1662,7 @@ function startFlight() {
 
     playCabinDingDong();
     const player = document.getElementById('lofi-player');
-    if (player.paused) toggleLofi();
+    if (player && player.paused) toggleLofi();
 
     isFlying = true; isPausedByViolation = false; violationCount = 0; currentFlightProgress = 0;
     updateSafetyHearts(); updateCameraViewsData();
@@ -1501,8 +1679,10 @@ function startFlight() {
     totalFlightSeconds = selectedDuration * 60;
     remainingSeconds = totalFlightSeconds;
 
-    if (planeMarker) map.removeLayer(planeMarker);
-    planeMarker = L.marker(originAirport.coords, { icon: createCustomAircraftMapIcon(), zIndexOffset: 1000 }).addTo(map);
+    if (map && typeof L !== 'undefined') {
+        if (planeMarker) map.removeLayer(planeMarker);
+        planeMarker = L.marker(originAirport.coords, { icon: createCustomAircraftMapIcon(), zIndexOffset: 1000 }).addTo(map);
+    }
 
     updateFlightTick();
     if (flightInterval) clearInterval(flightInterval);
@@ -1604,14 +1784,14 @@ function centerOnPlane() {
     setCameraView('map');
     const curLat = originAirport.coords[0] + (destAirport.coords[0] - originAirport.coords[0]) * currentFlightProgress;
     const curLng = originAirport.coords[1] + (destAirport.coords[1] - originAirport.coords[1]) * currentFlightProgress;
-    if (is2DMapActive && planeMarker) map.flyTo(planeMarker.getLatLng(), 7, { duration: 1.2 });
+    if (is2DMapActive && map && planeMarker) map.flyTo(planeMarker.getLatLng(), 7, { duration: 1.2 });
     else { targetRot.y = (curLng + 90) * (Math.PI / 180); targetRot.x = curLat * (Math.PI / 180) * 0.75; }
 }
 
 function abortFlight() {
     isFlying = false; isPausedByViolation = false; stopAlarmLoop();
     if (flightInterval) clearInterval(flightInterval);
-    if (planeMarker) map.removeLayer(planeMarker);
+    if (map && planeMarker) map.removeLayer(planeMarker);
     setCameraView('map');
     document.getElementById('screen-flying').classList.add('hidden');
     document.getElementById('screen-booking').classList.remove('hidden');

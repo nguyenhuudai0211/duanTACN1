@@ -1,153 +1,18 @@
-// ================= 0. BẢO VỆ DỮ LIỆU DỰ PHÒNG (CHỐNG LỖI UNDEFINED) =================
+// ================= 0. BẢO VỆ DỮ LIỆU DỰ PHÒNG =================
 if (typeof currentLang === 'undefined') { window.currentLang = "vi"; }
 if (typeof showLunarCalendar === 'undefined') { window.showLunarCalendar = true; }
 
-if (typeof CAN_VI === 'undefined') {
-    window.CAN_VI = ["Giáp", "Ất", "Bính", "Đinh", "Mậu", "Kỷ", "Canh", "Tân", "Nhâm", "Quý"];
-    window.CHI_VI = ["Tý", "Sửu", "Dần", "Mão", "Thìn", "Tỵ", "Ngọ", "Mùi", "Thân", "Dậu", "Tuất", "Hợi"];
-    window.CAN_ZH = ["甲", "乙", "丙", "丁", "戊", "己", "庚", "辛", "壬", "癸"];
-    window.CHI_ZH = ["子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"];
+// ================= 1. CHUYỂN ĐỔI NGÔN NGỮ TOÀN DIỆN (DASHBOARD + VÉ MÁY BAY) =================
+function setTextIfExist(id, text) {
+    const el = document.getElementById(id);
+    if (el && text !== undefined) el.innerText = text;
 }
 
-if (typeof I18N === 'undefined') {
-    window.I18N = {
-        vi: {
-            memberTop: "Thành viên", tabDash: "📊 Bảng Điều Khiển Học Tập", tabFlight: "✈️ Chuyến Bay 3D / 2D",
-            bannerTag: "Thông báo Chuyến bay từ Lịch cá nhân", bannerBtn: "🛫 Cất cánh học ngay",
-            kpi1Title: "Hồ sơ thành viên", kpi1Sub: "Đồng bộ Lịch ➔ Chuyến bay",
-            kpi2Title: "Nhiệm vụ & Lịch bay", kpi2Sub: "Đang chờ cất cánh",
-            kpi3Title: "Đã hoàn thành (✓)", kpi4Title: "Dặm bay tích lũy",
-            aiBadge: "💡 Hôm nay nên học gì? (AI Đề xuất)", aiSub: "Báo giờ bay tự động theo khung giờ đã đặt",
-            remindBtn: "🔔 Kiểm tra báo thức bay", smartCtrlTitle: "⚡ Điều phối Lịch AI Thông Minh",
-            smartCtrlDesc: "Sắp xếp thứ tự ưu tiên theo Deadline hoặc tự động dời toàn bộ ca học khi bạn có việc đột xuất.",
-            btnAiSort: "🤖 AI Sắp xếp Thứ tự Ưu tiên", btnSudden: "🌪️ Có lịch đột xuất (Tự động dời ca)",
-            todoHeader: "✅ Danh Sách Nhiệm Vụ & Chặng Bay", todoSyncTag: "⚡ Tự động nhận từ Lịch",
-            todoSub: "Thêm môn học ở Lịch bên phải sẽ tự động nhảy sang đây kèm giờ bay!",
-            filterAll: "Tất cả", filterPending: "Đang làm", filterDone: "Đã xong ✓",
-            quickAddTitle: "+ Thêm nhanh bài tập / deadline lẻ:", quickDeadline: "Hạn (Giờ):", btnSaveTask: "+ Lưu Việc",
-            calHeader: "🗓️ Lịch Biểu & Việc Cá Nhân", calSub: "Bấm chọn trực tiếp ngày trên tờ lịch để xem Thứ/Ngày/Tháng/Năm & Âm lịch",
-            lunarOn: "🌙 Âm lịch: BẬT", lunarOff: "🌙 Âm lịch: TẮT", btnToday: "Hôm nay",
-            weekdays: ["Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "CN"],
-            fullWeekdays: ["Chủ Nhật", "Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy"],
-            monthPrefix: "THÁNG", pickDate: "Chọn ngày:", startTime: "⏰ Bắt đầu:", endTime: "🏁 Kết thúc:",
-            catType: "Phân loại lịch", repeatCycle: "Chu kỳ lặp lại (Tự chọn)", btnAddSlot: "+ Thêm Lịch",
-            autoSyncCheck: "⚡ Tự động đẩy sang Danh sách Nhiệm vụ & Báo giờ Chuyến bay bên trái",
-            botHeader: "Trợ lý Học tập AI", emptyTasks: "Chưa có nhiệm vụ nào ở mục này", emptySlots: "Chưa có lịch nào trong ngày này"
-        },
-        en: {
-            memberTop: "Member", tabDash: "📊 Study Dashboard", tabFlight: "✈️ 3D / 2D Flight Sim",
-            bannerTag: "Flight Alert from Personal Schedule", bannerBtn: "🛫 Takeoff & Study Now",
-            kpi1Title: "Active Profile", kpi1Sub: "Auto-Sync Schedule ➔ Flight",
-            kpi2Title: "Pending Tasks & Flights", kpi2Sub: "Ready for takeoff",
-            kpi3Title: "Completed (✓)", kpi4Title: "Total Flight Miles",
-            aiBadge: "💡 What to study today? (AI Recommended)", aiSub: "Automatic flight alarm synced with your schedule",
-            remindBtn: "🔔 Check Flight Alarm", smartCtrlTitle: "⚡ Smart AI Schedule Dispatcher",
-            smartCtrlDesc: "Automatically prioritize tasks by deadline or reschedule sessions when unexpected events happen.",
-            btnAiSort: "🤖 AI Sort by Priority", btnSudden: "🌪️ Unexpected Event (Auto-Reschedule)",
-            todoHeader: "✅ Task List & Flight Routes", todoSyncTag: "⚡ Auto-Synced from Calendar",
-            todoSub: "Adding a schedule on the right automatically creates a flight task here!",
-            filterAll: "All", filterPending: "Pending", filterDone: "Done ✓",
-            quickAddTitle: "+ Quick add standalone task / deadline:", quickDeadline: "Due (Hrs):", btnSaveTask: "+ Save Task",
-            calHeader: "🗓️ Monthly Calendar & Personal Events", calSub: "Click any date on the calendar grid to view Day of Week, Solar & Lunar Date",
-            lunarOn: "🌙 Lunar: ON", lunarOff: "🌙 Lunar: OFF", btnToday: "Today",
-            weekdays: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
-            fullWeekdays: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
-            monthPrefix: "MONTH", pickDate: "Pick Date:", startTime: "⏰ Start:", endTime: "🏁 End:",
-            catType: "Category", repeatCycle: "Recurrence Cycle (Custom)", btnAddSlot: "+ Add Event",
-            autoSyncCheck: "⚡ Auto-push to Task List & Flight Alarm on the left",
-            botHeader: "AI Study Assistant", emptyTasks: "No tasks in this view yet", emptySlots: "No events scheduled for this date"
-        },
-        zh: {
-            memberTop: "小組成員", tabDash: "📊 學習與日程儀表板", tabFlight: "✈️ 3D / 2D 專注飛行艙",
-            bannerTag: "來自個人行事曆的航班提醒", bannerBtn: "🛫 立即起飛專注學習",
-            kpi1Title: "當前成員檔案", kpi1Sub: "行事曆 ➔ 航班自動同步",
-            kpi2Title: "待辦任務與航班", kpi2Sub: "準備起飛",
-            kpi3Title: "已完成任務 (✓)", kpi4Title: "累計飛行里程",
-            aiBadge: "💡 今天該學什麼？（AI 智慧推薦）", aiSub: "根據您設定的時段自動提醒航班起飛時間",
-            remindBtn: "🔔 檢查航班鬧鐘", smartCtrlTitle: "⚡ AI 智慧排程調度中心",
-            smartCtrlDesc: "根據截止時間自動排序優先級，或在遇到突發狀況時自動順延學習時段。",
-            btnAiSort: "🤖 AI 智慧優先級排序", btnSudden: "🌪️ 突發行程（自動順延時段）",
-            todoHeader: "✅ 任務清單與飛行航線", todoSyncTag: "⚡ 與右側行事曆自動同步",
-            todoSub: "在右側行事曆新增課程或個人事項，將自動同步至此並設定航班時間！",
-            filterAll: "全部", filterPending: "進行中", filterDone: "已完成 ✓",
-            quickAddTitle: "+ 快速新增單獨作業 / 截止期限：", quickDeadline: "期限(小時):", btnSaveTask: "+ 儲存任務",
-            calHeader: "🗓️ 萬年曆與個人行程表", calSub: "直接點擊月曆上的日期，即可查看星期、國曆與農曆日期",
-            lunarOn: "🌙 農曆：開啟", lunarOff: "🌙 農曆：關閉", btnToday: "今天",
-            weekdays: ["週一", "週二", "週三", "週四", "週五", "週六", "週日"],
-            fullWeekdays: ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"],
-            monthPrefix: "月份", pickDate: "選擇日期:", startTime: "⏰ 開始時間:", endTime: "🏁 結束時間:",
-            catType: "行程類別", repeatCycle: "重複週期（自由設定）", btnAddSlot: "+ 新增行程",
-            autoSyncCheck: "⚡ 自動同步至左側任務清單並設定專注航班鬧鐘",
-            botHeader: "AI 智慧學習助理", emptyTasks: "目前尚無任何待辦任務", emptySlots: "此日期尚無安排任何行程"
-        }
-    };
+function setSelectorText(selector, text) {
+    const el = document.querySelector(selector);
+    if (el && text !== undefined) el.innerText = text;
 }
 
-if (typeof AIRPORTS === 'undefined') {
-    window.AIRPORTS = [
-        { code: "SGN", name: "TP.HCM (Tân Sơn Nhất)", group: "VN", coords: [10.8188, 106.6519] },
-        { code: "HAN", name: "Hà Nội (Nội Bài)", group: "VN", coords: [21.2212, 105.8072] },
-        { code: "DAD", name: "Đà Nẵng", group: "VN", coords: [16.0439, 108.1994] },
-        { code: "CXR", name: "Cam Ranh (Khánh Hòa)", group: "VN", coords: [11.9982, 109.2194] },
-        { code: "UIH", name: "Phù Cát (Quy Nhơn)", group: "VN", coords: [13.9550, 109.0422] },
-        { code: "LTH", name: "Long Thành (Đồng Nai)", group: "VN", coords: [10.7850, 107.0650] },
-        { code: "PQC", name: "Phú Quốc (Kiên Giang)", group: "VN", coords: [10.1698, 103.9931] },
-        { code: "DLI", name: "Đà Lạt (Liên Khương)", group: "VN", coords: [11.7500, 108.3667] },
-        { code: "HPH", name: "Hải Phòng (Cát Bi)", group: "VN", coords: [20.8194, 106.7250] },
-        { code: "VII", name: "Vinh (Nghệ An)", group: "VN", coords: [18.7376, 105.6708] },
-        { code: "HUI", name: "Huế (Phú Bài)", group: "VN", coords: [16.4015, 107.7026] },
-        { code: "VCA", name: "Cần Thơ", group: "VN", coords: [10.0851, 105.7119] },
-        { code: "VDH", name: "Đồng Hới (Quảng Bình)", group: "VN", coords: [17.5150, 106.5905] },
-        { code: "THD", name: "Thanh Hóa (Thọ Xuân)", group: "VN", coords: [19.9017, 105.4678] },
-        { code: "VDO", name: "Vân Đồn (Quảng Ninh)", group: "VN", coords: [21.1178, 107.4142] },
-        { code: "VCL", name: "Chu Lai (Quảng Nam)", group: "VN", coords: [15.4061, 108.7056] },
-        { code: "TBB", name: "Tuy Hòa (Phú Yên)", group: "VN", coords: [13.0494, 109.3336] },
-        { code: "BMV", name: "Buôn Ma Thuột (Đắk Lắk)", group: "VN", coords: [12.6683, 108.1200] },
-        { code: "PXU", name: "Pleiku (Gia Lai)", group: "VN", coords: [14.0045, 108.0172] },
-        { code: "VCS", name: "Côn Đảo (Bà Rịa - VT)", group: "VN", coords: [8.7325, 106.6336] },
-        { code: "DIN", name: "Điện Biên Phủ", group: "VN", coords: [21.3975, 103.0078] },
-        { code: "CAH", name: "Cà Mau", group: "VN", coords: [9.1756, 105.1794] },
-        { code: "TPE", name: "Đài Bắc - Đào Viên (Đài Loan 🇹🇼)", group: "INT", coords: [25.0797, 121.2342] },
-        { code: "BKK", name: "Bangkok (Thái Lan)", group: "INT", coords: [13.6900, 100.7501] },
-        { code: "SIN", name: "Singapore (Changi)", group: "INT", coords: [1.3644, 103.9915] },
-        { code: "KUL", name: "Kuala Lumpur (Malaysia)", group: "INT", coords: [2.7456, 101.7072] },
-        { code: "HKG", name: "Hong Kong", group: "INT", coords: [22.3080, 113.9185] },
-        { code: "ICN", name: "Seoul Incheon (Hàn Quốc)", group: "INT", coords: [37.4602, 126.4407] },
-        { code: "HND", name: "Tokyo Haneda (Nhật Bản)", group: "INT", coords: [35.5494, 139.7798] },
-        { code: "MNL", name: "Manila (Philippines)", group: "INT", coords: [14.5086, 121.0194] },
-        { code: "PEK", name: "Bắc Kinh (Trung Quốc)", group: "INT", coords: [40.0799, 116.6031] },
-        { code: "SYD", name: "Sydney (Úc)", group: "INT", coords: [-33.9399, 151.1753] },
-        { code: "CDG", name: "Paris (Pháp)", group: "INT", coords: [49.0097, 2.5479] },
-        { code: "JFK", name: "New York (Mỹ)", group: "INT", coords: [40.6413, -73.7781] }
-    ];
-}
-
-if (typeof FOCUS_MODES === 'undefined') {
-    window.FOCUS_MODES = [
-        { id: "focus", label: "Focus", icon: "⚛️", color: "bg-slate-600/90 border-slate-400 text-white" },
-        { id: "work", label: "Work", icon: "💻", color: "bg-blue-600 border-blue-300 text-white" },
-        { id: "meditate", label: "Meditate", icon: "🧘", color: "bg-indigo-500 border-indigo-300 text-white" },
-        { id: "read", label: "Read", icon: "📖", color: "bg-teal-600 border-teal-300 text-white" },
-        { id: "exercise", label: "Exercise", icon: "🏃", color: "bg-sky-500 border-sky-300 text-white" }
-    ];
-}
-
-if (typeof INITIAL_CLEAN_DB === 'undefined') {
-    window.INITIAL_CLEAN_DB = {
-        lastMember: "huudai",
-        members: {
-            huudai:    { name: "Hữu Đại",    seat: "06A", miles: 0, flights: 0, tasks: [], calendarEvents: [] },
-            quangminh: { name: "Quang Minh", seat: "06A", miles: 0, flights: 0, tasks: [], calendarEvents: [] },
-            khanhthi:  { name: "Khánh Thi",  seat: "04F", miles: 0, flights: 0, tasks: [], calendarEvents: [] },
-            minhchau:  { name: "Minh Châu",  seat: "05A", miles: 0, flights: 0, tasks: [], calendarEvents: [] },
-            uyennhi:   { name: "Uyên Nhi",   seat: "03C", miles: 0, flights: 0, tasks: [], calendarEvents: [] },
-            vanhoang:  { name: "Văn Hoàng",  seat: "07F", miles: 0, flights: 0, tasks: [], calendarEvents: [] }
-        }
-    };
-}
-if (typeof STORAGE_KEY === 'undefined') { window.STORAGE_KEY = "studyhub_focus_flight_clean_v4"; }
-
-// ================= 1. CHUYỂN ĐỔI NGÔN NGỮ & TÍNH ÂM LỊCH =================
 function setAppLanguage(lang) {
     currentLang = lang;
     ['vi', 'en', 'zh'].forEach(l => {
@@ -160,49 +25,76 @@ function setAppLanguage(lang) {
     });
 
     const t = I18N[lang];
-    document.getElementById('lbl-member-top').innerText = t.memberTop;
-    document.getElementById('lbl-tab-dashboard').innerText = t.tabDash;
-    document.getElementById('lbl-tab-flight').innerText = t.tabFlight;
-    document.getElementById('lbl-banner-tag').innerText = t.bannerTag;
-    document.getElementById('lbl-banner-btn').innerText = t.bannerBtn;
-    document.getElementById('lbl-kpi-1-title').innerText = t.kpi1Title;
-    document.getElementById('lbl-kpi-1-sub').innerText = t.kpi1Sub;
-    document.getElementById('lbl-kpi-2-title').innerText = t.kpi2Title;
-    document.getElementById('lbl-kpi-2-sub').innerText = t.kpi2Sub;
-    document.getElementById('lbl-kpi-3-title').innerText = t.kpi3Title;
-    document.getElementById('lbl-kpi-4-title').innerText = t.kpi4Title;
-    document.getElementById('lbl-ai-badge').innerText = t.aiBadge;
-    document.getElementById('lbl-ai-sub').innerText = t.aiSub;
-    document.getElementById('lbl-remind-btn').innerText = t.remindBtn;
-    document.getElementById('lbl-smart-ctrl-title').innerText = t.smartCtrlTitle;
-    document.getElementById('lbl-smart-ctrl-desc').innerText = t.smartCtrlDesc;
-    document.getElementById('lbl-btn-aisort').innerText = t.btnAiSort;
-    document.getElementById('lbl-btn-sudden').innerText = t.btnSudden;
-    document.getElementById('lbl-todo-header').innerText = t.todoHeader;
-    document.getElementById('lbl-todo-sync-tag').innerText = t.todoSyncTag;
-    document.getElementById('lbl-todo-sub').innerText = t.todoSub;
-    document.getElementById('filter-all').innerText = t.filterAll;
-    document.getElementById('filter-pending').innerText = t.filterPending;
-    document.getElementById('filter-done').innerText = t.filterDone;
-    document.getElementById('lbl-quick-add-title').innerText = t.quickAddTitle;
-    document.getElementById('lbl-quick-deadline').innerText = t.quickDeadline;
-    document.getElementById('lbl-btn-save-task').innerText = t.btnSaveTask;
-    document.getElementById('lbl-cal-header').innerText = t.calHeader;
-    document.getElementById('lbl-cal-sub').innerText = t.calSub;
-    document.getElementById('btn-toggle-lunar').innerText = showLunarCalendar ? t.lunarOn : t.lunarOff;
-    document.getElementById('lbl-btn-today').innerText = t.btnToday;
-    document.getElementById('lbl-pick-date').innerText = t.pickDate;
-    document.getElementById('lbl-start-time').innerText = t.startTime;
-    document.getElementById('lbl-end-time').innerText = t.endTime;
-    document.getElementById('lbl-cat-type').innerText = t.catType;
-    document.getElementById('lbl-repeat-cycle').innerText = t.repeatCycle;
-    document.getElementById('lbl-btn-add-slot').innerText = t.btnAddSlot;
-    document.getElementById('lbl-autosync-check').innerText = t.autoSyncCheck;
-    document.getElementById('lbl-bot-header').innerText = t.botHeader;
+    // 1. Dịch Header & Dashboard
+    setTextIfExist('lbl-member-top', t.memberTop);
+    setTextIfExist('lbl-tab-dashboard', t.tabDash);
+    setTextIfExist('lbl-tab-flight', t.tabFlight);
+    setTextIfExist('lbl-banner-tag', t.bannerTag);
+    setTextIfExist('lbl-banner-btn', t.bannerBtn);
+    setTextIfExist('lbl-kpi-1-title', t.kpi1Title);
+    setTextIfExist('lbl-kpi-1-sub', t.kpi1Sub);
+    setTextIfExist('lbl-kpi-2-title', t.kpi2Title);
+    setTextIfExist('lbl-kpi-2-sub', t.kpi2Sub);
+    setTextIfExist('lbl-kpi-3-title', t.kpi3Title);
+    setTextIfExist('lbl-kpi-4-title', t.kpi4Title);
+    setTextIfExist('lbl-ai-badge', t.aiBadge);
+    setTextIfExist('lbl-ai-sub', t.aiSub);
+    setTextIfExist('lbl-remind-btn', t.remindBtn);
+    setTextIfExist('lbl-smart-ctrl-title', t.smartCtrlTitle);
+    setTextIfExist('lbl-smart-ctrl-desc', t.smartCtrlDesc);
+    setTextIfExist('lbl-btn-aisort', t.btnAiSort);
+    setTextIfExist('lbl-btn-sudden', t.btnSudden);
+    setTextIfExist('lbl-todo-header', t.todoHeader);
+    setTextIfExist('lbl-todo-sync-tag', t.todoSyncTag);
+    setTextIfExist('lbl-todo-sub', t.todoSub);
+    setTextIfExist('filter-all', t.filterAll);
+    setTextIfExist('filter-pending', t.filterPending);
+    setTextIfExist('filter-done', t.filterDone);
+    setTextIfExist('lbl-quick-add-title', t.quickAddTitle);
+    setTextIfExist('lbl-quick-deadline', t.quickDeadline);
+    setTextIfExist('lbl-btn-save-task', t.btnSaveTask);
+    setTextIfExist('lbl-cal-header', t.calHeader);
+    setTextIfExist('lbl-cal-sub', t.calSub);
+    setTextIfExist('btn-toggle-lunar', showLunarCalendar ? t.lunarOn : t.lunarOff);
+    setTextIfExist('lbl-btn-today', t.btnToday);
+    setTextIfExist('lbl-pick-date', t.pickDate);
+    setTextIfExist('lbl-start-time', t.startTime);
+    setTextIfExist('lbl-end-time', t.endTime);
+    setTextIfExist('lbl-cat-type', t.catType);
+    setTextIfExist('lbl-repeat-cycle', t.repeatCycle);
+    setTextIfExist('lbl-btn-add-slot', t.btnAddSlot);
+    setTextIfExist('lbl-autosync-check', t.autoSyncCheck);
+    setTextIfExist('lbl-bot-header', t.botHeader);
+
+    // 2. Dịch Bảng Đặt Vé, Chọn Ghế, Vé Boarding Pass & Trạm Bay 3D/2D
+    setTextIfExist('lbl-origin-title', t.originTitle);
+    setTextIfExist('lbl-dest-title', t.destTitle);
+    setTextIfExist('lbl-auto-dur-title', t.autoDurTitle);
+    setTextIfExist('lbl-btn-pick-seat', t.btnPickSeat);
+    setTextIfExist('lbl-btn-fly-now', t.btnFlyNow);
+    setTextIfExist('toggle-booking-btn', isBookingCollapsed ? t.btnExpand : t.btnCollapse);
+    setTextIfExist('quick-switch-proj-btn', is2DMapActive ? t.btnGlobe3D : t.btnMap2D);
+
+    // Các nút trong màn hình Chọn ghế, Vé Boarding Pass, Cabin & Cửa sổ
+    setSelectorText('button[onclick="backToBooking()"]', t.btnBackBooking);
+    setSelectorText('button[onclick="showBoardingPass()"]', t.btnContinueTicket);
+    setSelectorText('button[onclick="confirmSeatAndFocus()"]', t.btnConfirmSeat);
+    setSelectorText('button[onclick="backToSeatFromTicket()"]', t.btnChangeSeat);
+    setSelectorText('#screen-ticket button[onclick="startFlight()"]', t.btnTakeoffTicket);
+    setSelectorText('button[onclick="completeFlightEarly()"]', t.btnDoneFlight);
+    setSelectorText('button[onclick="abortFlight()"]', t.btnAbortFlight);
+    setTextIfExist('btn-reading-light', t.btnReadingLight);
+    setTextIfExist('btn-tray-table', t.btnTrayTable);
+    setSelectorText('button[onclick="cycleCabinMoodLight()"]', t.btnMoodLight);
+    setSelectorText('button[onclick="callFlightAttendant()"]', t.btnCallFA);
+    setSelectorText('button[onclick="toggleWindowShade()"]', t.btnWindowShade);
 
     const wkRow = document.getElementById('calendar-weekdays-row');
-    wkRow.innerHTML = t.weekdays.map((w, idx) => `<div class="${idx === 6 ? 'text-red-400' : ''}">${w}</div>`).join('');
+    if (wkRow) wkRow.innerHTML = t.weekdays.map((w, idx) => `<div class="${idx === 6 ? 'text-red-400' : ''}">${w}</div>`).join('');
 
+    initAirportDropdowns();
+    updateBookingUI();
+    updateRealTimeClock();
     renderCalendarGrid();
     renderDashboard();
     resetChat();
@@ -712,10 +604,11 @@ let routeLine = null, originMarker = null, destMarker = null, planeMarker = null
 
 function activate2DSatelliteMap() {
     lastTransitionTime = Date.now(); is2DMapActive = true;
+    const t = I18N[currentLang];
     document.getElementById('globe-wrapper').classList.add('globe-hidden');
     document.getElementById('map-2d-wrapper').classList.add('active-2d');
     document.getElementById('projection-mode-badge').innerHTML = "2D";
-    document.getElementById('quick-switch-proj-btn').innerHTML = "🌍 Quả cầu 3D";
+    document.getElementById('quick-switch-proj-btn').innerHTML = t.btnGlobe3D || "🌍 Quả cầu 3D";
     const refresh2DMap = () => {
         if (!map) return;
         map.invalidateSize(true);
@@ -727,10 +620,11 @@ function activate2DSatelliteMap() {
 
 function activate3DSpaceGlobe() {
     lastTransitionTime = Date.now(); is2DMapActive = false; targetGlobeZ = 245; globeCameraZ = 190;
+    const t = I18N[currentLang];
     document.getElementById('map-2d-wrapper').classList.remove('active-2d');
     document.getElementById('globe-wrapper').classList.remove('globe-hidden');
     document.getElementById('projection-mode-badge').innerHTML = "3D";
-    document.getElementById('quick-switch-proj-btn').innerHTML = "🛰️ Bản đồ 2D";
+    document.getElementById('quick-switch-proj-btn').innerHTML = t.btnMap2D || "🛰️ Bản đồ 2D";
 }
 
 function toggleProjectionMode() { if (is2DMapActive) activate3DSpaceGlobe(); else activate2DSatelliteMap(); }
@@ -759,9 +653,12 @@ function calcStudyDurationFromDistance(distKm, aircraftType) {
 }
 
 function formatDurationLabel(mins) {
-    if (mins < 60) return `${mins} phút`;
+    const t = I18N[currentLang] || I18N.vi;
+    const uMin = t.unitMin || "phút";
+    const uHr = t.unitHr || "giờ";
+    if (mins < 60) return `${mins} ${uMin}`;
     const h = Math.floor(mins / 60), m = mins % 60;
-    return m > 0 ? `${h}h ${m}p (${mins}p)` : `${h} giờ (${mins}p)`;
+    return m > 0 ? `${h}h ${m}m (${mins} ${uMin})` : `${h} ${uHr} (${mins} ${uMin})`;
 }
 
 function calcRealTimeETA(durationMins) {
@@ -921,10 +818,15 @@ function toggleWindowShade() {
 
 function toggleReadingLight() {
     isReadingLightOn = !isReadingLightOn;
+    const t = I18N[currentLang];
     document.getElementById('reading-light-beam').classList.toggle('hidden', !isReadingLightOn);
-    document.getElementById('btn-reading-light').className = isReadingLightOn
-        ? "bg-yellow-400 text-black px-2.5 py-1 rounded-xl text-[11px] font-extrabold shadow"
-        : "bg-slate-800 hover:bg-slate-700 border border-white/15 px-2.5 py-1 rounded-xl text-[11px] font-bold text-slate-200 transition";
+    const btn = document.getElementById('btn-reading-light');
+    if (btn) {
+        btn.innerText = t.btnReadingLight;
+        btn.className = isReadingLightOn
+            ? "bg-yellow-400 text-black px-2.5 py-1 rounded-xl text-[11px] font-extrabold shadow"
+            : "bg-slate-800 hover:bg-slate-700 border border-white/15 px-2.5 py-1 rounded-xl text-[11px] font-bold text-slate-200 transition";
+    }
 }
 
 function toggleTrayTable() {
@@ -935,7 +837,7 @@ function toggleTrayTable() {
 function callFlightAttendant() {
     playCabinDingDong();
     const profile = appState.members[currentMemberKey];
-    alert(`🛎️ Tiếp viên trưởng: Chúc hành khách ${profile.name} (Ghế ${selectedSeat}) có một chuyến bay học tập thật hiệu quả!`);
+    alert(`🛎️ Crew: Wishing passenger ${profile.name} (Seat ${selectedSeat}) a productive study flight!`);
 }
 
 function cycleCabinMoodLight() {
@@ -1206,12 +1108,12 @@ function renderDashboard() {
                     </div>
                     <div class="text-sm sm:text-base font-extrabold text-white">${top.title}</div>
                     <div class="text-xs text-cyan-300 mt-1">
-                        ✈️ SGN ➔ <b>${dCode} (${dKm} km • ${top.duration}p)</b>
+                        ✈️ SGN ➔ <b>${dCode} (${dKm} km • ${top.duration} ${t.unitMin})</b>
                     </div>
                 </div>
                 <div class="flex sm:flex-col gap-2 shrink-0">
                     <button onclick="startFlightFromTask(${top.id})" class="bg-gradient-to-r from-emerald-500 to-cyan-500 hover:opacity-95 text-black font-black px-4 py-2 rounded-xl text-xs shadow-lg whitespace-nowrap">
-                        🛫 Bay (${top.duration}p)
+                        🛫 Fly (${top.duration}m)
                     </button>
                     <button onclick="openWhyModal(${top.id})" class="bg-white/10 hover:bg-white/20 text-white font-bold px-3 py-1.5 rounded-xl text-[11px] whitespace-nowrap">
                         ❓ Info
@@ -1220,7 +1122,7 @@ function renderDashboard() {
             </div>
         `;
     } else {
-        aiBox.innerHTML = `<div class="text-xs text-slate-300 py-1.5">💡 Hãy chọn ngày bất kỳ trên tờ lịch bên phải và bấm <b>"+ Thêm Lịch"</b> — hệ thống sẽ tự động tạo chuyến bay và báo giờ!</div>`;
+        aiBox.innerHTML = `<div class="text-xs text-slate-300 py-1.5">💡 ${t.calSub}</div>`;
     }
 
     const listEl = document.getElementById('todo-drag-list');
@@ -1274,7 +1176,7 @@ function renderDashboard() {
                 <div class="flex items-center gap-1.5 shrink-0 self-end sm:self-center">
                     ${!task.done ? `
                         <button onclick="startFlightFromTask(${task.id})" class="bg-gradient-to-r from-blue-600 to-cyan-500 hover:opacity-95 text-white px-3 py-1 rounded-xl text-[11px] font-extrabold shadow">
-                            🛫 Bay (${task.duration}p)
+                            🛫 ${task.duration}m
                         </button>
                     ` : ''}
                     <button onclick="deleteTask(${task.id})" class="bg-red-500/15 hover:bg-red-500/30 text-red-300 px-2 py-1 rounded-xl text-xs font-bold">🗑️</button>
@@ -1297,16 +1199,16 @@ function renderDashboard() {
     } else {
         dayEvents.forEach((ev) => {
             let badgeStyle = 'bg-blue-500/20 text-cyan-300 border-cyan-500/30';
-            let typeLabel = '📚 Lịch học';
+            let typeLabel = '📚 Study';
             if (ev.type === 'personal') {
                 badgeStyle = 'bg-purple-950/40 text-purple-300 border-purple-400/40';
-                typeLabel = '🟣 Việc cá nhân';
+                typeLabel = '🟣 Personal';
             } else if (ev.type === 'school') {
                 badgeStyle = 'bg-red-950/35 text-red-300 border-red-400/30';
-                typeLabel = '🔴 Lịch trường';
+                typeLabel = '🔴 School';
             } else if (ev.type === 'free') {
                 badgeStyle = 'bg-emerald-950/35 text-emerald-300 border-emerald-400/30';
-                typeLabel = '🟢 Giờ trống';
+                typeLabel = '🟢 Free Slot';
             }
 
             const el = document.createElement('div');
@@ -1322,7 +1224,7 @@ function renderDashboard() {
                 </div>
                 <div class="flex items-center gap-1 shrink-0">
                     <button onclick="flyDirectlyFromCalendarEvent(${ev.id})" class="bg-cyan-500 hover:bg-cyan-400 text-black font-black px-2.5 py-1 rounded-xl text-[10px] shadow">
-                        🛫 Bay
+                        🛫 Fly
                     </button>
                     <button onclick="removeCalendarEvent(${ev.id})" class="bg-red-500/20 hover:bg-red-500/40 text-red-200 px-2 py-1 rounded-xl text-xs font-bold">🗑️</button>
                 </div>
@@ -1375,7 +1277,7 @@ function openWhyModal(taskId) {
     document.getElementById('why-modal-content').innerHTML = `
         <div class="bg-slate-900 p-3 rounded-2xl border border-white/10">
             <div class="text-sm font-extrabold text-white">${task.title}</div>
-            <div class="text-xs text-amber-300 font-mono mt-1">⏰ ${task.slot} • 🔄 ${task.scope || '1 lần'}</div>
+            <div class="text-xs text-amber-300 font-mono mt-1">⏰ ${task.slot} • 🔄 ${task.scope || '1x'}</div>
         </div>
     `;
     document.getElementById('why-schedule-modal').classList.remove('hidden');
@@ -1424,40 +1326,45 @@ function startFlightFromTask(taskId) {
 function toggleBookingCardSize() {
     const card = document.getElementById('screen-booking');
     const btn = document.getElementById('toggle-booking-btn');
+    const t = I18N[currentLang];
     isBookingCollapsed = !isBookingCollapsed;
-    if (isBookingCollapsed) { card.classList.add('translate-y-[130%]'); btn.innerText = "🔼 Mở bảng"; }
-    else { card.classList.remove('translate-y-[130%]'); btn.innerText = "🔽 Thu gọn bảng"; }
+    if (isBookingCollapsed) { card.classList.add('translate-y-[130%]'); btn.innerText = t.btnExpand; }
+    else { card.classList.remove('translate-y-[130%]'); btn.innerText = t.btnCollapse; }
 }
 
 function initAirportDropdowns() {
     const oSel = document.getElementById('origin-select');
     const dSel = document.getElementById('dest-select');
     const qSel = document.getElementById('quick-task-dest');
+    const t = I18N[currentLang] || I18N.vi;
+
+    const prevOrigin = (oSel && oSel.value) ? oSel.value : originAirport.code;
+    const prevDest = (dSel && dSel.value) ? dSel.value : destAirport.code;
+    const prevQuick = (qSel && qSel.value) ? qSel.value : "DAD";
 
     const vnAirports = AIRPORTS.filter(a => a.group === 'VN');
     const intAirports = AIRPORTS.filter(a => a.group === 'INT');
 
     const buildOptions = (withTimeHint = false) => {
-        let html = `<optgroup label="🇻🇳 Việt Nam (22)" class="bg-slate-900">`;
+        let html = `<optgroup label="${t.vnGroup}" class="bg-slate-900">`;
         vnAirports.forEach(a => {
             const dist = calcDistanceKm(AIRPORTS[0].coords, a.coords);
             const mins = calcStudyDurationFromDistance(dist, "Airbus A321neo");
-            html += `<option value="${a.code}">${a.code} - ${a.name} ${withTimeHint ? `(~${mins}p)` : ''}</option>`;
+            html += `<option value="${a.code}">${a.code} - ${a.name} ${withTimeHint ? `(~${mins}m)` : ''}</option>`;
         });
-        html += `</optgroup><optgroup label="🌏 Quốc tế / 國際 (12)" class="bg-slate-900">`;
+        html += `</optgroup><optgroup label="${t.intGroup}" class="bg-slate-900">`;
         intAirports.forEach(a => {
             const dist = calcDistanceKm(AIRPORTS[0].coords, a.coords);
             const mins = calcStudyDurationFromDistance(dist, "Airbus A321neo");
-            html += `<option value="${a.code}">${a.code} - ${a.name} ${withTimeHint ? `(~${mins}p)` : ''}</option>`;
+            html += `<option value="${a.code}">${a.code} - ${a.name} ${withTimeHint ? `(~${mins}m)` : ''}</option>`;
         });
         html += `</optgroup>`;
         return html;
     };
 
-    oSel.innerHTML = buildOptions(false);
-    dSel.innerHTML = buildOptions(false);
-    qSel.innerHTML = buildOptions(true);
-    oSel.value = originAirport.code; dSel.value = destAirport.code; qSel.value = "DAD";
+    if (oSel) { oSel.innerHTML = buildOptions(false); oSel.value = prevOrigin; }
+    if (dSel) { dSel.innerHTML = buildOptions(false); dSel.value = prevDest; }
+    if (qSel) { qSel.innerHTML = buildOptions(true); qSel.value = prevQuick; }
 }
 
 function onRouteChange() {
@@ -1584,8 +1491,9 @@ function confirmSeatAndFocus() {
 }
 
 function goToSeatSelection() {
+    const t = I18N[currentLang];
     document.getElementById('seat-header-aircraft').innerText = selectedAircraft;
-    document.getElementById('seat-header-route').innerText = `${originAirport.code} ➔ ${destAirport.code} (${currentDistance} km • ${selectedDuration}p)`;
+    document.getElementById('seat-header-route').innerText = `${originAirport.code} ➔ ${destAirport.code} (${currentDistance} km • ${selectedDuration} ${t.unitMin})`;
     document.getElementById('screen-booking').classList.add('hidden');
     document.getElementById('toggle-booking-btn').classList.add('hidden');
     document.getElementById('screen-seat').classList.remove('hidden');
@@ -1602,6 +1510,7 @@ function backToBooking() {
 
 function showBoardingPass() {
     const profile = appState.members[currentMemberKey];
+    const t = I18N[currentLang];
     strictModeEnabled = document.getElementById('strict-mode-toggle').checked;
     document.getElementById('screen-seat').classList.add('hidden');
     document.getElementById('screen-seat').classList.remove('flex');
@@ -1618,7 +1527,7 @@ function showBoardingPass() {
     document.getElementById('tk-origin-name').innerText = originAirport.name.split(' (')[0];
     document.getElementById('tk-dest-code').innerText = destAirport.code;
     document.getElementById('tk-dest-name').innerText = destAirport.name.split(' (')[0];
-    document.getElementById('tk-duration').innerText = `${selectedDuration}p`;
+    document.getElementById('tk-duration').innerText = `${selectedDuration} ${t.unitMin}`;
     document.getElementById('tk-seat').innerText = selectedSeat;
     document.getElementById('tk-dist').innerText = currentDistance + ' km';
     document.getElementById('tk-focus').innerText = `${selectedFocus.icon} ${selectedFocus.label}`;

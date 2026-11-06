@@ -12,7 +12,6 @@ st.set_page_config(
 BASE_DIR = Path(__file__).parent
 
 def read_source_file(filename: str) -> str:
-    # Tìm chính xác hoặc không phân biệt hoa thường / khoảng trắng thừa trên GitHub
     target = BASE_DIR / filename
     if target.exists():
         return target.read_text(encoding="utf-8")
@@ -24,17 +23,14 @@ def read_source_file(filename: str) -> str:
 css_content = read_source_file("styles.css")
 layout_content = read_source_file("layout.html")
 data_i18n_js = read_source_file("data_i18n.js")
-script_logic_js = read_source_file("script_logic.js")
+logic_dashboard_js = read_source_file("logic_dashboard.js")
+logic_flight_js = read_source_file("logic_flight.js")
+features_wow_js = read_source_file("features_wow.js")
 
-# Báo lỗi rõ ràng nếu thiếu file trên GitHub
-missing = []
-if not css_content: missing.append("styles.css")
-if not layout_content: missing.append("layout.html")
-if not script_logic_js: missing.append("script_logic.js")
-
-if missing:
-    st.error(f"⚠️ Thiếu hoặc sai tên file trên GitHub: {', '.join(missing)}. Hãy kiểm tra lại tên file cùng thư mục với app.py!")
-    st.stop()
+# Dự phòng nếu bạn vẫn còn giữ script_logic.js cũ
+fallback_logic_js = ""
+if not (logic_dashboard_js and logic_flight_js):
+    fallback_logic_js = read_source_file("script_logic.js")
 
 st.markdown("""
     <style>
@@ -79,6 +75,7 @@ app_html = f"""<!DOCTYPE html>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
     <style>
@@ -91,7 +88,10 @@ app_html = f"""<!DOCTYPE html>
 {data_i18n_js}
     </script>
     <script>
-{script_logic_js}
+{logic_dashboard_js}
+{logic_flight_js}
+{features_wow_js}
+{fallback_logic_js}
     </script>
 </body>
 </html>

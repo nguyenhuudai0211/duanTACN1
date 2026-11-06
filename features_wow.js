@@ -36,12 +36,14 @@ function applyMemberHomeAirportRoute() {
 
 function renderSquadronRadarOn2DMap() {
     if (!map || typeof L === 'undefined') return;
-    squadronMarkers2D.forEach(m => map.removeLayer(m));
+    squadronMarkers2D.forEach(m => {
+        try { map.removeLayer(m); } catch (e) {}
+    });
     squadronMarkers2D = [];
     if (!squadronRadarEnabled) return;
 
     Object.keys(SQUADRON_CONFIG).forEach((key, idx) => {
-        if (key === currentMemberKey) return; // Thành viên đang chọn đã có máy bay chính
+        if (key === currentMemberKey) return;
         const cfg = SQUADRON_CONFIG[key];
         const oAir = AIRPORTS.find(a => a.code === cfg.home) || AIRPORTS[0];
         const dAir = AIRPORTS.find(a => a.code === cfg.dest) || AIRPORTS[2];
@@ -93,6 +95,9 @@ function toggleSquadronRadar() {
 
 function updateSquadron3DPins() {
     if (!earthGroup || !camera) return;
+    const wrapper = document.getElementById('globe-wrapper');
+    if (!wrapper) return;
+
     Object.keys(SQUADRON_CONFIG).forEach((key, idx) => {
         const pinId = 'sq-3d-pin-' + key;
         let el = document.getElementById(pinId);
@@ -101,7 +106,7 @@ function updateSquadron3DPins() {
             el.id = pinId;
             el.style.zIndex = "14";
             el.className = "squadron-3d-pin fixed pointer-events-none -translate-x-1/2 -translate-y-1/2 hidden";
-            document.getElementById('globe-wrapper').appendChild(el);
+            wrapper.appendChild(el);
         }
         if (!squadronRadarEnabled || key === currentMemberKey || is2DMapActive || currentCamView !== 'map') {
             el.classList.add('hidden');
@@ -127,8 +132,8 @@ function toggleCaptainVoice() {
     if (btn) {
         btn.innerText = captainVoiceEnabled ? "🔊 Cơ trưởng & ATC: BẬT" : "🔇 Cơ trưởng & ATC: TẮT";
         btn.className = captainVoiceEnabled
-            ? "bg-amber-500/20 text-amber-300 border border-amber-400/40 px-2.5 py-1 rounded-xl text-[10px] font-extrabold transition"
-            : "bg-slate-800 text-slate-400 border border-white/10 px-2.5 py-1 rounded-xl text-[10px] font-bold transition";
+            ? "bg-amber-500/20 text-amber-300 border border-amber-400/40 px-2 py-0.5 rounded-lg text-[10px] font-extrabold transition"
+            : "bg-slate-800 text-slate-400 border border-white/10 px-2 py-0.5 rounded-lg text-[10px] font-bold transition";
     }
 }
 
@@ -157,7 +162,6 @@ function runTakeoffTaxiAndAtcSequence() {
     const subText = document.getElementById('atc-sub-text');
     const prog = document.getElementById('atc-taxi-bar');
 
-    // Bước 1: Xin phép đài chỉ huy ATC
     stageText.innerHTML = `🗼 [ATC TOWER ${originAirport.code} - 118.1 MHz]: Cấp huấn lệnh lăn bánh`;
     subText.innerHTML = `"${selectedAircraft}, đường băng 25R thông thoáng, gió ${liveWeatherCache.wind} km/h. Cho phép lăn ra đường băng chuẩn bị cất cánh đi ${destAirport.code}!"`;
     prog.style.width = "33%";
@@ -214,11 +218,6 @@ async function updateDestinationLiveWeather(airportCode) {
     }
 }
 
-function syncWindowWithLiveWeather() {
-    if (liveWeatherCache.code >= 51) setFlightEnvironment('rain');
-    else syncEnvironmentWithRealTime();
-}
-
 // ================= 4. THẺ VIP FREQUENT FLYER, HỘ CHIẾU 3D & HỘP ĐEN PHÂN TÍCH =================
 function getFrequentFlyerTier(miles) {
     if (miles >= 3000) return { name: "💎 DIAMOND VIP", bg: "bg-cyan-500/20 text-cyan-300 border-cyan-400/50" };
@@ -254,8 +253,11 @@ function openPassportAndBlackboxModal() {
     const tier = getFrequentFlyerTier(profile.miles || 0);
 
     if (!profile.passportStamps || profile.passportStamps.length === 0) {
+        const destCode = SQUADRON_CONFIG[currentMemberKey].dest;
+        const oObj = AIRPORTS.find(a => a.code === homeCode) || AIRPORTS[0];
+        const dObj = AIRPORTS.find(a => a.code === destCode) || AIRPORTS[2];
         profile.passportStamps = [
-            { origin: homeCode, dest: SQUADRON_CONFIG[currentMemberKey].dest, dist: calcDistanceKm(AIRPORTS.find(a=>a.code===homeCode).coords, AIRPORTS.find(a=>a.code===SQUADRON_CONFIG[currentMemberKey].dest).coords), date: "06/11/2026", subject: SQUADRON_CONFIG[currentMemberKey].subject }
+            { origin: homeCode, dest: destCode, dist: calcDistanceKm(oObj.coords, dObj.coords), date: "06/11/2026", subject: SQUADRON_CONFIG[currentMemberKey].subject }
         ];
     }
 
@@ -337,129 +339,133 @@ function downloadBoardingPassPNG() {
     });
 }
 
-// ================= 6. TỰ ĐỘNG GẮN CÁC NÚT ĐIỀU KHIỂN MỚI VÀO GIAO DIỆN =================
+// ================= 6. TỰ ĐỘNG GẮN CÁC NÚT ĐIỀU KHIỂN MỚI VÀO GIAO DIỆN (AN TOÀN 100%) =================
 function injectWowUIElements() {
-    // 1. Gắn huy hiệu Hạng thẻ VIP vào Thẻ KPI số 1
-    const statName = document.getElementById('stat-member-name');
-    if (statName && !document.getElementById('vip-tier-badge')) {
-        const badge = document.createElement('span');
-        badge.id = 'vip-tier-badge';
-        badge.className = "ml-1.5 text-[10px] font-black px-2 py-0.5 rounded-full border";
-        statName.parentElement.appendChild(badge);
-    }
+    try {
+        const statName = document.getElementById('stat-member-name');
+        if (statName && !document.getElementById('vip-tier-badge')) {
+            const badge = document.createElement('span');
+            badge.id = 'vip-tier-badge';
+            badge.className = "ml-1.5 text-[10px] font-black px-2 py-0.5 rounded-full border";
+            statName.parentElement.appendChild(badge);
+        }
+    } catch (e) {}
 
-    // 2. Gắn nút Hộ Chiếu 3D & Hộp Đen vào Header
-    const headerRight = document.querySelector('header > div:last-child');
-    if (headerRight && !document.getElementById('btn-open-passport')) {
-        const passBtn = document.createElement('button');
-        passBtn.id = 'btn-open-passport';
-        passBtn.onclick = openPassportAndBlackboxModal;
-        passBtn.className = "bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/40 px-2.5 py-1.5 rounded-xl text-xs font-extrabold text-amber-300 transition flex items-center gap-1";
-        passBtn.innerHTML = `🛂 <span class="hidden sm:inline">Hộ Chiếu & VIP</span>`;
-        headerRight.insertBefore(passBtn, headerRight.firstChild);
-    }
+    try {
+        const headerRight = document.querySelector('header > div:last-child');
+        if (headerRight && !document.getElementById('btn-open-passport')) {
+            const passBtn = document.createElement('button');
+            passBtn.id = 'btn-open-passport';
+            passBtn.onclick = openPassportAndBlackboxModal;
+            passBtn.className = "bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/40 px-2.5 py-1.5 rounded-xl text-xs font-extrabold text-amber-300 transition flex items-center gap-1";
+            passBtn.innerHTML = `🛂 <span class="hidden sm:inline">Hộ Chiếu & VIP</span>`;
+            headerRight.insertBefore(passBtn, headerRight.firstChild);
+        }
+    } catch (e) {}
 
-    // 3. Gắn nút Bật/Tắt Radar Đội hình 6 Thành viên ở cụm Zoom 2D/3D
-    const zoomCtrl = document.getElementById('zoom-mode-controls');
-    if (zoomCtrl && !document.getElementById('btn-squadron-radar')) {
-        const radBtn = document.createElement('button');
-        radBtn.id = 'btn-squadron-radar';
-        radBtn.onclick = toggleSquadronRadar;
-        radBtn.className = "glass-panel px-3 py-1.5 rounded-xl text-[10px] font-extrabold text-emerald-300 border border-emerald-400/40 shadow-xl whitespace-nowrap";
-        radBtn.innerText = "📡 Đội hình 6 TV: BẬT";
-        zoomCtrl.appendChild(radBtn);
-    }
+    try {
+        const zoomCtrl = document.getElementById('zoom-mode-controls');
+        if (zoomCtrl && !document.getElementById('btn-squadron-radar')) {
+            const radBtn = document.createElement('button');
+            radBtn.id = 'btn-squadron-radar';
+            radBtn.onclick = toggleSquadronRadar;
+            radBtn.className = "glass-panel px-3 py-1.5 rounded-xl text-[10px] font-extrabold text-emerald-300 border border-emerald-400/40 shadow-xl whitespace-nowrap";
+            radBtn.innerText = "📡 Đội hình 6 TV: BẬT";
+            zoomCtrl.appendChild(radBtn);
+        }
+    } catch (e) {}
 
-    // 4. Gắn Thanh Thời tiết thực tế + Nút Bật/Tắt tiếng Cơ trưởng & ATC vào Bảng đặt vé
-    const bookingCard = document.getElementById('screen-booking');
-    if (bookingCard && !document.getElementById('live-weather-bar')) {
-        const wxBar = document.createElement('div');
-        wxBar.id = 'live-weather-bar';
-        wxBar.className = "flex flex-wrap items-center justify-between gap-1.5 bg-slate-900/90 border border-white/10 rounded-xl px-2.5 py-1.5 mb-2 text-[10px]";
-        wxBar.innerHTML = `
-            <span id="live-weather-badge" class="text-cyan-300 font-semibold">☀️ Thời tiết DAD: 28°C</span>
-            <div class="flex items-center gap-1">
-                <button id="btn-captain-voice-toggle" onclick="toggleCaptainVoice()" class="bg-amber-500/20 text-amber-300 border border-amber-400/40 px-2 py-0.5 rounded-lg text-[10px] font-extrabold transition">🔊 Cơ trưởng & ATC: BẬT</button>
-            </div>
-        `;
-        const actionRow = bookingCard.querySelector('.flex.gap-2:last-child');
-        bookingCard.insertBefore(wxBar, actionRow);
-    }
+    try {
+        const bookingCard = document.getElementById('screen-booking');
+        if (bookingCard && !document.getElementById('live-weather-bar')) {
+            const wxBar = document.createElement('div');
+            wxBar.id = 'live-weather-bar';
+            wxBar.className = "flex flex-wrap items-center justify-between gap-1.5 bg-slate-900/90 border border-white/10 rounded-xl px-2.5 py-1.5 mb-2 text-[10px]";
+            wxBar.innerHTML = `
+                <span id="live-weather-badge" class="text-cyan-300 font-semibold">☀️ Thời tiết DAD: 28°C</span>
+                <div class="flex items-center gap-1">
+                    <button id="btn-captain-voice-toggle" onclick="toggleCaptainVoice()" class="bg-amber-500/20 text-amber-300 border border-amber-400/40 px-2 py-0.5 rounded-lg text-[10px] font-extrabold transition">🔊 Cơ trưởng & ATC: BẬT</button>
+                </div>
+            `;
+            bookingCard.insertBefore(wxBar, bookingCard.lastElementChild);
+        }
+    } catch (e) {}
 
-    // 5. Gắn nút Tùy chọn Tải ảnh Vé Boarding Pass (.PNG) vào màn hình Vé
-    const ticketScreen = document.querySelector('#screen-ticket > div');
-    if (ticketScreen && !document.getElementById('btn-download-ticket-png')) {
-        const dlBtn = document.createElement('button');
-        dlBtn.id = 'btn-download-ticket-png';
-        dlBtn.onclick = downloadBoardingPassPNG;
-        dlBtn.className = "w-full mt-2.5 bg-slate-900 hover:bg-slate-800 text-amber-300 border border-amber-400/40 font-extrabold py-2 rounded-2xl text-xs shadow transition";
-        dlBtn.innerHTML = "📸 Tải ảnh Vé Boarding Pass (PNG - Tùy chọn)";
-        ticketScreen.insertBefore(dlBtn, ticketScreen.lastElementChild);
-    }
+    try {
+        const ticketScreen = document.querySelector('#screen-ticket > div');
+        if (ticketScreen && !document.getElementById('btn-download-ticket-png')) {
+            const dlBtn = document.createElement('button');
+            dlBtn.id = 'btn-download-ticket-png';
+            dlBtn.onclick = downloadBoardingPassPNG;
+            dlBtn.className = "w-full mt-2.5 bg-slate-900 hover:bg-slate-800 text-amber-300 border border-amber-400/40 font-extrabold py-2 rounded-2xl text-xs shadow transition";
+            dlBtn.innerHTML = "📸 Tải ảnh Vé Boarding Pass (PNG - Tùy chọn)";
+            ticketScreen.insertBefore(dlBtn, ticketScreen.lastElementChild);
+        }
+    } catch (e) {}
 
-    // 6. Gắn Menu Phục vụ Trà sữa / Cà phê Hạng Thương Gia vào Bàn học trong khoang Cabin
-    const trayEl = document.getElementById('cabin-tray-table-open');
-    if (trayEl && !document.getElementById('cabin-catering-menu')) {
-        const menuDiv = document.createElement('div');
-        menuDiv.id = 'cabin-catering-menu';
-        menuDiv.className = "mt-2 pt-2 border-t border-slate-400/50 flex flex-wrap items-center justify-between gap-1.5";
-        menuDiv.innerHTML = `
-            <div class="flex items-center gap-1 text-[10px] font-extrabold text-slate-700">
-                <span>🍽️ Menu VIP:</span>
-                <button onclick="serveCabinItem('🧋','Trà sữa Trân châu')" class="bg-white hover:bg-amber-100 px-2 py-0.5 rounded-lg shadow-sm">🧋 Trà sữa</button>
-                <button onclick="serveCabinItem('🍵','Matcha Latte')" class="bg-white hover:bg-emerald-100 px-2 py-0.5 rounded-lg shadow-sm">🍵 Matcha</button>
-                <button onclick="serveCabinItem('☕','Espresso')" class="bg-white hover:bg-amber-100 px-2 py-0.5 rounded-lg shadow-sm">☕ Cà phê</button>
-                <button onclick="serveCabinItem('🥐','Croissant')" class="bg-white hover:bg-yellow-100 px-2 py-0.5 rounded-lg shadow-sm">🥐 Bánh</button>
-            </div>
-            <div id="cabin-served-items" class="text-xs font-bold text-slate-800">☕ 📓</div>
-        `;
-        trayEl.appendChild(menuDiv);
-    }
+    try {
+        const trayEl = document.getElementById('cabin-tray-table-open');
+        if (trayEl && !document.getElementById('cabin-catering-menu')) {
+            const menuDiv = document.createElement('div');
+            menuDiv.id = 'cabin-catering-menu';
+            menuDiv.className = "mt-2 pt-2 border-t border-slate-400/50 flex flex-wrap items-center justify-between gap-1.5";
+            menuDiv.innerHTML = `
+                <div class="flex items-center gap-1 text-[10px] font-extrabold text-slate-700">
+                    <span>🍽️ Menu VIP:</span>
+                    <button onclick="serveCabinItem('🧋','Trà sữa Trân châu')" class="bg-white hover:bg-amber-100 px-2 py-0.5 rounded-lg shadow-sm">🧋 Trà sữa</button>
+                    <button onclick="serveCabinItem('🍵','Matcha Latte')" class="bg-white hover:bg-emerald-100 px-2 py-0.5 rounded-lg shadow-sm">🍵 Matcha</button>
+                    <button onclick="serveCabinItem('☕','Espresso')" class="bg-white hover:bg-amber-100 px-2 py-0.5 rounded-lg shadow-sm">☕ Cà phê</button>
+                    <button onclick="serveCabinItem('🥐','Croissant')" class="bg-white hover:bg-yellow-100 px-2 py-0.5 rounded-lg shadow-sm">🥐 Bánh</button>
+                </div>
+                <div id="cabin-served-items" class="text-xs font-bold text-slate-800">☕ 📓</div>
+            `;
+            trayEl.appendChild(menuDiv);
+        }
+    } catch (e) {}
 
-    // 7. Tạo Overlay Mô phỏng Lăn bánh Đường băng & Đài Không Lưu ATC + Modal Hộ Chiếu 3D
-    if (!document.getElementById('atc-taxi-overlay')) {
-        const modalsWrapper = document.createElement('div');
-        modalsWrapper.innerHTML = `
-            <!-- OVERLAY MÔ PHỎNG LĂN BÁNH ĐƯỜNG BĂNG & ĐÀI ATC -->
-            <div id="atc-taxi-overlay" style="z-index: 8200;" class="fixed top-16 left-1/2 -translate-x-1/2 w-[94%] max-w-lg glass-panel rounded-3xl p-4 border-2 border-amber-400/50 shadow-2xl hidden flex-col gap-2">
-                <div class="flex items-center justify-between">
-                    <span id="atc-stage-text" class="text-xs font-black text-amber-300 uppercase tracking-wider">🗼 [ATC TOWER]</span>
-                    <div class="flex items-center gap-1.5">
-                        <button onclick="toggleCaptainVoice()" class="text-[10px] bg-white/10 hover:bg-white/20 text-white px-2 py-0.5 rounded-lg font-bold">🔊/🔇 Tiếng</button>
-                        <button onclick="closeAtcTaxiOverlay()" class="text-[10px] bg-emerald-500 hover:bg-emerald-400 text-black font-black px-2.5 py-0.5 rounded-lg">Bỏ qua ➔ Bay luôn</button>
+    try {
+        if (!document.getElementById('atc-taxi-overlay')) {
+            const modalsWrapper = document.createElement('div');
+            modalsWrapper.innerHTML = `
+                <div id="atc-taxi-overlay" style="z-index: 8200;" class="fixed top-16 left-1/2 -translate-x-1/2 w-[94%] max-w-lg glass-panel rounded-3xl p-4 border-2 border-amber-400/50 shadow-2xl hidden flex-col gap-2">
+                    <div class="flex items-center justify-between">
+                        <span id="atc-stage-text" class="text-xs font-black text-amber-300 uppercase tracking-wider">🗼 [ATC TOWER]</span>
+                        <div class="flex items-center gap-1.5">
+                            <button onclick="toggleCaptainVoice()" class="text-[10px] bg-white/10 hover:bg-white/20 text-white px-2 py-0.5 rounded-lg font-bold">🔊/🔇 Tiếng</button>
+                            <button onclick="closeAtcTaxiOverlay()" class="text-[10px] bg-emerald-500 hover:bg-emerald-400 text-black font-black px-2.5 py-0.5 rounded-lg">Bỏ qua ➔ Bay luôn</button>
+                        </div>
+                    </div>
+                    <div id="atc-sub-text" class="text-xs text-slate-200 leading-relaxed font-mono bg-black/40 p-2.5 rounded-xl border border-white/10"></div>
+                    <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                        <div id="atc-taxi-bar" class="bg-gradient-to-r from-amber-400 to-emerald-400 h-full w-1/3 transition-all duration-700"></div>
                     </div>
                 </div>
-                <div id="atc-sub-text" class="text-xs text-slate-200 leading-relaxed font-mono bg-black/40 p-2.5 rounded-xl border border-white/10"></div>
-                <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
-                    <div id="atc-taxi-bar" class="bg-gradient-to-r from-amber-400 to-emerald-400 h-full w-1/3 transition-all duration-700"></div>
-                </div>
-            </div>
 
-            <!-- MODAL HỘ CHIẾU 3D & HỘP ĐEN ĐỘI HÌNH 6 THÀNH VIÊN -->
-            <div id="passport-blackbox-modal" style="z-index: 9200;" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center p-4">
-                <div class="glass-panel w-full max-w-2xl rounded-3xl p-5 shadow-2xl border border-amber-400/40">
-                    <div class="flex justify-between items-center mb-3 pb-2 border-b border-white/10">
-                        <h3 class="text-sm sm:text-base font-black text-amber-300">🛂 Cuốn Hộ Chiếu 3D, Hạng Thẻ VIP & Radar 6 Thành Viên</h3>
-                        <button onclick="closePassportAndBlackboxModal()" class="text-slate-400 hover:text-white text-lg font-bold">✕</button>
+                <div id="passport-blackbox-modal" style="z-index: 9200;" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center p-4">
+                    <div class="glass-panel w-full max-w-2xl rounded-3xl p-5 shadow-2xl border border-amber-400/40">
+                        <div class="flex justify-between items-center mb-3 pb-2 border-b border-white/10">
+                            <h3 class="text-sm sm:text-base font-black text-amber-300">🛂 Cuốn Hộ Chiếu 3D, Hạng Thẻ VIP & Radar 6 Thành Viên</h3>
+                            <button onclick="closePassportAndBlackboxModal()" class="text-slate-400 hover:text-white text-lg font-bold">✕</button>
+                        </div>
+                        <div id="passport-modal-body"></div>
+                        <button onclick="closePassportAndBlackboxModal()" class="mt-4 w-full bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-black py-2.5 rounded-xl text-xs uppercase">Đóng Hộ Chiếu</button>
                     </div>
-                    <div id="passport-modal-body"></div>
-                    <button onclick="closePassportAndBlackboxModal()" class="mt-4 w-full bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-black py-2.5 rounded-xl text-xs uppercase">Đóng Hộ Chiếu</button>
                 </div>
-            </div>
-        `;
-        document.body.appendChild(modalsWrapper);
-    }
+            `;
+            document.body.appendChild(modalsWrapper);
+        }
+    } catch (e) {}
 }
 
-// ================= 7. KHỞI CHẠY HỆ THỐNG =================
-document.getElementById('member-select').value = currentMemberKey;
-injectWowUIElements();
-initThreeGlobe();
-updateRealTimeClock();
-initAirportDropdowns();
-applyMemberHomeAirportRoute();
-syncEnvironmentWithRealTime();
-updateSlotDurationPreview();
-renderCalendarGrid();
-renderDashboard();
-resetChat();
+// ================= 7. KHỞI CHẠY HỆ THỐNG Bọc Bảo Vệ Từng Bước =================
+try { document.getElementById('member-select').value = currentMemberKey; } catch (e) {}
+try { injectWowUIElements(); } catch (e) {}
+try { initThreeGlobe(); } catch (e) {}
+try { updateRealTimeClock(); } catch (e) {}
+try { initAirportDropdowns(); } catch (e) {}
+try { applyMemberHomeAirportRoute(); } catch (e) {}
+try { syncEnvironmentWithRealTime(); } catch (e) {}
+try { updateSlotDurationPreview(); } catch (e) {}
+try { renderCalendarGrid(); } catch (e) {}
+try { renderDashboard(); } catch (e) {}
+try { resetChat(); } catch (e) {}

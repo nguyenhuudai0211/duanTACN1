@@ -1,11 +1,11 @@
 // ================= 1. PHÂN BỐ 6 THÀNH VIÊN Ở 6 SÂN BAY VIỆT NAM KHÁC NHAU & RADAR ĐỘI HÌNH =================
 const SQUADRON_CONFIG = {
     huudai:    { name: "Hữu Đại",    home: "SGN", dest: "DAD", subject: "Điều khiển thông minh & Tự động hóa", aircraft: "Airbus A321neo", color: "#38bdf8" },
-    quangminh: { name: "Quang Minh", home: "HAN", dest: "CXR", subject: "Thiết kế hệ thống truyền động cơ khí", aircraft: "Boeing 787-9",   color: "#facc15" },
-    khanhthi:  { name: "Khánh Thi",  home: "DAD", dest: "PQC", subject: "Xác suất thống kê & Phân tích dữ liệu", aircraft: "Airbus A350-900", color: "#f472b6" },
-    minhchau:  { name: "Minh Châu",  home: "CXR", dest: "HUI", subject: "Luyện đề TOEIC Reading Part 5-7",     aircraft: "Airbus A321neo", color: "#34d399" },
-    uyennhi:   { name: "Uyên Nhi",   home: "PQC", dest: "DLI", subject: "Kinh tế vĩ mô & Tài chính doanh nghiệp", aircraft: "ATR 72-600",   color: "#a78bfa" },
-    vanhoang:  { name: "Văn Hoàng",  home: "VCA", dest: "VDO", subject: "Lập trình Python & Mô phỏng AI",      aircraft: "Boeing 787-9",   color: "#fb923c" }
+    quangminh: { name: "Quang Minh", home: "HAN", dest: "CXR", subject: "Điều khiển thông minh & Tự động hóa", aircraft: "Boeing 787-9",   color: "#facc15" },
+    khanhthi:  { name: "Khánh Thi",  home: "DAD", dest: "PQC", subject: "Điều khiển thông minh & Tự động hóa", aircraft: "Airbus A350-900", color: "#f472b6" },
+    minhchau:  { name: "Minh Châu",  home: "CXR", dest: "HUI", subject: "Công Nghệ Logistic",     aircraft: "Airbus A321neo", color: "#34d399" },
+    uyennhi:   { name: "Uyên Nhi",   home: "PQC", dest: "DLI", subject: "Điều khiển thông minh & Tự động hóa", aircraft: "ATR 72-600",   color: "#a78bfa" },
+    vanhoang:  { name: "Văn Hoàng",  home: "VCA", dest: "VDO", subject: "Điều khiển thông minh & Tự động hóa",      aircraft: "Boeing 787-9",   color: "#fb923c" }
 };
 
 let captainVoiceEnabled = true;

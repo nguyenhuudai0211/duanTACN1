@@ -1,6 +1,77 @@
-// ================= 1. TỪ ĐIỂN ĐA NGÔN NGỮ CHO CÁC TÍNH NĂNG MỚI (VI / EN / 繁體中文) =================
+// ================= 1. TỪ ĐIỂN ĐA NGÔN NGỮ TOÀN DIỆN & TÊN 34 SÂN BAY (VI / EN / 繁體中文) =================
+const AIRPORT_NAMES_I18N = {
+    SGN: { vi: "TP.HCM (Tân Sơn Nhất)", en: "Ho Chi Minh City (Tan Son Nhat)", zh: "胡志明市（新山一）" },
+    HAN: { vi: "Hà Nội (Nội Bài)", en: "Hanoi (Noi Bai)", zh: "河內（內排）" },
+    DAD: { vi: "Đà Nẵng", en: "Da Nang", zh: "峴港" },
+    CXR: { vi: "Cam Ranh (Khánh Hòa)", en: "Cam Ranh (Nha Trang)", zh: "金蘭（芽莊）" },
+    UIH: { vi: "Phù Cát (Quy Nhơn)", en: "Phu Cat (Quy Nhon)", zh: "符吉（歸仁）" },
+    LTH: { vi: "Long Thành (Đồng Nai)", en: "Long Thanh (Dong Nai)", zh: "隆城（同奈）" },
+    PQC: { vi: "Phú Quốc (Kiên Giang)", en: "Phu Quoc Island", zh: "富國島" },
+    DLI: { vi: "Đà Lạt (Liên Khương)", en: "Da Lat (Lien Khuong)", zh: "大叻（聯姜）" },
+    HPH: { vi: "Hải Phòng (Cát Bi)", en: "Hai Phong (Cat Bi)", zh: "海防（吉碑）" },
+    VII: { vi: "Vinh (Nghệ An)", en: "Vinh (Nghe An)", zh: "榮市（乂安）" },
+    HUI: { vi: "Huế (Phú Bài)", en: "Hue (Phu Bai)", zh: "順化（富牌）" },
+    VCA: { vi: "Cần Thơ", en: "Can Tho", zh: "芹苴" },
+    VDH: { vi: "Đồng Hới (Quảng Bình)", en: "Dong Hoi (Quang Binh)", zh: "洞海（廣平）" },
+    THD: { vi: "Thanh Hóa (Thọ Xuân)", en: "Thanh Hoa (Tho Xuan)", zh: "清化（壽春）" },
+    VDO: { vi: "Vân Đồn (Quảng Ninh)", en: "Van Don (Ha Long)", zh: "雲屯（廣寧）" },
+    VCL: { vi: "Chu Lai (Quảng Nam)", en: "Chu Lai (Quang Nam)", zh: "朱萊（廣南）" },
+    TBB: { vi: "Tuy Hòa (Phú Yên)", en: "Tuy Hoa (Phu Yen)", zh: "綏和（富安）" },
+    BMV: { vi: "Buôn Ma Thuột (Đắk Lắk)", en: "Buon Ma Thuot (Dak Lak)", zh: "邦美蜀（得勒）" },
+    PXU: { vi: "Pleiku (Gia Lai)", en: "Pleiku (Gia Lai)", zh: "波來古（嘉萊）" },
+    VCS: { vi: "Côn Đảo (Bà Rịa - VT)", en: "Con Dao Island", zh: "崑崙島" },
+    DIN: { vi: "Điện Biên Phủ", en: "Dien Bien Phu", zh: "奠邊府" },
+    CAH: { vi: "Cà Mau", en: "Ca Mau", zh: "金甌" },
+    TPE: { vi: "Đài Bắc - Đào Viên (Đài Loan 🇹🇼)", en: "Taipei Taoyuan (Taiwan 🇹🇼)", zh: "台北桃園（台灣 🇹🇼）" },
+    BKK: { vi: "Bangkok (Thái Lan)", en: "Bangkok Suvarnabhumi (Thailand)", zh: "曼谷（泰國）" },
+    SIN: { vi: "Singapore (Changi)", en: "Singapore (Changi)", zh: "新加坡（樟宜）" },
+    KUL: { vi: "Kuala Lumpur (Malaysia)", en: "Kuala Lumpur (Malaysia)", zh: "吉隆坡（馬來西亞）" },
+    HKG: { vi: "Hong Kong", en: "Hong Kong Intl", zh: "香港國際機場" },
+    ICN: { vi: "Seoul Incheon (Hàn Quốc)", en: "Seoul Incheon (South Korea)", zh: "首爾仁川（韓國）" },
+    HND: { vi: "Tokyo Haneda (Nhật Bản)", en: "Tokyo Haneda (Japan)", zh: "東京羽田（日本）" },
+    MNL: { vi: "Manila (Philippines)", en: "Manila (Philippines)", zh: "馬尼拉（菲律賓）" },
+    PEK: { vi: "Bắc Kinh (Trung Quốc)", en: "Beijing Capital (China)", zh: "北京首都（中國）" },
+    SYD: { vi: "Sydney (Úc)", en: "Sydney Kingsford Smith (Australia)", zh: "雪梨（澳洲）" },
+    CDG: { vi: "Paris (Pháp)", en: "Paris Charles de Gaulle (France)", zh: "巴黎戴高樂（法國）" },
+    JFK: { vi: "New York (Mỹ)", en: "New York JFK (USA)", zh: "紐約甘迺迪（美國）" }
+};
+
+function getLocalizedAirportName(code) {
+    const item = AIRPORT_NAMES_I18N[code];
+    if (!item) return code;
+    return item[currentLang] || item.vi;
+}
+
 const WOW_I18N = {
     vi: {
+        shortMin: "p",
+        unitMin: "phút",
+        unitHr: "giờ",
+        vnGroup: "🇻🇳 Việt Nam (22)",
+        intGroup: "🌏 Quốc tế (12)",
+        originTitle: "Điểm khởi hành",
+        destTitle: "Điểm hạ cánh",
+        autoDurTitle: "⏱️ Thời gian học (Tính theo khoảng cách)",
+        btnPickSeat: "💺 Chọn Ghế & In Vé",
+        btnFlyNow: "🛫 Bay Ngay Lập Tức",
+        btnCollapse: "🔽 Thu gọn bảng",
+        btnExpand: "🔼 Mở bảng",
+        btnGlobe3D: "🌍 Quả cầu 3D",
+        btnMap2D: "🛰️ Bản đồ 2D",
+        btnBackBooking: "‹ Quay lại",
+        seatHint: "Chạm vào ghế bất kỳ hoặc bấm Tiếp tục",
+        btnContinueTicket: "Tiếp tục ➔",
+        btnConfirmSeat: "Xác nhận & Xuất Vé Boarding Pass ➔",
+        strictSub: "Cảnh báo nếu rời khỏi màn hình học",
+        btnChangeSeat: "‹ Đổi ghế",
+        btnTakeoffTicket: "🛫 Cất Cánh Bắt Đầu Học",
+        btnDoneFlight: "✓ Xong",
+        btnAbortFlight: "Hủy",
+        btnReadingLight: "💡 Đèn đọc sách",
+        btnTrayTable: "🍱 Gấp/Mở bàn học",
+        btnMoodLight: "🌈 Đèn LED trần",
+        btnCallFA: "🛎️ Gọi tiếp viên",
+        btnWindowShade: "🪟 Kéo Rèm Cửa Sổ Lên / Xuống",
         passportBtn: "Hộ Chiếu & VIP",
         fidsBadge: "🛫 FIDS • DEPARTURE STUDY BOARD",
         fidsTitle: "Bảng Điện Tử Lịch Bay Học Tập Trong Ngày",
@@ -27,7 +98,6 @@ const WOW_I18N = {
         wxRain: "🌧️ Mưa",
         wxAt: "tại",
         wxWind: "Gió",
-        wxDefault: "☀️ Thời tiết",
         dlTicketBtn: "📸 Tải ảnh Vé Boarding Pass (PNG - Tùy chọn)",
         vipMenuLabel: "🍽️ Menu VIP:",
         itemBoba: "🧋 Trà sữa",
@@ -56,6 +126,7 @@ const WOW_I18N = {
         months: ["Tháng 1", "Tháng 2", "Tháng 3", "Tháng 4", "Tháng 5", "Tháng 6", "Tháng 7", "Tháng 8", "Tháng 9", "Tháng 10", "Tháng 11", "Tháng 12"],
         phQuickTask: "Nhập tên công việc (VD: Giải đề Toán, Tạo app...)",
         phSlotSubj: "Nhập môn học, ca làm, sự kiện (VD: Toán, Đi làm, Họp CLB...)",
+        phFocusInput: "Nhập mục tiêu (VD: Toán, Tạo app...)",
         phChat: "Nhập tin nhắn...",
         slotTypes: [
             "📚 Lịch học / Ôn bài (Tạo chuyến bay)",
@@ -71,11 +142,42 @@ const WOW_I18N = {
             "☀️ Hàng ngày (Mỗi ngày)",
             "⚙️ Tùy chỉnh chu kỳ (Tự nhập bao lâu tùy ý)..."
         ],
+        customRepeatLbl: "⚙️ Lặp lại mỗi:",
+        customRepeatInLbl: "Trong:",
+        customUnits: ["Ngày", "Tuần", "Tháng", "Năm"],
         qChat1: "💡 Hôm nay học gì?",
         qChat2: "📋 Việc đang làm",
         qChat3: "🌪️ Dời lịch"
     },
     en: {
+        shortMin: "m",
+        unitMin: "mins",
+        unitHr: "hrs",
+        vnGroup: "🇻🇳 Vietnam Domestic (22)",
+        intGroup: "🌏 International (12)",
+        originTitle: "Departure",
+        destTitle: "Destination",
+        autoDurTitle: "⏱️ Study Duration (Calculated by Distance)",
+        btnPickSeat: "💺 Select Seat & Ticket",
+        btnFlyNow: "🛫 Fly Immediately",
+        btnCollapse: "🔽 Collapse Panel",
+        btnExpand: "🔼 Expand Panel",
+        btnGlobe3D: "🌍 3D Globe",
+        btnMap2D: "🛰️ 2D Map",
+        btnBackBooking: "‹ Back",
+        seatHint: "Tap any seat or click Continue",
+        btnContinueTicket: "Continue ➔",
+        btnConfirmSeat: "Confirm & Issue Boarding Pass ➔",
+        strictSub: "Alert if you leave the study screen",
+        btnChangeSeat: "‹ Change Seat",
+        btnTakeoffTicket: "🛫 Takeoff & Start Studying",
+        btnDoneFlight: "✓ Done",
+        btnAbortFlight: "Abort",
+        btnReadingLight: "💡 Reading Light",
+        btnTrayTable: "🍱 Tray Table",
+        btnMoodLight: "🌈 Cabin LED",
+        btnCallFA: "🛎️ Call Crew",
+        btnWindowShade: "🪟 Toggle Window Shade",
         passportBtn: "Passport & VIP",
         fidsBadge: "🛫 FIDS • DEPARTURE STUDY BOARD",
         fidsTitle: "Daily Study Flights Departure Board",
@@ -102,7 +204,6 @@ const WOW_I18N = {
         wxRain: "🌧️ Rain",
         wxAt: "at",
         wxWind: "Wind",
-        wxDefault: "☀️ Weather at",
         dlTicketBtn: "📸 Download Boarding Pass Image (PNG - Optional)",
         vipMenuLabel: "🍽️ VIP Menu:",
         itemBoba: "🧋 Boba Tea",
@@ -131,11 +232,12 @@ const WOW_I18N = {
         months: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
         phQuickTask: "Enter task name (e.g., Math practice, Build app...)",
         phSlotSubj: "Enter subject, shift, or event (e.g., Math, Work, Club...)",
+        phFocusInput: "Enter focus goal (e.g., Math, Coding...)",
         phChat: "Type a message...",
         slotTypes: [
             "📚 Study / Review (Create Flight)",
             "🔴 School Class (Fixed)",
-            "🟣 Personal Event (Work, etc.)",
+            "🟣 Personal Event (Work, Club...)",
             "🟢 Free Self-Study Slot"
         ],
         repeatModes: [
@@ -144,13 +246,44 @@ const WOW_I18N = {
             "🗓️ Monthly (Same day each month)",
             "📆 Yearly (Same date each year)",
             "☀️ Daily (Every day)",
-            "⚙️ Custom recurrence..."
+            "⚙️ Custom recurrence (Set interval)..."
         ],
+        customRepeatLbl: "⚙️ Repeat every:",
+        customRepeatInLbl: "For:",
+        customUnits: ["Days", "Weeks", "Months", "Years"],
         qChat1: "💡 What to study?",
         qChat2: "📋 Pending tasks",
         qChat3: "🌪️ Reschedule"
     },
     zh: {
+        shortMin: "分",
+        unitMin: "分鐘",
+        unitHr: "小時",
+        vnGroup: "🇻🇳 越南國內線 (22)",
+        intGroup: "🌏 國際航線 (12)",
+        originTitle: "出發機場",
+        destTitle: "目的地機場",
+        autoDurTitle: "⏱️ 專注學習時長（依航程距離計算）",
+        btnPickSeat: "💺 選擇座位 & 登機證",
+        btnFlyNow: "🛫 立即起飛",
+        btnCollapse: "🔽 收合面板",
+        btnExpand: "🔼 展開面板",
+        btnGlobe3D: "🌍 3D 地球儀",
+        btnMap2D: "🛰️ 2D 衛星圖",
+        btnBackBooking: "‹ 返回",
+        seatHint: "點擊任意座位或按繼續",
+        btnContinueTicket: "繼續 ➔",
+        btnConfirmSeat: "確認座位並印製登機證 ➔",
+        strictSub: "離開學習畫面時將發出警報",
+        btnChangeSeat: "‹ 更換座位",
+        btnTakeoffTicket: "🛫 起飛開始專注學習",
+        btnDoneFlight: "✓ 完成",
+        btnAbortFlight: "取消",
+        btnReadingLight: "💡 閱讀燈",
+        btnTrayTable: "🍱 摺疊桌板",
+        btnMoodLight: "🌈 機艙氛圍燈",
+        btnCallFA: "🛎️ 呼叫空服員",
+        btnWindowShade: "🪟 拉起 / 放下遮陽板",
         passportBtn: "護照與 VIP",
         fidsBadge: "🛫 FIDS • 專注航班電子看板",
         fidsTitle: "當日專注學習航班時刻表",
@@ -177,7 +310,6 @@ const WOW_I18N = {
         wxRain: "🌧️ 降雨",
         wxAt: "於",
         wxWind: "風速",
-        wxDefault: "☀️ 即時天氣",
         dlTicketBtn: "📸 下載登機證圖片（PNG - 選用）",
         vipMenuLabel: "🍽️ VIP 餐點：",
         itemBoba: "🧋 珍珠奶茶",
@@ -206,11 +338,12 @@ const WOW_I18N = {
         months: ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"],
         phQuickTask: "輸入任務名稱（例如：解數學題、開發專案...）",
         phSlotSubj: "輸入科目、班表或事件（例如：數學、打工、社團...）",
+        phFocusInput: "輸入專注目標（例如：微積分、寫程式...）",
         phChat: "輸入訊息...",
         slotTypes: [
             "📚 學習 / 複習（建立專注航班）",
             "🔴 學校固定課程",
-            "🟣 個人事項（打工、活動...）",
+            "🟣 個人事項（打工、社團...）",
             "🟢 空閒自習時段"
         ],
         repeatModes: [
@@ -221,6 +354,9 @@ const WOW_I18N = {
             "☀️ 每天（每日重複）",
             "⚙️ 自訂重複週期..."
         ],
+        customRepeatLbl: "⚙️ 重複頻率：",
+        customRepeatInLbl: "持續：",
+        customUnits: ["天", "週", "個月", "年"],
         qChat1: "💡 今天學什麼？",
         qChat2: "📋 待辦任務",
         qChat3: "🌪️ 順延行程"
@@ -231,7 +367,213 @@ function getW() {
     return WOW_I18N[currentLang] || WOW_I18N.vi;
 }
 
-// ================= 2. CẤU HÌNH SÂN BAY CĂN CỨ CỦA 6 THÀNH VIÊN =================
+// ================= 2. GHI ĐÈ TRỰC TIẾP CÁC HÀM XỬ LÝ NGÔN NGỮ, ĐƠN VỊ PHÚT & SÂN BAY =================
+window.getLunarDateInfo = function(year, month, day) {
+    try {
+        const dateObj = new Date(year, month - 1, day);
+        const parts = new Intl.DateTimeFormat('en-u-ca-chinese', { day: 'numeric', month: 'numeric' }).formatToParts(dateObj);
+        let lDay = 1, lMonth = 1;
+        parts.forEach(p => {
+            if (p.type === 'day') lDay = parseInt(p.value) || 1;
+            if (p.type === 'month') lMonth = parseInt(p.value) || 1;
+        });
+
+        const a = Math.floor((14 - month) / 12);
+        const y = year + 4800 - a;
+        const m = month + 12 * a - 3;
+        const jdn = day + Math.floor((153 * m + 2) / 5) + 365 * y + Math.floor(y / 4) - Math.floor(y / 100) + Math.floor(y / 400) - 32045;
+        const canIdx = (jdn + 9) % 10;
+        const chiIdx = (jdn + 1) % 12;
+
+        const canChiVi = `${CAN_VI[canIdx]} ${CHI_VI[chiIdx]}`;
+        const canChiZh = `${CAN_ZH[canIdx]}${CHI_ZH[chiIdx]}日`;
+
+        return {
+            lDay, lMonth,
+            shortStr: (lDay === 1 || day === 1) ? `${lDay}/${lMonth}` : `${lDay}`,
+            fullVi: `Ngày ${String(lDay).padStart(2,'0')}/${String(lMonth).padStart(2,'0')} Âm lịch • Ngày ${canChiVi}`,
+            fullEn: `Lunar Date: ${String(lDay).padStart(2,'0')}/${String(lMonth).padStart(2,'0')} (Lunar Calendar)`,
+            fullZh: `農曆 ${lMonth}月${lDay}日 • ${canChiZh}`
+        };
+    } catch (e) {
+        return { lDay: day, lMonth: month, shortStr: `${day}`, fullVi: "Âm lịch", fullEn: "Lunar", fullZh: "農曆" };
+    }
+};
+
+window.updateSlotDurationPreview = function() {
+    const s = document.getElementById('new-slot-start').value;
+    const e = document.getElementById('new-slot-end').value;
+    const mins = calcMinutesBetweenTimes(s, e);
+    const matchedAirport = findBestAirportForDuration(mins);
+    const w = getW();
+    setTextIfExist('calc-slot-mins-preview', `${mins}${w.shortMin} (✈️${matchedAirport.code})`);
+};
+
+window.formatDurationLabel = function(mins) {
+    const w = getW();
+    if (mins < 60) return `${mins} ${w.unitMin}`;
+    const h = Math.floor(mins / 60), m = mins % 60;
+    return m > 0 ? `${h}h ${m}${w.shortMin} (${mins} ${w.unitMin})` : `${h} ${w.unitHr} (${mins} ${w.unitMin})`;
+};
+
+window.initAirportDropdowns = function() {
+    const oSel = document.getElementById('origin-select');
+    const dSel = document.getElementById('dest-select');
+    const qSel = document.getElementById('quick-task-dest');
+    const w = getW();
+
+    const prevOrigin = (oSel && oSel.value) ? oSel.value : originAirport.code;
+    const prevDest = (dSel && dSel.value) ? dSel.value : destAirport.code;
+    const prevQuick = (qSel && qSel.value) ? qSel.value : "DAD";
+
+    const vnAirports = AIRPORTS.filter(a => a.group === 'VN');
+    const intAirports = AIRPORTS.filter(a => a.group === 'INT');
+
+    const buildOptions = (withTimeHint = false) => {
+        let html = `<optgroup label="${w.vnGroup}" class="bg-slate-900">`;
+        vnAirports.forEach(a => {
+            const dist = calcDistanceKm(originAirport.coords, a.coords);
+            const mins = calcStudyDurationFromDistance(dist, "Airbus A321neo");
+            const localName = getLocalizedAirportName(a.code);
+            html += `<option value="${a.code}">${a.code} - ${localName} ${withTimeHint ? `(~${mins}${w.shortMin})` : ''}</option>`;
+        });
+        html += `</optgroup><optgroup label="${w.intGroup}" class="bg-slate-900">`;
+        intAirports.forEach(a => {
+            const dist = calcDistanceKm(originAirport.coords, a.coords);
+            const mins = calcStudyDurationFromDistance(dist, "Airbus A321neo");
+            const localName = getLocalizedAirportName(a.code);
+            html += `<option value="${a.code}">${a.code} - ${localName} ${withTimeHint ? `(~${mins}${w.shortMin})` : ''}</option>`;
+        });
+        html += `</optgroup>`;
+        return html;
+    };
+
+    if (oSel) { oSel.innerHTML = buildOptions(false); oSel.value = prevOrigin; }
+    if (dSel) { dSel.innerHTML = buildOptions(false); dSel.value = prevDest; }
+    if (qSel) { qSel.innerHTML = buildOptions(true); qSel.value = prevQuick; }
+};
+
+window.updateBookingUI = function() {
+    const specs = getAircraftSpecs(selectedAircraft);
+    const box = document.getElementById('booking-plane-svg-box');
+    if (box) box.innerHTML = getAircraftSVG(selectedAircraft, 45);
+    setTextIfExist('badge-origin', originAirport.code);
+    setTextIfExist('badge-dest', destAirport.code);
+    setTextIfExist('badge-dist', `${currentDistance} km`);
+    const oShort = getLocalizedAirportName(originAirport.code).split(' (')[0].split('（')[0];
+    const dShort = getLocalizedAirportName(destAirport.code);
+    setTextIfExist('banner-dest-title', `${oShort} ➔ ${dShort}`);
+    setTextIfExist('auto-calc-duration-text', formatDurationLabel(selectedDuration));
+    setTextIfExist('auto-calc-speed-text', `(${currentDistance} km • ${specs.speedKmh} km/h)`);
+
+    const now = new Date();
+    setTextIfExist('booking-realtime-eta', `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')} ➔ ${calcRealTimeETA(selectedDuration)}`);
+
+    if (map && typeof L !== 'undefined') {
+        if (routeLine) map.removeLayer(routeLine);
+        if (originMarker) map.removeLayer(originMarker);
+        if (destMarker) map.removeLayer(destMarker);
+
+        originMarker = L.marker(originAirport.coords, { icon: createAirportBadge(originAirport.code, false) }).addTo(map);
+        destMarker = L.marker(destAirport.coords, { icon: createAirportBadge(destAirport.code, true) }).addTo(map);
+        routeLine = L.polyline([originAirport.coords, destAirport.coords], { color: '#38bdf8', weight: 3.5, dashArray: '8, 8', opacity: 0.95 }).addTo(map);
+
+        if (is2DMapActive) { map.invalidateSize(true); map.fitBounds(routeLine.getBounds(), { padding: [90, 90], maxZoom: 7 }); }
+    }
+    update3DGlobeRouteArc();
+    updateCameraViewsData();
+};
+
+// Ghi đè hàm setAppLanguage để chắc chắn 100% mọi nhãn đều đổi khi bấm VI / EN / 繁體
+window.setAppLanguage = function(lang) {
+    currentLang = lang;
+    ['vi', 'en', 'zh'].forEach(l => {
+        const btn = document.getElementById('lang-btn-' + l);
+        if (btn) {
+            btn.className = (l === lang)
+                ? "px-2 py-1 rounded-lg bg-amber-400 text-black transition"
+                : "px-2 py-1 rounded-lg text-slate-300 hover:text-white transition";
+        }
+    });
+
+    const t = I18N[lang];
+    const w = getW();
+
+    setTextIfExist('lbl-member-top', t.memberTop);
+    setTextIfExist('lbl-tab-dashboard', t.tabDash);
+    setTextIfExist('lbl-tab-flight', t.tabFlight);
+    setTextIfExist('lbl-banner-tag', t.bannerTag);
+    setTextIfExist('lbl-banner-btn', t.bannerBtn);
+    setTextIfExist('lbl-kpi-1-title', t.kpi1Title);
+    setTextIfExist('lbl-kpi-1-sub', t.kpi1Sub);
+    setTextIfExist('lbl-kpi-2-title', t.kpi2Title);
+    setTextIfExist('lbl-kpi-2-sub', t.kpi2Sub);
+    setTextIfExist('lbl-kpi-3-title', t.kpi3Title);
+    setTextIfExist('lbl-kpi-4-title', t.kpi4Title);
+    setTextIfExist('lbl-ai-badge', t.aiBadge);
+    setTextIfExist('lbl-ai-sub', t.aiSub);
+    setTextIfExist('lbl-remind-btn', t.remindBtn);
+    setTextIfExist('lbl-smart-ctrl-title', t.smartCtrlTitle);
+    setTextIfExist('lbl-smart-ctrl-desc', t.smartCtrlDesc);
+    setTextIfExist('lbl-btn-aisort', t.btnAiSort);
+    setTextIfExist('lbl-btn-sudden', t.btnSudden);
+    setTextIfExist('lbl-todo-header', t.todoHeader);
+    setTextIfExist('lbl-todo-sync-tag', t.todoSyncTag);
+    setTextIfExist('lbl-todo-sub', t.todoSub);
+    setTextIfExist('filter-all', t.filterAll);
+    setTextIfExist('filter-pending', t.filterPending);
+    setTextIfExist('filter-done', t.filterDone);
+    setTextIfExist('lbl-quick-add-title', t.quickAddTitle);
+    setTextIfExist('lbl-quick-deadline', t.quickDeadline);
+    setTextIfExist('lbl-btn-save-task', t.btnSaveTask);
+    setTextIfExist('lbl-cal-header', t.calHeader);
+    setTextIfExist('lbl-cal-sub', t.calSub);
+    setTextIfExist('btn-toggle-lunar', showLunarCalendar ? t.lunarOn : t.lunarOff);
+    setTextIfExist('lbl-btn-today', t.btnToday);
+    setTextIfExist('lbl-pick-date', t.pickDate);
+    setTextIfExist('lbl-start-time', t.startTime);
+    setTextIfExist('lbl-end-time', t.endTime);
+    setTextIfExist('lbl-cat-type', t.catType);
+    setTextIfExist('lbl-repeat-cycle', t.repeatCycle);
+    setTextIfExist('lbl-btn-add-slot', t.btnAddSlot);
+    setTextIfExist('lbl-autosync-check', t.autoSyncCheck);
+    setTextIfExist('lbl-bot-header', t.botHeader);
+
+    setTextIfExist('lbl-origin-title', w.originTitle);
+    setTextIfExist('lbl-dest-title', w.destTitle);
+    setTextIfExist('lbl-auto-dur-title', w.autoDurTitle);
+    setTextIfExist('lbl-btn-pick-seat', w.btnPickSeat);
+    setTextIfExist('lbl-btn-fly-now', w.btnFlyNow);
+    setTextIfExist('toggle-booking-btn', isBookingCollapsed ? w.btnExpand : w.btnCollapse);
+    setTextIfExist('quick-switch-proj-btn', is2DMapActive ? w.btnGlobe3D : w.btnMap2D);
+
+    setSelectorText('button[onclick="backToBooking()"]', w.btnBackBooking);
+    setSelectorText('button[onclick="showBoardingPass()"]', w.btnContinueTicket);
+    setSelectorText('button[onclick="confirmSeatAndFocus()"]', w.btnConfirmSeat);
+    setSelectorText('button[onclick="backToSeatFromTicket()"]', w.btnChangeSeat);
+    setSelectorText('#screen-ticket button[onclick="startFlight()"]', w.btnTakeoffTicket);
+    setSelectorText('button[onclick="completeFlightEarly()"]', w.btnDoneFlight);
+    setSelectorText('button[onclick="abortFlight()"]', w.btnAbortFlight);
+    setTextIfExist('btn-reading-light', w.btnReadingLight);
+    setTextIfExist('btn-tray-table', w.btnTrayTable);
+    setSelectorText('button[onclick="cycleCabinMoodLight()"]', w.btnMoodLight);
+    setSelectorText('button[onclick="callFlightAttendant()"]', w.btnCallFA);
+    setSelectorText('button[onclick="toggleWindowShade()"]', w.btnWindowShade);
+
+    const wkRow = document.getElementById('calendar-weekdays-row');
+    if (wkRow) wkRow.innerHTML = t.weekdays.map((wk, idx) => `<div class="${idx === 6 ? 'text-red-400' : ''}">${wk}</div>`).join('');
+
+    updateWowLabelsByLang();
+    initAirportDropdowns();
+    updateSlotDurationPreview();
+    updateBookingUI();
+    updateRealTimeClock();
+    renderCalendarGrid();
+    renderDashboard();
+    resetChat();
+};
+
+// ================= 3. CẤU HÌNH SÂN BAY CĂN CỨ CỦA 6 THÀNH VIÊN =================
 const MEMBER_BASE_AIRPORTS = {
     huudai:    { name: "Hữu Đại",    home: "SGN", aircraft: "Airbus A321neo", color: "#38bdf8" },
     quangminh: { name: "Quang Minh", home: "HAN", aircraft: "Boeing 787-9",   color: "#facc15" },
@@ -279,7 +621,6 @@ function applyMemberHomeAirportRoute() {
     renderFidsDepartureBoard();
 }
 
-// ================= 3. ĐỒNG BỘ 100% NGÔN NGỮ CHO TOÀN BỘ PHẦN TỬ TRÊN MÀN HÌNH =================
 function updateWowLabelsByLang() {
     const w = getW();
     setTextIfExist('lbl-passport-top', w.passportBtn);
@@ -308,23 +649,20 @@ function updateWowLabelsByLang() {
     setTextIfExist('vip-btn-coffee', w.itemCoffee);
     setTextIfExist('vip-btn-croissant', w.itemCroissant);
 
-    // Dịch Dropdown Tháng 1..12
     const mSel = document.getElementById('cal-month-select');
     if (mSel && mSel.options.length === 12) {
-        for (let i = 0; i < 12; i++) {
-            mSel.options[i].text = w.months[i];
-        }
+        for (let i = 0; i < 12; i++) mSel.options[i].text = w.months[i];
     }
 
-    // Dịch Placeholders
     const qInput = document.getElementById('quick-task-title');
     if (qInput) qInput.placeholder = w.phQuickTask;
     const sInput = document.getElementById('new-slot-subject');
     if (sInput) sInput.placeholder = w.phSlotSubj;
+    const fInput = document.getElementById('custom-focus-input');
+    if (fInput) fInput.placeholder = w.phFocusInput;
     const cInput = document.getElementById('chat-input');
     if (cInput) cInput.placeholder = w.phChat;
 
-    // Dịch Dropdown Phân loại lịch & Chu kỳ lặp lại
     const typeSel = document.getElementById('new-slot-type');
     if (typeSel && typeSel.options.length === 4) {
         for (let i = 0; i < 4; i++) typeSel.options[i].text = w.slotTypes[i];
@@ -334,7 +672,11 @@ function updateWowLabelsByLang() {
         for (let i = 0; i < 6; i++) repSel.options[i].text = w.repeatModes[i];
     }
 
-    // Dịch nút gợi ý nhanh trong Chatbot
+    const unitSel = document.getElementById('custom-repeat-unit');
+    if (unitSel && unitSel.options.length === 4) {
+        for (let i = 0; i < 4; i++) unitSel.options[i].text = w.customUnits[i];
+    }
+
     const qBtns = document.querySelectorAll('#chatbot-window button[onclick^="sendQuickChat"]');
     if (qBtns.length >= 3) {
         qBtns[0].innerText = w.qChat1;
@@ -347,12 +689,10 @@ function updateWowLabelsByLang() {
     renderSquadronRadarOn2DMap();
 }
 
-// ================= 4. RADAR 6 THÀNH VIÊN (CHỈ BAY KHI CÓ LỊCH THẬT) =================
+// ================= 4. RADAR 6 THÀNH VIÊN & BẢNG ĐIỆN TỬ FIDS =================
 function renderSquadronRadarOn2DMap() {
     if (!map || typeof L === 'undefined') return;
-    squadronMarkers2D.forEach(m => {
-        try { map.removeLayer(m); } catch (e) {}
-    });
+    squadronMarkers2D.forEach(m => { try { map.removeLayer(m); } catch (e) {} });
     squadronMarkers2D = [];
     if (!squadronRadarEnabled) return;
 
@@ -466,7 +806,6 @@ function updateSquadron3DPins() {
     });
 }
 
-// ================= 5. BẢNG ĐIỆN TỬ FIDS ĐA NGÔN NGỮ & ZEN FOCUS HUD =================
 function renderFidsDepartureBoard() {
     const container = document.getElementById('fids-board-rows');
     if (!container) return;
@@ -480,11 +819,7 @@ function renderFidsDepartureBoard() {
     const curMins = now.getHours() * 60 + now.getMinutes();
 
     if (tasks.length === 0) {
-        container.innerHTML = `
-            <div class="col-span-12 py-4 text-center text-xs text-slate-400 font-mono">
-                ${w.fidsEmpty}
-            </div>
-        `;
+        container.innerHTML = `<div class="col-span-12 py-4 text-center text-xs text-slate-400 font-mono">${w.fidsEmpty}</div>`;
         return;
     }
 
@@ -535,12 +870,10 @@ function toggleZenFocusHud() {
     const zenOverlay = document.getElementById('zen-focus-hud-overlay');
     if (!zenOverlay) return;
     if (zenFocusModeActive) {
-        zenOverlay.classList.remove('hidden');
-        zenOverlay.classList.add('flex');
+        zenOverlay.classList.remove('hidden'); zenOverlay.classList.add('flex');
         syncZenHudTick();
     } else {
-        zenOverlay.classList.add('hidden');
-        zenOverlay.classList.remove('flex');
+        zenOverlay.classList.add('hidden'); zenOverlay.classList.remove('flex');
     }
 }
 
@@ -559,7 +892,7 @@ function syncZenHudTick() {
 }
 setInterval(syncZenHudTick, 500);
 
-// ================= 6. LĂN BÁNH ĐƯỜNG BĂNG (TAXI) + ĐÀI ATC + GIỌNG CƠ TRƯỞNG =================
+// ================= 5. ĐÀI ATC, GIỌNG CƠ TRƯỞNG, THỜI TIẾT & HỘ CHIẾU 3D =================
 function toggleCaptainVoice() {
     captainVoiceEnabled = !captainVoiceEnabled;
     if (!captainVoiceEnabled && ('speechSynthesis' in window)) window.speechSynthesis.cancel();
@@ -630,7 +963,7 @@ function runTakeoffTaxiAndAtcSequence() {
 
     atcStepTimer2 = setTimeout(() => {
         stageText.innerHTML = `🎙️ [CAPTAIN PA]: V1... Rotate!`;
-        let speechMsg = `Cơ trưởng xin chào hành khách ${profile.name}. Chuyến bay tập trung từ ${originAirport.name.split(' (')[0]} đi ${destAirport.name} thời lượng ${selectedDuration} phút xin phép cất cánh. Chúc bạn hoàn thành mục tiêu học tập!`;
+        let speechMsg = `Cơ trưởng xin chào hành khách ${profile.name}. Chuyến bay tập trung từ ${getLocalizedAirportName(originAirport.code).split(' (')[0]} đi ${getLocalizedAirportName(destAirport.code)} thời lượng ${selectedDuration} phút xin phép cất cánh!`;
         if (currentLang === 'en') speechMsg = `Captain speaking. Welcome passenger ${profile.name} aboard our focus flight from ${originAirport.code} to ${destAirport.code}. Flight time is ${selectedDuration} minutes. Cleared for takeoff!`;
         if (currentLang === 'zh') speechMsg = `機長廣播：歡迎旅客 ${profile.name} 搭乘從 ${originAirport.code} 前往 ${destAirport.code} 的專注航班，飛行時間 ${selectedDuration} 分鐘，現在起飛！`;
         subText.innerHTML = `"${speechMsg}"`;
@@ -638,9 +971,7 @@ function runTakeoffTaxiAndAtcSequence() {
         speakCaptainAnnouncement(speechMsg);
     }, 5600);
 
-    atcStepTimer3 = setTimeout(() => {
-        closeAtcTaxiOverlay();
-    }, 10500);
+    atcStepTimer3 = setTimeout(() => { closeAtcTaxiOverlay(); }, 10500);
 }
 
 function closeAtcTaxiOverlay() {
@@ -651,7 +982,6 @@ function closeAtcTaxiOverlay() {
     if (overlay) { overlay.classList.add('hidden'); overlay.classList.remove('flex'); }
 }
 
-// ================= 7. THỜI TIẾT THỰC TẾ, HỘ CHIẾU 3D ĐA NGÔN NGỮ & XUẤT ẢNH VÉ PNG =================
 function renderWeatherBadgeText() {
     const badge = document.getElementById('live-weather-badge');
     if (!badge) return;
@@ -793,7 +1123,7 @@ function downloadBoardingPassPNG() {
     });
 }
 
-// ================= 8. TỰ ĐỘNG NÂNG CẤP GIAO DIỆN ĐA NGÔN NGỮ =================
+// ================= 6. TỰ ĐỘNG NÂNG CẤP GIAO DIỆN ĐA NGÔN NGỮ =================
 function injectWowUIElements() {
     const w = getW();
     try {
@@ -965,7 +1295,7 @@ function injectWowUIElements() {
     } catch (e) {}
 }
 
-// ================= 9. KHỞI CHẠY HỆ THỐNG =================
+// ================= 7. KHỞI CHẠY HỆ THỐNG =================
 try { document.getElementById('member-select').value = currentMemberKey; } catch (e) {}
 try { injectWowUIElements(); } catch (e) {}
 try { initThreeGlobe(); } catch (e) {}
@@ -973,9 +1303,4 @@ try { updateRealTimeClock(); } catch (e) {}
 try { initAirportDropdowns(); } catch (e) {}
 try { applyMemberHomeAirportRoute(); } catch (e) {}
 try { syncEnvironmentWithRealTime(); } catch (e) {}
-try { updateSlotDurationPreview(); } catch (e) {}
-try { updateWowLabelsByLang(); } catch (e) {}
-try { renderCalendarGrid(); } catch (e) {}
-try { renderDashboard(); } catch (e) {}
-try { renderFidsDepartureBoard(); } catch (e) {}
-try { resetChat(); } catch (e) {}
+try { setAppLanguage(currentLang); } catch (e) {}

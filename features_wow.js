@@ -1,28 +1,40 @@
-// ================= 1. PHÂN BỐ 6 THÀNH VIÊN Ở 6 SÂN BAY VIỆT NAM KHÁC NHAU & RADAR ĐỘI HÌNH =================
-const SQUADRON_CONFIG = {
-    huudai:    { name: "Hữu Đại",    home: "SGN", dest: "DAD", subject: "Điều khiển thông minh & Tự động hóa", aircraft: "Airbus A321neo", color: "#38bdf8" },
-    quangminh: { name: "Quang Minh", home: "HAN", dest: "CXR", subject: "Điều khiển thông minh & Tự động hóa", aircraft: "Boeing 787-9",   color: "#facc15" },
-    khanhthi:  { name: "Khánh Thi",  home: "DAD", dest: "PQC", subject: "Điều khiển thông minh & Tự động hóa", aircraft: "Airbus A350-900", color: "#f472b6" },
-    minhchau:  { name: "Minh Châu",  home: "CXR", dest: "HUI", subject: "Công Nghệ Logistic",     aircraft: "Airbus A321neo", color: "#34d399" },
-    uyennhi:   { name: "Uyên Nhi",   home: "PQC", dest: "DLI", subject: "Điều khiển thông minh & Tự động hóa", aircraft: "ATR 72-600",   color: "#a78bfa" },
-    vanhoang:  { name: "Văn Hoàng",  home: "VCA", dest: "VDO", subject: "Điều khiển thông minh & Tự động hóa",      aircraft: "Boeing 787-9",   color: "#fb923c" }
+// ================= 1. CẤU HÌNH SÂN BAY CĂN CỨ CỦA 6 THÀNH VIÊN (KHÔNG CHÈN MÔN HỌC GIẢ) =================
+const MEMBER_BASE_AIRPORTS = {
+    huudai:    { name: "Hữu Đại",    home: "SGN", aircraft: "Airbus A321neo", color: "#38bdf8" },
+    quangminh: { name: "Quang Minh", home: "HAN", aircraft: "Boeing 787-9",   color: "#facc15" },
+    khanhthi:  { name: "Khánh Thi",  home: "DAD", aircraft: "Airbus A350-900", color: "#f472b6" },
+    minhchau:  { name: "Minh Châu",  home: "CXR", aircraft: "Airbus A321neo", color: "#34d399" },
+    uyennhi:   { name: "Uyên Nhi",   home: "PQC", aircraft: "ATR 72-600",     color: "#a78bfa" },
+    vanhoang:  { name: "Văn Hoàng",  home: "VCA", aircraft: "Boeing 787-9",   color: "#fb923c" }
 };
 
 let captainVoiceEnabled = true;
 let squadronRadarEnabled = true;
+let zenFocusModeActive = false;
 let squadronMarkers2D = [];
-let squadronProgressTick = 0.25;
+let squadronProgressTick = 0.35;
 let atcStepTimer1 = null, atcStepTimer2 = null, atcStepTimer3 = null;
 let liveWeatherCache = { temp: 28, wind: 11, code: 0 };
 
 function getMemberHomeAirportCode(memberKey) {
-    return (SQUADRON_CONFIG[memberKey] && SQUADRON_CONFIG[memberKey].home) ? SQUADRON_CONFIG[memberKey].home : "SGN";
+    return (MEMBER_BASE_AIRPORTS[memberKey] && MEMBER_BASE_AIRPORTS[memberKey].home) ? MEMBER_BASE_AIRPORTS[memberKey].home : "SGN";
+}
+
+// Chỉ lấy nhiệm vụ/môn học THẬT do người dùng đã nhập trong danh sách của thành viên đó
+function getMemberRealActiveTask(memberKey) {
+    const m = appState.members[memberKey];
+    if (!m || !m.tasks || m.tasks.length === 0) return null;
+    const pending = m.tasks.filter(tk => !tk.done);
+    return pending.length > 0 ? pending[0] : null;
 }
 
 function applyMemberHomeAirportRoute() {
-    const cfg = SQUADRON_CONFIG[currentMemberKey] || SQUADRON_CONFIG.huudai;
+    const cfg = MEMBER_BASE_AIRPORTS[currentMemberKey] || MEMBER_BASE_AIRPORTS.huudai;
+    const activeTask = getMemberRealActiveTask(currentMemberKey);
     const oAir = AIRPORTS.find(a => a.code === cfg.home) || AIRPORTS[0];
-    const dAir = AIRPORTS.find(a => a.code === cfg.dest) || AIRPORTS[2];
+    const targetDestCode = activeTask ? activeTask.destCode : (cfg.home === "DAD" ? "SGN" : "DAD");
+    const dAir = AIRPORTS.find(a => a.code === targetDestCode) || AIRPORTS[2];
+
     originAirport = oAir;
     destAirport = dAir;
 
@@ -32,8 +44,10 @@ function applyMemberHomeAirportRoute() {
     if (dSel) dSel.value = destAirport.code;
     onRouteChange();
     renderSquadronRadarOn2DMap();
+    renderFidsDepartureBoard();
 }
 
+// ================= 2. RADAR 6 THÀNH VIÊN (CHỈ BAY KHI CÓ LỊCH THẬT, CHƯA CÓ LỊCH SẼ ĐỖ TẠI SÂN BAY) =================
 function renderSquadronRadarOn2DMap() {
     if (!map || typeof L === 'undefined') return;
     squadronMarkers2D.forEach(m => {
@@ -42,49 +56,71 @@ function renderSquadronRadarOn2DMap() {
     squadronMarkers2D = [];
     if (!squadronRadarEnabled) return;
 
-    Object.keys(SQUADRON_CONFIG).forEach((key, idx) => {
+    Object.keys(MEMBER_BASE_AIRPORTS).forEach((key, idx) => {
         if (key === currentMemberKey) return;
-        const cfg = SQUADRON_CONFIG[key];
-        const oAir = AIRPORTS.find(a => a.code === cfg.home) || AIRPORTS[0];
-        const dAir = AIRPORTS.find(a => a.code === cfg.dest) || AIRPORTS[2];
+        const cfg = MEMBER_BASE_AIRPORTS[key];
+        const homeAir = AIRPORTS.find(a => a.code === cfg.home) || AIRPORTS[0];
+        const realTask = getMemberRealActiveTask(key);
 
-        const tProg = (squadronProgressTick + idx * 0.17) % 1;
-        const lat = oAir.coords[0] + (dAir.coords[0] - oAir.coords[0]) * tProg;
-        const lng = oAir.coords[1] + (dAir.coords[1] - oAir.coords[1]) * tProg;
-        const brng = calcBearingDeg(oAir.coords, dAir.coords);
+        if (realTask) {
+            // Thành viên này ĐÃ CÓ lịch học thật do người dùng thêm -> Cho máy bay bay trên chặng đó
+            const destAir = AIRPORTS.find(a => a.code === (realTask.destCode || "DAD")) || AIRPORTS[2];
+            const tProg = (squadronProgressTick + idx * 0.17) % 1;
+            const lat = homeAir.coords[0] + (destAir.coords[0] - homeAir.coords[0]) * tProg;
+            const lng = homeAir.coords[1] + (destAir.coords[1] - homeAir.coords[1]) * tProg;
+            const brng = calcBearingDeg(homeAir.coords, destAir.coords);
 
-        const line = L.polyline([oAir.coords, dAir.coords], { color: cfg.color, weight: 1.5, dashArray: '4, 6', opacity: 0.55 }).addTo(map);
-        squadronMarkers2D.push(line);
+            const line = L.polyline([homeAir.coords, destAir.coords], { color: cfg.color, weight: 2, dashArray: '5, 6', opacity: 0.7 }).addTo(map);
+            squadronMarkers2D.push(line);
 
-        const icon = L.divIcon({
-            className: 'squadron-peer-icon',
-            html: `<div class="relative flex flex-col items-center">
-                <div class="w-8 h-8">${getAircraftSVG(cfg.aircraft, brng)}</div>
-                <span style="background:${cfg.color}" class="text-black font-black text-[9px] px-1.5 py-0.2 rounded shadow whitespace-nowrap -mt-1">${cfg.name} (${cfg.home}➔${cfg.dest})</span>
-            </div>`,
-            iconSize: [80, 42], iconAnchor: [40, 21]
-        });
+            const icon = L.divIcon({
+                className: 'squadron-peer-icon',
+                html: `<div class="relative flex flex-col items-center">
+                    <div class="w-8 h-8">${getAircraftSVG(cfg.aircraft, brng)}</div>
+                    <span style="background:${cfg.color}" class="text-black font-black text-[9px] px-1.5 py-0.2 rounded shadow whitespace-nowrap -mt-1">✈️ ${cfg.name} (${cfg.home}➔${destAir.code})</span>
+                </div>`,
+                iconSize: [90, 42], iconAnchor: [45, 21]
+            });
 
-        const marker = L.marker([lat, lng], { icon }).addTo(map);
-        marker.bindPopup(`<div class="text-slate-900 text-xs font-sans p-1">
-            <div class="font-black text-sm">✈️ ${cfg.name}</div>
-            <div class="text-[11px] font-bold text-blue-700">Chặng: ${cfg.home} ➔ ${cfg.dest} (${cfg.aircraft})</div>
-            <div class="text-[11px] mt-1">📚 Đang học: <b>${cfg.subject}</b></div>
-        </div>`);
-        squadronMarkers2D.push(marker);
+            const marker = L.marker([lat, lng], { icon }).addTo(map);
+            marker.bindPopup(`<div class="text-slate-900 text-xs font-sans p-1">
+                <div class="font-black text-sm">✈️ ${cfg.name} (Đang bay theo lịch)</div>
+                <div class="text-[11px] font-bold text-blue-700">Chặng: ${cfg.home} ➔ ${destAir.code} • ⏰ ${realTask.slot}</div>
+                <div class="text-[11px] mt-1">📚 Nhiệm vụ: <b>${realTask.title}</b></div>
+            </div>`);
+            squadronMarkers2D.push(marker);
+        } else {
+            // Thành viên CHƯA CÓ lịch học nào -> Đỗ yên tại sân bay căn cứ (Standby), không hiển thị môn học ảo
+            const icon = L.divIcon({
+                className: 'squadron-standby-icon',
+                html: `<div class="flex items-center gap-1 bg-slate-950/90 border border-white/25 text-slate-300 px-2 py-0.5 rounded-full text-[9px] font-bold shadow-lg whitespace-nowrap">
+                    <span class="w-2 h-2 rounded-full" style="background:${cfg.color}"></span>
+                    <span>${cfg.name} (${cfg.home} • Chờ lịch)</span>
+                </div>`,
+                iconSize: [110, 22], iconAnchor: [55, -10]
+            });
+
+            const marker = L.marker(homeAir.coords, { icon }).addTo(map);
+            marker.bindPopup(`<div class="text-slate-900 text-xs font-sans p-1">
+                <div class="font-black text-sm">🛬 ${cfg.name} (Đang đỗ tại ${cfg.home})</div>
+                <div class="text-[11px] text-slate-600 mt-0.5">Chưa có lịch học nào được thêm. Hãy chuyển sang hồ sơ <b>${cfg.name}</b> và thêm lịch học để cất cánh!</div>
+            </div>`);
+            squadronMarkers2D.push(marker);
+        }
     });
 }
 
 setInterval(() => {
-    squadronProgressTick = (squadronProgressTick + 0.012) % 1;
+    squadronProgressTick = (squadronProgressTick + 0.015) % 1;
     if (squadronRadarEnabled && is2DMapActive) renderSquadronRadarOn2DMap();
-}, 4000);
+    renderFidsDepartureBoard();
+}, 5000);
 
 function toggleSquadronRadar() {
     squadronRadarEnabled = !squadronRadarEnabled;
     const btn = document.getElementById('btn-squadron-radar');
     if (btn) {
-        btn.innerText = squadronRadarEnabled ? "📡 Đội hình 6 TV: BẬT" : "📡 Đội hình 6 TV: TẮT";
+        btn.innerText = squadronRadarEnabled ? "📡 Vị trí 6 TV: BẬT" : "📡 Vị trí 6 TV: TẮT";
         btn.className = squadronRadarEnabled
             ? "glass-panel px-3 py-1.5 rounded-xl text-[10px] font-extrabold text-emerald-300 border border-emerald-400/40 shadow-xl whitespace-nowrap"
             : "glass-panel px-3 py-1.5 rounded-xl text-[10px] font-extrabold text-slate-400 border border-white/10 shadow-xl whitespace-nowrap";
@@ -98,7 +134,7 @@ function updateSquadron3DPins() {
     const wrapper = document.getElementById('globe-wrapper');
     if (!wrapper) return;
 
-    Object.keys(SQUADRON_CONFIG).forEach((key, idx) => {
+    Object.keys(MEMBER_BASE_AIRPORTS).forEach((key, idx) => {
         const pinId = 'sq-3d-pin-' + key;
         let el = document.getElementById(pinId);
         if (!el) {
@@ -112,19 +148,117 @@ function updateSquadron3DPins() {
             el.classList.add('hidden');
             return;
         }
-        const cfg = SQUADRON_CONFIG[key];
-        const oAir = AIRPORTS.find(a => a.code === cfg.home) || AIRPORTS[0];
-        const dAir = AIRPORTS.find(a => a.code === cfg.dest) || AIRPORTS[2];
-        const tProg = (squadronProgressTick + idx * 0.17) % 1;
-        const lat = oAir.coords[0] + (dAir.coords[0] - oAir.coords[0]) * tProg;
-        const lng = oAir.coords[1] + (dAir.coords[1] - oAir.coords[1]) * tProg;
+        const cfg = MEMBER_BASE_AIRPORTS[key];
+        const homeAir = AIRPORTS.find(a => a.code === cfg.home) || AIRPORTS[0];
+        const realTask = getMemberRealActiveTask(key);
 
-        el.innerHTML = `<div style="border-color:${cfg.color}" class="bg-slate-950/90 border text-[9px] font-bold text-white px-1.5 py-0.5 rounded-md shadow whitespace-nowrap">✈️ ${cfg.name} (${cfg.home}➔${cfg.dest})</div>`;
-        update3DPinOverlay(pinId, lat, lng, 1.035);
+        if (realTask) {
+            const destAir = AIRPORTS.find(a => a.code === (realTask.destCode || "DAD")) || AIRPORTS[2];
+            const tProg = (squadronProgressTick + idx * 0.17) % 1;
+            const lat = homeAir.coords[0] + (destAir.coords[0] - homeAir.coords[0]) * tProg;
+            const lng = homeAir.coords[1] + (destAir.coords[1] - homeAir.coords[1]) * tProg;
+            el.innerHTML = `<div style="border-color:${cfg.color}" class="bg-slate-950/90 border text-[9px] font-bold text-white px-1.5 py-0.5 rounded-md shadow whitespace-nowrap">✈️ ${cfg.name} (${cfg.home}➔${destAir.code})</div>`;
+            update3DPinOverlay(pinId, lat, lng, 1.035);
+        } else {
+            el.innerHTML = `<div style="border-color:${cfg.color}" class="bg-slate-950/75 border text-[8px] font-semibold text-slate-300 px-1.5 py-0.5 rounded-md shadow whitespace-nowrap">🛬 ${cfg.name} (${cfg.home})</div>`;
+            update3DPinOverlay(pinId, homeAir.coords[0], homeAir.coords[1], 1.02);
+        }
     });
 }
 
-// ================= 2. LĂN BÁNH ĐƯỜNG BĂNG (TAXI) + ĐÀI ATC + GIỌNG CƠ TRƯỞNG (CÓ BẬT/TẮT TIẾNG) =================
+// ================= 3. BẢNG ĐIỆN TỬ LỊCH HỌC SÂN BAY (FIDS DEPARTURE BOARD) & ZEN FOCUS HUD =================
+function renderFidsDepartureBoard() {
+    const container = document.getElementById('fids-board-rows');
+    if (!container) return;
+
+    const profile = appState.members[currentMemberKey];
+    const homeCode = getMemberHomeAirportCode(currentMemberKey);
+    const tasks = profile.tasks || [];
+
+    const now = new Date();
+    const curMins = now.getHours() * 60 + now.getMinutes();
+
+    if (tasks.length === 0) {
+        container.innerHTML = `
+            <div class="col-span-12 py-4 text-center text-xs text-slate-400 font-mono">
+                📡 [STANDBY] Chưa có ca học nào trên bảng điện tử FIDS hôm nay. Hãy thêm lịch ở khung Thời Gian Biểu bên dưới để lên bảng điện tử!
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = tasks.slice(0, 5).map((tk, i) => {
+        const flightNo = `VN${202 + i * 15}`;
+        const oCode = tk.originCode || homeCode;
+        const dCode = tk.destCode || "DAD";
+
+        let statusText = "SCHEDULED";
+        let statusClass = "bg-blue-500/20 text-cyan-300 border-cyan-400/40";
+
+        if (tk.done) {
+            statusText = "LANDED ✓";
+            statusClass = "bg-emerald-500/20 text-emerald-300 border-emerald-400/40";
+        } else if (tk.slot && tk.slot.includes('-')) {
+            const parts = tk.slot.split('-').map(s => s.trim());
+            const [sh, sm] = (parts[0] || "00:00").split(':').map(Number);
+            const [eh, em] = (parts[1] || "23:59").split(':').map(Number);
+            const sMins = sh * 60 + sm;
+            const eMins = eh * 60 + em;
+            if (curMins >= sMins && curMins <= eMins) {
+                statusText = "IN FLIGHT ✈️";
+                statusClass = "bg-amber-400 text-black font-black animate-pulse";
+            } else if (sMins > curMins && (sMins - curMins) <= 45) {
+                statusText = "BOARDING 🔔";
+                statusClass = "bg-yellow-500/25 text-yellow-300 border-yellow-400/50 animate-bounce";
+            }
+        }
+
+        return `
+            <div class="grid grid-cols-12 items-center bg-[#060a14] hover:bg-slate-900/90 border border-white/10 rounded-xl px-3 py-2 font-mono text-xs transition gap-2">
+                <div class="col-span-2 font-extrabold text-amber-400">${tk.slot ? tk.slot.split(' ')[0] : '--:--'}</div>
+                <div class="col-span-2 text-cyan-300 font-bold">${flightNo} (${oCode}➔${dCode})</div>
+                <div class="col-span-5 font-sans font-extrabold text-white truncate">${tk.title}</div>
+                <div class="col-span-2 text-right">
+                    <span class="text-[10px] px-2 py-0.5 rounded border ${statusClass}">${statusText}</span>
+                </div>
+                <div class="col-span-1 text-right">
+                    ${!tk.done ? `<button onclick="startFlightFromTask(${tk.id})" class="bg-cyan-500 hover:bg-cyan-400 text-black font-sans font-black px-2 py-0.5 rounded text-[10px]">Bay</button>` : `<span class="text-emerald-400">✓</span>`}
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function toggleZenFocusHud() {
+    zenFocusModeActive = !zenFocusModeActive;
+    const zenOverlay = document.getElementById('zen-focus-hud-overlay');
+    if (!zenOverlay) return;
+    if (zenFocusModeActive) {
+        zenOverlay.classList.remove('hidden');
+        zenOverlay.classList.add('flex');
+        syncZenHudTick();
+    } else {
+        zenOverlay.classList.add('hidden');
+        zenOverlay.classList.remove('flex');
+    }
+}
+
+function syncZenHudTick() {
+    if (!zenFocusModeActive) return;
+    const timerTxt = document.getElementById('countdown-timer');
+    const zenTimer = document.getElementById('zen-big-timer');
+    const zenTask = document.getElementById('zen-task-label');
+    const zenRoute = document.getElementById('zen-route-label');
+    const zenBar = document.getElementById('zen-progress-bar');
+
+    if (zenTimer && timerTxt) zenTimer.innerText = timerTxt.innerText;
+    if (zenTask) zenTask.innerText = `${selectedFocus.icon} ${selectedFocus.label}`;
+    if (zenRoute) zenRoute.innerText = `✈️ ${originAirport.code} ➔ ${destAirport.code} • GHẾ ${selectedSeat} • ${appState.members[currentMemberKey].name}`;
+    if (zenBar) zenBar.style.width = `${(currentFlightProgress || 0) * 100}%`;
+}
+setInterval(syncZenHudTick, 500);
+
+// ================= 4. LĂN BÁNH ĐƯỜNG BĂNG (TAXI) + ĐÀI ATC + GIỌNG CƠ TRƯỞNG =================
 function toggleCaptainVoice() {
     captainVoiceEnabled = !captainVoiceEnabled;
     if (!captainVoiceEnabled && ('speechSynthesis' in window)) window.speechSynthesis.cancel();
@@ -172,13 +306,13 @@ function runTakeoffTaxiAndAtcSequence() {
 
     atcStepTimer1 = setTimeout(() => {
         stageText.innerHTML = `🛞 [RUNWAY TAXIING]: Máy bay đang lăn ra đường băng 25R...`;
-        subText.innerHTML = `Kiểm tra cánh tà Flaps 1+F • Đèn Strobe ON • Hành khách ${profile.name} (${tier.name}) thắt dây an toàn tại ghế ${selectedSeat}.`;
+        subText.innerHTML = `Mục tiêu ca học: "${selectedFocus.label}" • Hành khách ${profile.name} (${tier.name}) ổn định tại ghế ${selectedSeat}.`;
         prog.style.width = "68%";
     }, 2800);
 
     atcStepTimer2 = setTimeout(() => {
         stageText.innerHTML = `🎙️ [CAPTAIN PA]: Phát thanh Cơ trưởng & Tăng tốc V1... Rotate!`;
-        let speechMsg = `Cơ trưởng xin chào hành khách ${profile.name}. Chuyến bay tập trung từ ${originAirport.name.split(' (')[0]} đi ${destAirport.name} thời lượng ${selectedDuration} phút xin phép cất cánh. Chúc bạn học tập hiệu quả!`;
+        let speechMsg = `Cơ trưởng xin chào hành khách ${profile.name}. Chuyến bay tập trung từ ${originAirport.name.split(' (')[0]} đi ${destAirport.name} thời lượng ${selectedDuration} phút xin phép cất cánh. Chúc bạn hoàn thành mục tiêu học tập!`;
         if (currentLang === 'en') speechMsg = `Captain speaking. Welcome passenger ${profile.name} aboard our focus flight from ${originAirport.code} to ${destAirport.code}. Flight time is ${selectedDuration} minutes. Cleared for takeoff!`;
         if (currentLang === 'zh') speechMsg = `機長廣播：歡迎旅客 ${profile.name} 搭乘從 ${originAirport.code} 前往 ${destAirport.code} 的專注航班，飛行時間 ${selectedDuration} 分鐘，現在起飛！`;
         subText.innerHTML = `"${speechMsg}"`;
@@ -199,7 +333,7 @@ function closeAtcTaxiOverlay() {
     if (overlay) { overlay.classList.add('hidden'); overlay.classList.remove('flex'); }
 }
 
-// ================= 3. THỜI TIẾT THỰC TẾ TẠI SÂN BAY ĐẾN (OPEN-METEO API) =================
+// ================= 5. THỜI TIẾT THỰC TẾ, HỘ CHIẾU 3D THẬT 100% & XUẤT ẢNH VÉ PNG =================
 async function updateDestinationLiveWeather(airportCode) {
     const air = AIRPORTS.find(a => a.code === airportCode) || destAirport;
     const badge = document.getElementById('live-weather-badge');
@@ -218,7 +352,6 @@ async function updateDestinationLiveWeather(airportCode) {
     }
 }
 
-// ================= 4. THẺ VIP FREQUENT FLYER, HỘ CHIẾU 3D & HỘP ĐEN PHÂN TÍCH =================
 function getFrequentFlyerTier(miles) {
     if (miles >= 3000) return { name: "💎 DIAMOND VIP", bg: "bg-cyan-500/20 text-cyan-300 border-cyan-400/50" };
     if (miles >= 1200) return { name: "🥇 GOLD ELITE", bg: "bg-amber-500/20 text-amber-300 border-amber-400/50" };
@@ -234,6 +367,7 @@ function updateVipBadgeOnDashboard() {
         el.className = `text-[10px] font-black px-2 py-0.5 rounded-full border ${tier.bg}`;
         el.innerText = tier.name;
     }
+    renderFidsDepartureBoard();
 }
 
 function awardPassportStamp(originCode, destCode, distKm, subject) {
@@ -242,7 +376,7 @@ function awardPassportStamp(originCode, destCode, distKm, subject) {
     const now = new Date();
     const dateStr = `${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${now.getFullYear()}`;
     profile.passportStamps.unshift({
-        origin: originCode, dest: destCode, dist: distKm, date: dateStr, subject: subject || "Focus Study"
+        origin: originCode, dest: destCode, dist: distKm, date: dateStr, subject: subject || "Ca học tập trung"
     });
     savePersistentState();
 }
@@ -251,30 +385,27 @@ function openPassportAndBlackboxModal() {
     const profile = appState.members[currentMemberKey];
     const homeCode = getMemberHomeAirportCode(currentMemberKey);
     const tier = getFrequentFlyerTier(profile.miles || 0);
+    const stamps = profile.passportStamps || [];
 
-    if (!profile.passportStamps || profile.passportStamps.length === 0) {
-        const destCode = SQUADRON_CONFIG[currentMemberKey].dest;
-        const oObj = AIRPORTS.find(a => a.code === homeCode) || AIRPORTS[0];
-        const dObj = AIRPORTS.find(a => a.code === destCode) || AIRPORTS[2];
-        profile.passportStamps = [
-            { origin: homeCode, dest: destCode, dist: calcDistanceKm(oObj.coords, dObj.coords), date: "06/11/2026", subject: SQUADRON_CONFIG[currentMemberKey].subject }
-        ];
-    }
-
-    let stampsHtml = profile.passportStamps.map((s, idx) => `
-        <div class="border-2 border-dashed ${idx % 2 === 0 ? 'border-emerald-400/70 bg-emerald-950/25 rotate-[-2deg]' : 'border-amber-400/70 bg-amber-950/25 rotate-[2deg]'} rounded-2xl p-2.5 text-center shadow-lg">
-            <div class="text-[8px] font-mono font-black uppercase tracking-widest text-cyan-300">VIETNAM IMMIGRATION • ARRIVAL</div>
-            <div class="text-sm font-black text-white my-0.5">✈️ ${s.origin} ➔ ${s.dest}</div>
-            <div class="text-[10px] font-bold text-amber-300">+${s.dist} km • ${s.date}</div>
-            <div class="text-[9px] text-slate-300 truncate mt-0.5">${s.subject}</div>
-        </div>
-    `).join('');
+    let stampsHtml = stamps.length === 0
+        ? `<div class="col-span-3 text-center py-6 bg-slate-900/50 rounded-2xl border border-dashed border-white/10 text-xs text-slate-400">🛂 Chưa có con dấu nhập cảnh nào. Hãy hoàn thành 1 chuyến bay học tập để nhận con dấu đầu tiên!</div>`
+        : stamps.map((s, idx) => `
+            <div class="border-2 border-dashed ${idx % 2 === 0 ? 'border-emerald-400/70 bg-emerald-950/25 rotate-[-2deg]' : 'border-amber-400/70 bg-amber-950/25 rotate-[2deg]'} rounded-2xl p-2.5 text-center shadow-lg">
+                <div class="text-[8px] font-mono font-black uppercase tracking-widest text-cyan-300">IMMIGRATION • COMPLETED</div>
+                <div class="text-sm font-black text-white my-0.5">✈️ ${s.origin} ➔ ${s.dest}</div>
+                <div class="text-[10px] font-bold text-amber-300">+${s.dist} km • ${s.date}</div>
+                <div class="text-[9px] text-slate-300 truncate mt-0.5">${s.subject}</div>
+            </div>
+        `).join('');
 
     let leaderboardHtml = Object.keys(appState.members).map(k => {
         const m = appState.members[k];
-        const cfg = SQUADRON_CONFIG[k];
+        const cfg = MEMBER_BASE_AIRPORTS[k];
         const mTier = getFrequentFlyerTier(m.miles || 0);
+        const pendingCount = (m.tasks || []).filter(tk => !tk.done).length;
         const doneCount = (m.tasks || []).filter(tk => tk.done).length;
+        const realTask = getMemberRealActiveTask(k);
+
         return `
             <div class="bg-slate-900/90 border border-white/10 rounded-xl p-2.5 flex items-center justify-between">
                 <div>
@@ -283,11 +414,13 @@ function openPassportAndBlackboxModal() {
                         <span class="text-[9px] bg-blue-500/20 text-cyan-300 px-1.5 py-0.2 rounded">Căn cứ: ${cfg.home}</span>
                         <span class="text-[9px] px-1.5 py-0.2 rounded border ${mTier.bg}">${mTier.name}</span>
                     </div>
-                    <div class="text-[10px] text-slate-400 mt-0.5">Chặng mẫu: ${cfg.home} ➔ ${cfg.dest} • Đang học: ${cfg.subject}</div>
+                    <div class="text-[10px] text-slate-400 mt-0.5">
+                        ${realTask ? `🛫 Đang có lịch: <b class="text-amber-300">${realTask.title}</b> (${realTask.slot})` : `🛬 Đang đỗ tại ${cfg.home} (Chưa thêm lịch học)`}
+                    </div>
                 </div>
                 <div class="text-right font-mono">
                     <div class="text-xs font-black text-amber-300">${m.miles || 0} km</div>
-                    <div class="text-[10px] text-emerald-400">${m.flights || 0} chuyến • ${doneCount} xong</div>
+                    <div class="text-[10px] text-emerald-400">${doneCount} xong • ${pendingCount} chờ</div>
                 </div>
             </div>
         `;
@@ -298,13 +431,13 @@ function openPassportAndBlackboxModal() {
             <div>
                 <div class="text-[9px] text-amber-300 font-bold uppercase tracking-widest">PASSPORT & FREQUENT FLYER CARD</div>
                 <div class="text-base font-black text-white mt-0.5">🛂 ${profile.name} • Sân bay căn cứ: ${homeCode}</div>
-                <div class="text-xs text-cyan-300">Tích lũy: <b>${profile.miles || 0} km</b> • Đã bay: <b>${profile.flights || 0} chuyến</b></div>
+                <div class="text-xs text-cyan-300">Tích lũy: <b>${profile.miles || 0} km</b> • Đã hạ cánh: <b>${profile.flights || 0} chuyến</b></div>
             </div>
             <div class="px-3 py-1.5 rounded-xl border font-black text-xs ${tier.bg}">${tier.name}</div>
         </div>
-        <div class="text-xs font-extrabold text-amber-300 mb-2">💮 Bộ sưu tập Con dấu Nhập cảnh (Passport Stamps):</div>
+        <div class="text-xs font-extrabold text-amber-300 mb-2">💮 Con dấu Nhập cảnh (Chỉ đóng dấu khi hoàn thành ca học thật):</div>
         <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5 mb-4 max-h-40 overflow-y-auto p-1">${stampsHtml}</div>
-        <div class="text-xs font-extrabold text-cyan-300 mb-2">📊 Hộp Đen Đội Hình 6 Thành Viên (6 Sân bay Việt Nam):</div>
+        <div class="text-xs font-extrabold text-cyan-300 mb-2">📊 Trạng thái Thực tế của 6 Thành Viên (6 Sân bay căn cứ VN):</div>
         <div class="space-y-1.5 max-h-48 overflow-y-auto pr-1">${leaderboardHtml}</div>
     `;
     document.getElementById('passport-blackbox-modal').classList.remove('hidden');
@@ -316,12 +449,9 @@ function closePassportAndBlackboxModal() {
     document.getElementById('passport-blackbox-modal').classList.remove('flex');
 }
 
-// ================= 5. MENU ĐỒ ĂN / TRÀ SỮA KHOANG THƯƠNG GIA & TẢI ẢNH VÉ PNG TÙY CHỌN =================
 function serveCabinItem(icon, name) {
     const slot = document.getElementById('cabin-served-items');
-    if (slot) {
-        slot.innerHTML = `<span class="text-xl animate-bounce inline-block">${icon}</span> <span class="text-[11px] font-extrabold text-emerald-800">${name}</span>`;
-    }
+    if (slot) slot.innerHTML = `<span class="text-xl animate-bounce inline-block">${icon}</span> <span class="text-[11px] font-extrabold text-emerald-800">${name}</span>`;
     playCabinDingDong();
 }
 
@@ -339,7 +469,7 @@ function downloadBoardingPassPNG() {
     });
 }
 
-// ================= 6. TỰ ĐỘNG GẮN CÁC NÚT ĐIỀU KHIỂN MỚI VÀO GIAO DIỆN (AN TOÀN 100%) =================
+// ================= 6. TỰ ĐỘNG NÂNG CẤP GIAO DIỆN TẬP TRUNG HỌC & BẢNG ĐIỆN TỬ FIDS =================
 function injectWowUIElements() {
     try {
         const statName = document.getElementById('stat-member-name');
@@ -348,6 +478,36 @@ function injectWowUIElements() {
             badge.id = 'vip-tier-badge';
             badge.className = "ml-1.5 text-[10px] font-black px-2 py-0.5 rounded-full border";
             statName.parentElement.appendChild(badge);
+        }
+    } catch (e) {}
+
+    // Chèn Bảng Điện Tử Lịch Học Sân Bay (FIDS Departure Board) vào Dashboard
+    try {
+        const dashContainer = document.querySelector('#page-dashboard > div');
+        if (dashContainer && !document.getElementById('fids-departure-board')) {
+            const fidsBoard = document.createElement('div');
+            fidsBoard.id = 'fids-departure-board';
+            fidsBoard.className = "bg-gradient-to-b from-[#0b1326] to-[#060a14] border-2 border-amber-400/35 rounded-3xl p-4 shadow-2xl";
+            fidsBoard.innerHTML = `
+                <div class="flex flex-wrap items-center justify-between gap-2 pb-2.5 mb-2.5 border-b border-white/10">
+                    <div class="flex items-center gap-2">
+                        <span class="bg-amber-400 text-black font-mono font-black text-xs px-2.5 py-0.5 rounded uppercase tracking-wider">🛫 FIDS • DEPARTURE STUDY BOARD</span>
+                        <span class="text-xs font-extrabold text-white">Bảng Điện Tử Lịch Bay Học Tập Trong Ngày</span>
+                    </div>
+                    <span class="text-[11px] font-mono text-emerald-400">● Dữ liệu thật từ Thời Gian Biểu</span>
+                </div>
+                <div class="grid grid-cols-12 px-3 pb-1 text-[10px] font-mono font-bold text-slate-400 uppercase">
+                    <div class="col-span-2">GIỜ HỌC</div>
+                    <div class="col-span-2">CHUYẾN BAY</div>
+                    <div class="col-span-5">MÔN HỌC / NHIỆM VỤ</div>
+                    <div class="col-span-2 text-right">TRẠNG THÁI</div>
+                    <div class="col-span-1 text-right">CẤT CÁNH</div>
+                </div>
+                <div id="fids-board-rows" class="space-y-1.5"></div>
+            `;
+            // Đặt ngay bên dưới 4 thẻ KPI
+            const kpiGrid = dashContainer.children[1];
+            dashContainer.insertBefore(fidsBoard, kpiGrid.nextSibling);
         }
     } catch (e) {}
 
@@ -370,8 +530,21 @@ function injectWowUIElements() {
             radBtn.id = 'btn-squadron-radar';
             radBtn.onclick = toggleSquadronRadar;
             radBtn.className = "glass-panel px-3 py-1.5 rounded-xl text-[10px] font-extrabold text-emerald-300 border border-emerald-400/40 shadow-xl whitespace-nowrap";
-            radBtn.innerText = "📡 Đội hình 6 TV: BẬT";
+            radBtn.innerText = "📡 Vị trí 6 TV: BẬT";
             zoomCtrl.appendChild(radBtn);
+        }
+    } catch (e) {}
+
+    // Nút bật chế độ Zen Focus HUD trên thanh Dock khi đang bay
+    try {
+        const flyDockRight = document.querySelector('#screen-flying .flex.items-center.gap-1\\.5:last-child');
+        if (flyDockRight && !document.getElementById('btn-zen-focus')) {
+            const zenBtn = document.createElement('button');
+            zenBtn.id = 'btn-zen-focus';
+            zenBtn.onclick = toggleZenFocusHud;
+            zenBtn.className = "bg-amber-400 hover:bg-amber-300 text-black px-2.5 py-1.5 rounded-xl text-[11px] font-black shadow";
+            zenBtn.innerHTML = "🧘 Zen HUD";
+            flyDockRight.insertBefore(zenBtn, flyDockRight.firstChild);
         }
     } catch (e) {}
 
@@ -427,6 +600,7 @@ function injectWowUIElements() {
         if (!document.getElementById('atc-taxi-overlay')) {
             const modalsWrapper = document.createElement('div');
             modalsWrapper.innerHTML = `
+                <!-- OVERLAY MÔ PHỎNG LĂN BÁNH ĐƯỜNG BĂNG & ĐÀI ATC -->
                 <div id="atc-taxi-overlay" style="z-index: 8200;" class="fixed top-16 left-1/2 -translate-x-1/2 w-[94%] max-w-lg glass-panel rounded-3xl p-4 border-2 border-amber-400/50 shadow-2xl hidden flex-col gap-2">
                     <div class="flex items-center justify-between">
                         <span id="atc-stage-text" class="text-xs font-black text-amber-300 uppercase tracking-wider">🗼 [ATC TOWER]</span>
@@ -441,10 +615,25 @@ function injectWowUIElements() {
                     </div>
                 </div>
 
+                <!-- CHẾ ĐỘ SIÊU TẬP TRUNG ZEN FOCUS HUD -->
+                <div id="zen-focus-hud-overlay" style="z-index: 8800;" class="fixed inset-0 bg-[#03060f]/90 backdrop-blur-2xl hidden flex-col items-center justify-center p-6 text-center">
+                    <div id="zen-route-label" class="text-xs font-mono font-bold text-cyan-400 tracking-widest uppercase mb-2">✈️ SGN ➔ DAD • GHẾ 06A</div>
+                    <div id="zen-task-label" class="text-xl sm:text-3xl font-extrabold text-white mb-4 max-w-2xl">💻 Tập trung học tập</div>
+                    <div id="zen-big-timer" class="mono text-6xl sm:text-8xl font-black text-amber-400 tracking-tight my-4 drop-shadow-[0_0_35px_rgba(250,204,21,0.35)]">55:00</div>
+                    <div class="w-full max-w-md bg-slate-800 h-2.5 rounded-full overflow-hidden my-6 border border-white/10">
+                        <div id="zen-progress-bar" class="bg-gradient-to-r from-cyan-400 to-amber-400 h-full w-0 transition-all duration-500"></div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <button onclick="toggleLofi()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold px-4 py-2.5 rounded-2xl text-xs border border-white/15">🎵 Bật/Tắt Lofi</button>
+                        <button onclick="toggleZenFocusHud()" class="bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-black px-6 py-2.5 rounded-2xl text-xs shadow-xl">🔙 Quay lại Buồng lái</button>
+                    </div>
+                </div>
+
+                <!-- MODAL HỘ CHIẾU 3D & HỘP ĐEN ĐỘI HÌNH 6 THÀNH VIÊN -->
                 <div id="passport-blackbox-modal" style="z-index: 9200;" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center p-4">
                     <div class="glass-panel w-full max-w-2xl rounded-3xl p-5 shadow-2xl border border-amber-400/40">
                         <div class="flex justify-between items-center mb-3 pb-2 border-b border-white/10">
-                            <h3 class="text-sm sm:text-base font-black text-amber-300">🛂 Cuốn Hộ Chiếu 3D, Hạng Thẻ VIP & Radar 6 Thành Viên</h3>
+                            <h3 class="text-sm sm:text-base font-black text-amber-300">🛂 Cuốn Hộ Chiếu 3D, Hạng Thẻ VIP & Trạng Thái 6 Thành Viên</h3>
                             <button onclick="closePassportAndBlackboxModal()" class="text-slate-400 hover:text-white text-lg font-bold">✕</button>
                         </div>
                         <div id="passport-modal-body"></div>
@@ -457,7 +646,7 @@ function injectWowUIElements() {
     } catch (e) {}
 }
 
-// ================= 7. KHỞI CHẠY HỆ THỐNG Bọc Bảo Vệ Từng Bước =================
+// ================= 7. KHỞI CHẠY HỆ THỐNG =================
 try { document.getElementById('member-select').value = currentMemberKey; } catch (e) {}
 try { injectWowUIElements(); } catch (e) {}
 try { initThreeGlobe(); } catch (e) {}
@@ -468,4 +657,5 @@ try { syncEnvironmentWithRealTime(); } catch (e) {}
 try { updateSlotDurationPreview(); } catch (e) {}
 try { renderCalendarGrid(); } catch (e) {}
 try { renderDashboard(); } catch (e) {}
+try { renderFidsDepartureBoard(); } catch (e) {}
 try { resetChat(); } catch (e) {}
